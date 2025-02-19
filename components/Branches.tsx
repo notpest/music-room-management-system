@@ -1,8 +1,7 @@
 import React from "react";
 import { FocusCards } from "./ui/focus-cards";
 import SWO_Logo from "../public/SWO_Logo.png"; // Import images correctly
-import Band1 from "../public/Bands/Band1.jpeg";
-import Band2 from "../public/Bands/Band2.jpeg";
+import Natyarpana from "../public/Natyarpana.jpeg";
 import ckc from "../public/Choir/CKC.png";
 
 const Branches = () => {
@@ -20,14 +19,9 @@ const Branches = () => {
     {
       title: "Natyarpana",
       desc: "We Dance Nicely",
-      src: Band1,
+      src: Natyarpana,
     },
-    {
-      title: "Cultural Team",
-      desc: "Bleugh",
-      src: Band2,
-    },
-  ];
+     ];
 
   return (
     <div className="mt-8">

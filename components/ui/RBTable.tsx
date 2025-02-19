@@ -452,7 +452,7 @@ const RBTable = () => {
         
         <TableBody>
           {timeSlots.map((time, rowIndex) => (
-            <TableRow key={time.key} style={{ height: "50px" }}>
+            <TableRow key={time.key} style={{ height: "60px" }}>
               {[
                 <TableCell
                   key={`time-${time.key}`}
