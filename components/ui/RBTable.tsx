@@ -13,6 +13,8 @@ import {
   ModalFooter,
   Button,
   Input,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import axios from "axios";
 
@@ -244,9 +246,11 @@ const RBTable = () => {
       setSelectedDayKey(dayKey);
       setSelectedTimeKey(timeKey);
       // Set default start and end times based on the selected slot.
-      const timeSlotObj = timeSlots.find((ts) => ts.key === timeKey);
-      const defaultStart = timeSlotObj ? timeSlotObj.display : timeKey;
-      const defaultEnd = calculateEndTime(timeKey);
+      const startIndex = timeSlots.findIndex((ts) => ts.key === timeKey);
+      const defaultStart = timeKey;
+      const defaultEnd = timeSlots[startIndex + 1]
+        ? timeSlots[startIndex + 1].key
+        : timeKey; // fallback if there is no next slot
       setBookingStartTime(defaultStart);
       setBookingEndTime(defaultEnd);
       setDefaultStartTime(defaultStart);
@@ -273,13 +277,30 @@ const RBTable = () => {
   };
 
   const handleBookingConfirm = async () => {
-    const [year, month, day] = selectedDayKey.split("-").map(Number);
-    const startParsed = parseTime12(bookingStartTime);
-    const endParsed = parseTime12(bookingEndTime);
+    // Validate using keys instead of display values
+    const validStart = timeSlots.some((ts) => ts.key === bookingStartTime);
+    const validEnd = timeSlots.some((ts) => ts.key === bookingEndTime);
+    if (!validStart || !validEnd) {
+      alert("One or both time slots are invalid.");
+      return;
+    }
+
+    // Look up the display values to pass to parseTime12
+    const startSlot = timeSlots.find((ts) => ts.key === bookingStartTime);
+    const endSlot = timeSlots.find((ts) => ts.key === bookingEndTime);
+    if (!startSlot || !endSlot) {
+      alert("Invalid time slot selection.");
+      return;
+    }
+
+    const startParsed = parseTime12(startSlot.display);
+    const endParsed = parseTime12(endSlot.display);
     if (!startParsed || !endParsed) {
       alert("Invalid time format. Please use HH:MM AM/PM format.");
       return;
     }
+
+    const [year, month, day] = selectedDayKey.split("-").map(Number);
     const localSlotStart = new Date(year, month - 1, day, startParsed.hour, startParsed.minute);
     const localSlotEnd = new Date(year, month - 1, day, endParsed.hour, endParsed.minute);
     const offset = localSlotStart.getTimezoneOffset() * 60000;
@@ -538,7 +559,6 @@ const RBTable = () => {
             <>
               <ModalHeader>Book Slot</ModalHeader>
               <ModalBody>
-                {/* Only the three input fields are shown */}
                 <Input
                   isClearable
                   variant="underlined"
@@ -546,37 +566,70 @@ const RBTable = () => {
                   label="Band ID"
                   placeholder="Enter your Band ID"
                   value={bandId}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setBandId(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setBandId(e.target.value)
+                  }
                   onClear={() => setBandId("")}
                 />
-                <Input
-                  isClearable
-                  type="text"
-                  variant="underlined"
-                  fullWidth
+                {/* Dropdown for selecting Slot Start Time */}
+                <Select
                   label="Slot Start Time"
-                  placeholder={defaultStartTime || "Slot Start Time"}
-                  value={bookingStartTime}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setBookingStartTime(e.target.value)}
-                  onClear={() => setBookingStartTime("")}
-                />
-                <Input
-                  isClearable
-                  type="text"
-                  variant="underlined"
-                  fullWidth
+                  placeholder={defaultStartTime}
+                  value={
+                    bookingStartTime
+                  }
+                  onChange={(value: string) => {
+                    if (timeSlots.some((ts) => ts.key === value)) {
+                      setBookingStartTime(value);
+                    } else {
+                      alert("Invalid time slot selected");
+                    }
+                  }}
+                >
+                  {timeSlots.map((slot) => (
+                    <SelectItem key={slot.key} value={slot.key}>
+                      {slot.display}
+                    </SelectItem>
+                  ))}
+                </Select>
+                {/* Dropdown for selecting Slot End Time */}
+                <Select
                   label="Slot End Time"
-                  placeholder={defaultEndTime || "Slot End Time"}
-                  value={bookingEndTime}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setBookingEndTime(e.target.value)}
-                  onClear={() => setBookingEndTime("")}
-                />
+                  placeholder={defaultEndTime}
+                  value={bookingEndTime} // bookingEndTime is a key
+                  onChange={(value: string) => {
+                    if (timeSlots.some((ts) => ts.key === value)) {
+                      setBookingEndTime(value);
+                    } else {
+                      alert("Invalid time slot selected");
+                    }
+                  }}
+                >
+                  {timeSlots.map((slot) => (
+                    <SelectItem key={slot.key} value={slot.key}>
+                      {slot.display}
+                    </SelectItem>
+                  ))}
+                </Select>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" onPress={() => setModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button color="success" onPress={handleBookingConfirm}>
+                <Button
+                  color="success"
+                  onPress={() => {
+                    // Validate that both times exist in the valid timeSlots list
+                    const validStart = timeSlots.some(
+                      (ts) => ts.key === bookingStartTime
+                    );
+                    const validEnd = timeSlots.some(
+                      (ts) => ts.key === bookingEndTime
+                    );
+                    if (!validStart || !validEnd) {
+                      alert("One or both time slots are invalid.");
+                      return;
+                    }
+                    handleBookingConfirm();
+                  }}
+                >
                   Confirm
                 </Button>
               </ModalFooter>
