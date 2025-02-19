@@ -92,9 +92,15 @@ const NavbarComponent = () => {
             <Link href="/EquipmentBooking" className={!isAuthenticated ? "opacity-50" : ""}>Equipment Booking</Link>
           </NavbarItem>
           {role === "admin" && (
-            <NavbarItem>
-              <Link href="/Approval" className={!isAuthenticated ? "opacity-50" : ""}>Approval Page</Link>
-            </NavbarItem>
+           <>
+              <NavbarItem>
+                <Link href="/Approval" className={!isAuthenticated ? "opacity-50" : ""}>Approval Page</Link>
+              </NavbarItem>
+              
+              <NavbarItem>
+                <Link href="/EntryLog" className={!isAuthenticated ? "opacity-50" : ""}>Entry Log</Link>
+              </NavbarItem>
+            </>
           )}
         </NavbarContent>
 
