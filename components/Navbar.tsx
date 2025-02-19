@@ -22,10 +22,11 @@ import { useRouter, usePathname } from "next/navigation";
 const NavbarComponent = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [mounted, setMounted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState<"user" | "admin">("user");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -50,8 +51,15 @@ const NavbarComponent = () => {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      if (username === "2260407" && password === "1234") {
+      if (username === "admin" && password === "1234") {
         setIsAuthenticated(true);
+        setRole("admin"); // Set role to admin for this example
+        onOpenChange(); // Close modal
+        setUsername(""); // Clear form
+        setPassword(""); // Clear form
+      } else if (username === "user" && password === "1234") {
+        setIsAuthenticated(true);
+        setRole("user"); // Set role to user for this example
         onOpenChange(); // Close modal
         setUsername(""); // Clear form
         setPassword(""); // Clear form
@@ -111,6 +119,17 @@ const NavbarComponent = () => {
               Equipment Booking
             </Link>
           </NavbarItem>
+          {role === "admin" && (
+            <NavbarItem>
+              <Link
+                href="/Approval"
+                aria-current="page"
+                className={!isAuthenticated ? "pointer-events-none opacity-50" : ""}
+              >
+                Approval Page
+              </Link>
+            </NavbarItem>
+          )}
         </NavbarContent>
         <NavbarContent justify="end">
           {isAuthenticated ? (
