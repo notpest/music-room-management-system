@@ -30,7 +30,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 const NavbarComponent = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"user" | "admin">("user");
@@ -64,70 +64,89 @@ const NavbarComponent = () => {
   };
 
   return (
-    <Navbar isBordered isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
-      <NavbarContent className="sm:hidden" justify="start">
-        <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} />
-      </NavbarContent>
+    <div>
+      <Navbar isBordered>
+        <NavbarContent className="sm:hidden" justify="start">
+          <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} />
+        </NavbarContent>
 
-      <NavbarContent className="sm:hidden pr-3" justify="center">
-        <NavbarBrand>
-          <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
-          <p className="font-bold text-inherit ml-2">SWO</p>
-        </NavbarBrand>
-      </NavbarContent>
+        <NavbarContent className="sm:hidden pr-3" justify="center">
+          <NavbarBrand>
+            <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
+            <p className="font-bold text-inherit ml-2">SWO</p>
+          </NavbarBrand>
+        </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex gap-4" justify="center">
-        <NavbarBrand>
-          <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
-          <p className="font-bold text-inherit ml-2">SWO</p>
-        </NavbarBrand>
-        <NavbarItem>
-          <Link href="/">Home</Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link href="/RoomBooking" className={!isAuthenticated ? "opacity-50" : ""}>Room Booking</Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link href="/EquipmentBooking" className={!isAuthenticated ? "opacity-50" : ""}>Equipment Booking</Link>
-        </NavbarItem>
-        {role === "admin" && (
+        <NavbarContent className="hidden sm:flex gap-4" justify="center">
+          <NavbarBrand>
+            <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
+            <p className="font-bold text-inherit ml-2">SWO</p>
+          </NavbarBrand>
           <NavbarItem>
-            <Link href="/Approval" className={!isAuthenticated ? "opacity-50" : ""}>Approval Page</Link>
+            <Link href="/">Home</Link>
           </NavbarItem>
-        )}
-      </NavbarContent>
-
-      <NavbarContent justify="end">
-        {isAuthenticated ? (
-          <Dropdown placement="bottom-end">
-            <DropdownTrigger>
-              <Avatar
-                isBordered
-                as="button"
-                className="transition-transform"
-                color="secondary"
-                name={username}
-                size="sm"
-                src="https://i.pravatar.cc/150"
-              />
-            </DropdownTrigger>
-            <DropdownMenu aria-label="Profile Actions" variant="flat">
-              <DropdownItem key="profile" className="h-14 gap-2">
-                <p className="font-semibold">Signed in as</p>
-                <p className="font-semibold">{username}</p>
-              </DropdownItem>
-              <DropdownItem key="settings">My Settings</DropdownItem>
-              <DropdownItem key="logout" color="danger" onClick={handleLogout}>
-                Log Out
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        ) : (
           <NavbarItem>
-            <Button onPress={onOpen} color="primary">Login</Button>
+            <Link href="/RoomBooking" className={!isAuthenticated ? "opacity-50" : ""}>Room Booking</Link>
           </NavbarItem>
-        )}
-      </NavbarContent>
+          <NavbarItem>
+            <Link href="/EquipmentBooking" className={!isAuthenticated ? "opacity-50" : ""}>Equipment Booking</Link>
+          </NavbarItem>
+          {role === "admin" && (
+            <NavbarItem>
+              <Link href="/Approval" className={!isAuthenticated ? "opacity-50" : ""}>Approval Page</Link>
+            </NavbarItem>
+          )}
+        </NavbarContent>
+
+        <NavbarContent justify="end">
+          {isAuthenticated ? (
+            <Dropdown placement="bottom-end">
+              <DropdownTrigger>
+                <Avatar
+                  isBordered
+                  as="button"
+                  className="transition-transform"
+                  color="secondary"
+                  name={username}
+                  size="sm"
+                  src="https://i.pravatar.cc/150"
+                />
+              </DropdownTrigger>
+              <DropdownMenu aria-label="Profile Actions" variant="flat">
+                <DropdownItem key="profile" className="h-14 gap-2">
+                  <p className="font-semibold">Signed in as</p>
+                  <p className="font-semibold">{username}</p>
+                </DropdownItem>
+                <DropdownItem key="settings">My Settings</DropdownItem>
+                <DropdownItem key="logout" color="danger" onClick={handleLogout}>
+                  Log Out
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          ) : (
+            <NavbarItem>
+              <Button onPress={onOpen} color="primary">Login</Button>
+            </NavbarItem>
+          )}
+        </NavbarContent>
+
+        <NavbarMenu>
+          <NavbarMenuItem>
+            <Link href="/">Home</Link>
+          </NavbarMenuItem>
+          <NavbarMenuItem>
+            <Link href="/RoomBooking" className={!isAuthenticated ? "opacity-50" : ""}>Room Booking</Link>
+          </NavbarMenuItem>
+          <NavbarMenuItem>
+            <Link href="/EquipmentBooking" className={!isAuthenticated ? "opacity-50" : ""}>Equipment Booking</Link>
+          </NavbarMenuItem>
+          {role === "admin" && (
+            <NavbarMenuItem>
+              <Link href="/Approval" className={!isAuthenticated ? "opacity-50" : ""}>Approval Page</Link>
+            </NavbarMenuItem>
+          )}
+        </NavbarMenu>
+      </Navbar>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur">
         <ModalContent>
@@ -142,7 +161,7 @@ const NavbarComponent = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </Navbar>
+    </div>
   );
 };
 
