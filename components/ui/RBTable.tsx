@@ -301,14 +301,18 @@ const RBTable = () => {
     }
 
     const [year, month, day] = selectedDayKey.split("-").map(Number);
-    const localSlotStart = new Date(year, month - 1, day, startParsed.hour, startParsed.minute);
-    const localSlotEnd = new Date(year, month - 1, day, endParsed.hour, endParsed.minute);
-    const offset = localSlotStart.getTimezoneOffset() * 60000;
-    const adjustedSlotStart = new Date(localSlotStart.getTime() - offset);
-    const adjustedSlotEnd = new Date(localSlotEnd.getTime() - offset);
+    const [startHour, startMinute] = bookingStartTime.split(":").map(Number);
+    const [endHour, endMinute] = bookingEndTime.split(":").map(Number);
+    const localSlotStart = new Date(year, month - 1, day, startHour, startMinute);
+    const localSlotEnd = new Date(year, month - 1, day, endHour, endMinute);
+
+    const adjustedSlotStart = localSlotStart;
+    const adjustedSlotEnd = localSlotEnd;
 
     try {
-      await axios.post("/api/slots", {
+      await axios.post("/api/requests", {
+        user_id: bandId,
+        status: "pending",
         slot_start: adjustedSlotStart.toISOString(),
         slot_end: adjustedSlotEnd.toISOString(),
         band_id: bandId,
@@ -319,8 +323,8 @@ const RBTable = () => {
       setBookingEndTime("");
       fetchSlots();
     } catch (error) {
-      console.error("Error booking slot:", error);
-      alert("Error booking slot.");
+      console.error("Error creating slot request:", error);
+      alert("Error creating slot request.");
     }
   };
 
@@ -557,7 +561,7 @@ const RBTable = () => {
             </>
           ) : modalType === "book" ? (
             <>
-              <ModalHeader>Book Slot</ModalHeader>
+              <ModalHeader>Request Slot</ModalHeader>
               <ModalBody>
                 <Input
                   isClearable
@@ -575,12 +579,11 @@ const RBTable = () => {
                 <Select
                   label="Slot Start Time"
                   placeholder={defaultStartTime}
-                  value={
-                    bookingStartTime
-                  }
-                  onChange={(value: string) => {
-                    if (timeSlots.some((ts) => ts.key === value)) {
-                      setBookingStartTime(value);
+                  selectedKeys={new Set([bookingStartTime])}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    if (timeSlots.some((ts) => ts.key === selected)) {
+                      setBookingStartTime(selected);
                     } else {
                       alert("Invalid time slot selected");
                     }
@@ -594,23 +597,30 @@ const RBTable = () => {
                 </Select>
                 {/* Dropdown for selecting Slot End Time */}
                 <Select
-                  label="Slot End Time"
-                  placeholder={defaultEndTime}
-                  value={bookingEndTime} // bookingEndTime is a key
-                  onChange={(value: string) => {
-                    if (timeSlots.some((ts) => ts.key === value)) {
-                      setBookingEndTime(value);
-                    } else {
-                      alert("Invalid time slot selected");
-                    }
-                  }}
-                >
+                label="Slot End Time"
+                placeholder={defaultEndTime}
+                selectedKeys={new Set([bookingEndTime])}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  if (timeSlots.some((ts) => ts.key === selected) || selected === "21:00") {
+                    setBookingEndTime(selected);
+                  } else {
+                    alert("Invalid time slot selected");
+                  }
+                }}
+              >
+                <>
                   {timeSlots.map((slot) => (
                     <SelectItem key={slot.key} value={slot.key}>
                       {slot.display}
                     </SelectItem>
                   ))}
-                </Select>
+                  {/* Append extra option for 9:00 PM */}
+                  <SelectItem key="21:00" value="21:00">
+                    09:00 PM
+                  </SelectItem>
+                </>
+              </Select>
               </ModalBody>
               <ModalFooter>
                 <Button
