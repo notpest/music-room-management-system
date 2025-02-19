@@ -2,8 +2,8 @@
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../database";
 import User from "./User";
+import Slot from "./Slot"; // Ensure Slot model is imported
 
-// Attributes for a Request
 interface RequestAttributes {
   id: string;
   user_id: string;
@@ -12,10 +12,10 @@ interface RequestAttributes {
   slot_end: Date;
   request_date: Date;
   response_date: Date | null;
+  slot_id?: number | null; // New field to track the created slot's id
 }
 
-// When creating a new Request, these fields will be optional.
-interface RequestCreationAttributes extends Optional<RequestAttributes, "id" | "request_date" | "response_date"> {}
+interface RequestCreationAttributes extends Optional<RequestAttributes, "id" | "request_date" | "response_date" | "slot_id"> {}
 
 class Request extends Model<RequestAttributes, RequestCreationAttributes> implements RequestAttributes {
   public id!: string;
@@ -25,6 +25,7 @@ class Request extends Model<RequestAttributes, RequestCreationAttributes> implem
   public slot_end!: Date;
   public request_date!: Date;
   public response_date!: Date | null;
+  public slot_id!: number | null;
 }
 
 Request.init(
@@ -62,6 +63,14 @@ Request.init(
     response_date: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    slot_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: Slot,
+        key: "id",
+      },
     },
   },
   {

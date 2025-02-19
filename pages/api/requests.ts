@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case "POST":
       try {
         const { user_id, slot_start, slot_end } = req.body;
-        // Insert a new request with status "pending"
+        // Create a new request with status "pending"
         const newRequest = await Request.create({
           user_id,
           status: "pending",
@@ -55,6 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           res.status(404).json({ message: "Request not found" });
           return;
         }
+
+        // Save previous status and slot_id
+        const prevStatus = requestToUpdate.status;
+        const prevSlotId = requestToUpdate.slot_id;
+
         const updateData: { [key: string]: any } = { ...req.body };
         if (updateData.user_id === undefined || updateData.user_id === "") {
           delete updateData.user_id;
@@ -62,34 +67,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log("Updating request", requestId, updateData);
         await requestToUpdate.update(updateData, { returning: true });
 
-        if (updateData.status === "approved") {
-            // Calculate offset for 5.5 hours in milliseconds.
-            const offsetMs = 5.5 * 60 * 60 * 1000;
-            // Ensure slot_start and slot_end are treated as Date objects.
-            const origStart = (requestToUpdate.slot_start instanceof Date)
-              ? requestToUpdate.slot_start.getTime()
-              : new Date(requestToUpdate.slot_start).getTime();
-            const origEnd = (requestToUpdate.slot_end instanceof Date)
-              ? requestToUpdate.slot_end.getTime()
-              : new Date(requestToUpdate.slot_end).getTime();
-            // Add the offset.
-            const adjustedSlotStart = new Date(origStart + offsetMs).toISOString();
-            const adjustedSlotEnd = new Date(origEnd + offsetMs).toISOString();
-          
-            console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
-          
-            // Create the slot record using the adjusted times.
-            await Slot.create({
-              slot_start: adjustedSlotStart,
-              slot_end: adjustedSlotEnd,
-              status: "booked",
-              band_id: requestToUpdate.user_id,
-            });
-          
-            // Optionally update the response_date.
-            await requestToUpdate.update({ response_date: new Date() });
-          }
-          
+        // When new status is "approved" and previously was not approved,
+        // create a new slot record and update the request's slot_id.
+        if (updateData.status === "approved" && prevStatus !== "approved") {
+          // Add 5.5 hours offset
+          const offsetMs = 5.5 * 60 * 60 * 1000;
+          const origStart = requestToUpdate.slot_start instanceof Date
+            ? requestToUpdate.slot_start.getTime()
+            : new Date(requestToUpdate.slot_start).getTime();
+          const origEnd = requestToUpdate.slot_end instanceof Date
+            ? requestToUpdate.slot_end.getTime()
+            : new Date(requestToUpdate.slot_end).getTime();
+          const adjustedSlotStart = new Date(origStart + offsetMs).toISOString();
+          const adjustedSlotEnd = new Date(origEnd + offsetMs).toISOString();
+
+          console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
+          const newSlot = await Slot.create({
+            slot_start: adjustedSlotStart,
+            slot_end: adjustedSlotEnd,
+            status: "booked",
+            band_id: requestToUpdate.user_id,
+          });
+          // Update the request's slot_id with the new slot's id.
+          await requestToUpdate.update({ slot_id: newSlot.id, response_date: new Date() });
+        }
+        // If the request was previously approved but now changed to pending/denied,
+        // delete the corresponding slot using the stored slot_id.
+        else if (prevStatus === "approved" && updateData.status !== "approved" && prevSlotId) {
+          await Slot.destroy({
+            where: {
+              id: prevSlotId,
+            },
+          });
+          await requestToUpdate.update({ slot_id: null });
+        }
+
         res.status(200).json({
           message: "Request updated successfully",
           request: requestToUpdate,
@@ -110,6 +122,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!requestToDelete) {
           res.status(404).json({ message: "Request not found" });
           return;
+        }
+        // If the request is approved, delete the corresponding slot using its id.
+        if (requestToDelete.status === "approved" && requestToDelete.slot_id) {
+          await Slot.destroy({
+            where: {
+              id: requestToDelete.slot_id,
+            },
+          });
         }
         await requestToDelete.destroy();
         res.status(200).json({ message: "Request deleted successfully" });
