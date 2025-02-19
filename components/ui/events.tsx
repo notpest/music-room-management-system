@@ -2,7 +2,9 @@
 import React, { useState, useEffect} from "react";
 import Image, { StaticImageData } from "next/image";
 import band1 from "../../public/Bands/Band1.jpeg";
-import band2 from "../../public/Bands/Band2.jpeg";
+import TalentWeek from "../../public/Bands/Talent Week.jpeg";
+import Magnificat from "../../public/Choir/Magnificat.jpeg";
+import SoundCurry from "../../public/Choir/Choir3.jpeg";
 
 interface EventProps {
   title: string;
@@ -18,8 +20,8 @@ const EventData: EventProps[] = [
     title: "Magnificat",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing twas a dream elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
-    imageSrc: band1, // Use imported image
-    altText: "Band 1",
+    imageSrc: Magnificat, // Use imported image
+    altText: "Magnificat",
     visible: false, // Initially hidden
     reverse: false,
   },
@@ -27,8 +29,8 @@ const EventData: EventProps[] = [
     title: "Sound Curry",
     description:
       "Lorem ipsum dolor sit amet, manifesting consectetur adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
-    imageSrc: band2, // Use imported image
-    altText: "Band 2",
+    imageSrc: SoundCurry, // Use imported image
+    altText: "SoundCurry",
     visible: false, // Initially hidden
     reverse: true,
   },
@@ -36,8 +38,8 @@ const EventData: EventProps[] = [
     title: "Blossoms",
     description:
       "Lorem ipsum dolor sit amet, rigged consectetur adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
-    imageSrc: band2,
-    altText: "Band 2",
+    imageSrc: band1,
+    altText: "Band 1",
     visible: false, // Initially hidden
     reverse: false,
   },
@@ -45,8 +47,8 @@ const EventData: EventProps[] = [
     title: "Talent Week",
     description:
       "Lorem ipsum dolor sit amet, consectetur twas amazing adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
-    imageSrc: band1,
-    altText: "Band 1",
+    imageSrc: TalentWeek,
+    altText: "Talent Week",
     visible: false, // Initially hidden
     reverse: true,
   },
