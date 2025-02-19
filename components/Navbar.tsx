@@ -1,12 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import React, { useState, useEffect } from "react";
 import {
   Navbar,
+  NavbarBrand,
+  NavbarMenuToggle,
+  NavbarMenuItem,
+  NavbarMenu,
   NavbarContent,
   NavbarItem,
   Link,
   Button,
-  NavbarBrand,
   Modal,
   ModalContent,
   ModalHeader,
@@ -14,210 +18,131 @@ import {
   ModalFooter,
   useDisclosure,
   Input,
-} from "@nextui-org/react";
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Avatar,
+} from "@heroui/react";
 import Image from "next/image";
 import SWOLogo from "../public/SWO_Logo.png";
 import { useRouter, usePathname } from "next/navigation";
 
 const NavbarComponent = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const [mounted, setMounted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [role, setRole] = useState<"user" | "admin">("user");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Handle mounting
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Prevent access to protected routes if not authenticated
-  useEffect(() => {
-    if (mounted && !isAuthenticated && pathname !== "/") {
+    if (!isAuthenticated && pathname !== "/") {
       router.push("/");
     }
-  }, [isAuthenticated, pathname, router, mounted]);
+  }, [isAuthenticated, pathname, router]);
 
-  // Don't render anything until mounted
-  if (!mounted) {
-    return null;
-  }
-
-  // Handle login
-  const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      if (username === "admin" && password === "1234") {
-        setIsAuthenticated(true);
-        setRole("admin"); // Set role to admin for this example
-        onOpenChange(); // Close modal
-        setUsername(""); // Clear form
-        setPassword(""); // Clear form
-      } else if (username === "user" && password === "1234") {
-        setIsAuthenticated(true);
-        setRole("user"); // Set role to user for this example
-        onOpenChange(); // Close modal
-        setUsername(""); // Clear form
-        setPassword(""); // Clear form
-      } else {
-        alert("Invalid username or password!");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("An error occurred during login");
-    } finally {
-      setIsLoading(false);
+  const handleLogin = () => {
+    if (username === "admin" && password === "1234") {
+      setIsAuthenticated(true);
+      setRole("admin");
+      onOpenChange();
+    } else if (username === "user" && password === "1234") {
+      setIsAuthenticated(true);
+      setRole("user");
+      onOpenChange();
+    } else {
+      alert("Invalid credentials");
     }
   };
 
-  // Handle logout
   const handleLogout = () => {
     setIsAuthenticated(false);
-    if (pathname !== "/") {
-      router.push("/");
-    }
+    router.push("/");
   };
 
   return (
-    <div>
-      <Navbar shouldHideOnScroll>
+    <Navbar isBordered isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
+      <NavbarContent className="sm:hidden" justify="start">
+        <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} />
+      </NavbarContent>
+
+      <NavbarContent className="sm:hidden pr-3" justify="center">
         <NavbarBrand>
-          <Image 
-            src={SWOLogo} 
-            alt="SWO Logo" 
-            width={50} 
-            height={50}
-            priority // Add priority to ensure logo loads quickly
-          />
+          <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
           <p className="font-bold text-inherit ml-2">SWO</p>
         </NavbarBrand>
-        <NavbarContent className="hidden sm:flex gap-4" justify="center">
-          <NavbarItem>
-            <Link color="foreground" href="/">
-              Home
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link
-              href="/RoomBooking"
-              aria-current="page"
-              className={!isAuthenticated ? "pointer-events-none opacity-50" : ""}
-            >
-              Room Booking
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link
-              href="/EquipmentBooking"
-              aria-current="page"
-              className={!isAuthenticated ? "pointer-events-none opacity-50" : ""}
-            >
-              Equipment Booking
-            </Link>
-          </NavbarItem>
-          {role === "admin" && (
-            <NavbarItem>
-              <Link
-                href="/Approval"
-                aria-current="page"
-                className={!isAuthenticated ? "pointer-events-none opacity-50" : ""}
-              >
-                Approval Page
-              </Link>
-            </NavbarItem>
-          )}
-        </NavbarContent>
-        <NavbarContent justify="end">
-          {isAuthenticated ? (
-            <NavbarItem>
-              <Button 
-                color="danger" 
-                variant="flat" 
-                onPress={handleLogout}
-                isLoading={isLoading}
-              >
-                Logout
-              </Button>
-            </NavbarItem>
-          ) : (
-            <NavbarItem>
-              <Button 
-                onPress={onOpen} 
-                color="primary"
-                isLoading={isLoading}
-              >
-                Login
-              </Button>
-            </NavbarItem>
-          )}
-        </NavbarContent>
-      </Navbar>
+      </NavbarContent>
 
-      {/* Login Modal */}
-      <Modal 
-        isOpen={isOpen} 
-        onOpenChange={onOpenChange}
-        placement="center"
-        backdrop="blur"
-        isDismissable={!isLoading}
-      >
+      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+        <NavbarBrand>
+          <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
+          <p className="font-bold text-inherit ml-2">SWO</p>
+        </NavbarBrand>
+        <NavbarItem>
+          <Link href="/">Home</Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link href="/RoomBooking" className={!isAuthenticated ? "opacity-50" : ""}>Room Booking</Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link href="/EquipmentBooking" className={!isAuthenticated ? "opacity-50" : ""}>Equipment Booking</Link>
+        </NavbarItem>
+        {role === "admin" && (
+          <NavbarItem>
+            <Link href="/Approval" className={!isAuthenticated ? "opacity-50" : ""}>Approval Page</Link>
+          </NavbarItem>
+        )}
+      </NavbarContent>
+
+      <NavbarContent justify="end">
+        {isAuthenticated ? (
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <Avatar
+                isBordered
+                as="button"
+                className="transition-transform"
+                color="secondary"
+                name={username}
+                size="sm"
+                src="https://i.pravatar.cc/150"
+              />
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Profile Actions" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-semibold">Signed in as</p>
+                <p className="font-semibold">{username}</p>
+              </DropdownItem>
+              <DropdownItem key="settings">My Settings</DropdownItem>
+              <DropdownItem key="logout" color="danger" onClick={handleLogout}>
+                Log Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        ) : (
+          <NavbarItem>
+            <Button onPress={onOpen} color="primary">Login</Button>
+          </NavbarItem>
+        )}
+      </NavbarContent>
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur">
         <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                Sign In
-              </ModalHeader>
-              <ModalBody>
-                <div className="flex flex-col gap-4">
-                  <Input
-                    type="text"
-                    label="Username"
-                    placeholder="Enter your username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    isDisabled={isLoading}
-                  />
-                  <Input
-                    type="password"
-                    label="Password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !isLoading) {
-                        handleLogin();
-                      }
-                    }}
-                    isDisabled={isLoading}
-                  />
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button 
-                  color="danger" 
-                  variant="light" 
-                  onPress={onClose}
-                  isDisabled={isLoading}
-                >
-                  Close
-                </Button>
-                <Button
-                  color="primary"
-                  onPress={handleLogin}
-                  isLoading={isLoading}
-                >
-                  Sign In
-                </Button>
-              </ModalFooter>
-            </>
-          )}
+          <ModalHeader>Sign In</ModalHeader>
+          <ModalBody>
+            <Input type="text" label="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Input type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" variant="light" onPress={onOpenChange}>Close</Button>
+            <Button color="primary" onPress={handleLogin}>Sign In</Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
-    </div>
+    </Navbar>
   );
 };
 
