@@ -56,20 +56,22 @@ const Mission = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-black-100">
       <BackgroundGradient className="rounded-[22px] p-4 sm:p-10 bg-white dark:bg-zinc-900 flex flex-col sm:flex-row items-center justify-between">
         {/* Slideshow */}
-        <div className="w-full sm:w-1/2 relative" style={{ height: "400px" }}>
+        <div className="w-full sm:w-1/2 relative" style={{ height: "400px", width: "600px" }}>
           {sections.map((section, index) => (
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-1000 ${
                 index === currentSection ? "opacity-100" : "opacity-0"
               }`}
+              style={{ height: "100%", width: "100%" }}
             >
               <Image
                 src={section.image}
                 alt={section.title}
-                width={300}
-                height={400}
-                className="object-cover rounded-lg w-full h-full"
+                layout="fill"
+                objectFit="cover"
+                className="rounded-lg"
+                style={{ height: "100%", width: "100%" }}
               />
             </div>
           ))}
@@ -87,14 +89,15 @@ const Mission = () => {
         </div>
 
         {/* Sections */}
-        <div className="w-full sm:w-1/2 text-right mt-4 sm:mt-0 sm:ml-10">
-          <p className="text-base sm:text-xl text-black mb-2 dark:text-neutral-200 font-semibold">
-            {sections[currentSection].title}
-          </p>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            {sections[currentSection].description}
-          </p>
-        </div>
+        <div className="w-full sm:w-1/2 flex flex-col items-center justify-center text-center mt-4 sm:mt-0 sm:ml-10">
+  <p className="text-base sm:text-xl text-black mb-2 dark:text-neutral-200 font-semibold">
+    {sections[currentSection].title}
+  </p>
+  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+    {sections[currentSection].description}
+  </p>
+</div>
+
       </BackgroundGradient>
     </div>
   );
