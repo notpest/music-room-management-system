@@ -1,52 +1,44 @@
 // pages/api/entrylogs.ts
-import { NextApiRequest, NextApiResponse } from 'next';
-import EntryLog from '../../models/EntryLog';
+import { NextApiRequest, NextApiResponse } from "next";
+import EntryLog from "../../models/EntryLog";
+import Equipment from "../../models/Equipment";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Handle preflight OPTIONS
+  // Handle preflight OPTIONS requests.
   if (req.method === "OPTIONS") {
-    res.setHeader("Allow", "GET,POST,DELETE,OPTIONS");
+    res.setHeader("Allow", "GET,POST,OPTIONS");
     res.status(200).end();
     return;
   }
 
-  switch(req.method) {
-    case 'GET':
-      try {
-        const logs = await EntryLog.findAll({
-          order: [['scanned_at', 'DESC']],
-        });
-        res.status(200).json(logs);
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error fetching entry logs" });
+  if (req.method === "GET") {
+    try {
+      const logs = await EntryLog.findAll({
+        include: [
+          {
+            model: Equipment,
+            attributes: ["equipment_name", "category"],
+          },
+        ],
+        order: [["scanned_at", "DESC"]],
+      });
+      res.status(200).json(logs);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error fetching entry logs" });
+    }
+  } else if (req.method === "POST") {
+    // The POST handler calls the Python script (see below).
+    const { exec } = require("child_process");
+    exec("python parse_gmail.py", (error: any, stdout: string, stderr: string) => {
+      if (error) {
+        console.error("Error executing python script:", error);
+        res.status(500).json({ message: "Error scanning Gmail" });
+        return;
       }
-      break;
-    case 'POST':
-      try {
-        const { equipment_id, scanned_at } = req.body;
-        const newLog = await EntryLog.create({
-          equipment_id,
-          scanned_at,
-        });
-        res.status(201).json(newLog);
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error creating entry log" });
-      }
-      break;
-    case 'DELETE':
-      try {
-        const { id } = req.query;
-        const logId = Array.isArray(id) ? id[0] : id;
-        await EntryLog.destroy({ where: { id: logId } });
-        res.status(200).json({ message: "Entry log deleted successfully" });
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error deleting entry log" });
-      }
-      break;
-    default:
-      res.status(405).json({ message: "Method not allowed" });
+      res.status(200).json({ message: stdout.trim() });
+    });
+  } else {
+    res.status(405).json({ message: "Method not allowed" });
   }
 }
