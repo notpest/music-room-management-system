@@ -7,7 +7,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const { id } = req.query;
-  // No conversion to number is needed; use the UUID string directly.
+  // Use the UUID string directly.
   const requestId = Array.isArray(id) ? id[0] : id;
 
   switch (req.method) {
@@ -34,16 +34,13 @@ export default async function handler(
           res.status(404).json({ message: "Request not found" });
           return;
         }
-        // Build update object without overwriting user_id to null.
+        // Build update object.
         const updateData: { [key: string]: any } = { ...req.body };
-
-        // If user_id is provided and nonempty, leave it as a string.
-        // Otherwise, remove it so we don't overwrite the existing value.
         if (updateData.user_id === undefined || updateData.user_id === "") {
           delete updateData.user_id;
         }
-
-        await requestToUpdate.update(updateData);
+        console.log("Updating request", requestId, updateData);
+        await requestToUpdate.update(updateData, { returning: true });
         res.status(200).json({
           message: "Request updated successfully",
           request: requestToUpdate,

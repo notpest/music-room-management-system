@@ -70,7 +70,7 @@ const columns = [
   { key: "actions", name: "ACTIONS" },
 ];
 
-// Ensure the chip color values match NextUI's allowed union types
+// Allowed chip colors (NextUI expects these exact strings)
 const statusColorMap: { [key in RequestType["status"]]: "success" | "danger" | "warning" } = {
   approved: "success",
   denied: "danger",
@@ -106,7 +106,7 @@ export default function SlotsRequestTable() {
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
 
   // --- States for editing a request ---
-  // We'll allow editing only the status and slot times.
+  // Only allow editing of status and slot times.
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(null);
   const [editForm, setEditForm] = useState({
@@ -148,7 +148,7 @@ export default function SlotsRequestTable() {
     }
   };
 
-  // --- Edit: Open modal and populate form with status and time values ---
+  // --- Edit: Open modal and populate form with current status and times ---
   const handleEdit = (req: RequestType) => {
     setSelectedRequest(req);
     setEditForm({
@@ -338,14 +338,23 @@ export default function SlotsRequestTable() {
         <ModalContent>
           <ModalHeader>Edit Request</ModalHeader>
           <ModalBody>
-            <Select
-              label="Status"
-              value={editForm.status}
-              onChange={(value: string) => setEditForm({ ...editForm, status: value })}
+          <Select
+            label="Status"
+            selectedKeys={new Set([editForm.status])}
+            onSelectionChange={(keys) => {
+                const selected = Array.from(keys)[0] as string;
+                setEditForm({ ...editForm, status: selected });
+            }}
             >
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="denied">Denied</SelectItem>
+            <SelectItem key="pending" value="pending">
+                Pending
+            </SelectItem>
+            <SelectItem key="approved" value="approved">
+                Approved
+            </SelectItem>
+            <SelectItem key="denied" value="denied">
+                Denied
+            </SelectItem>
             </Select>
             <Input
               type="time"
