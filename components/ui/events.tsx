@@ -26,7 +26,7 @@ const EventData: EventProps[] = [
     reverse: false,
   },
   {
-    title: "Erato",
+    title: "Sound Curry",
     description:
       "Lorem ipsum dolor sit amet, manifesting consectetur adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
     imageSrc: SoundCurry, // Use imported image
@@ -41,7 +41,7 @@ const EventData: EventProps[] = [
     imageSrc: band1,
     altText: "Band 1",
     visible: false, // Initially hidden
-    reverse: false,
+    reverse: false, 
   },
   {
     title: "Talent Week",
@@ -51,6 +51,15 @@ const EventData: EventProps[] = [
     altText: "Talent Week",
     visible: false, // Initially hidden
     reverse: true,
+  },
+  {
+    title: "Nritta",
+    description:
+      "Lorem ipsum dolor sit amet, consectetur twas amazing adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
+    imageSrc: SoundCurry,
+    altText: "Nritta",
+    visible: false, // Initially hidden
+    reverse: false,
   },
 ];
 
