@@ -68,7 +68,7 @@ const Mission = () => {
               <Image
                 src={section.image}
                 alt={section.title}
-                layout="fill"
+                fill
                 objectFit="cover"
                 className="rounded-lg"
                 style={{ height: "100%", width: "100%" }}
@@ -89,15 +89,14 @@ const Mission = () => {
         </div>
 
         {/* Sections */}
-        <div className="w-full sm:w-1/2 flex flex-col items-center justify-center text-center mt-4 sm:mt-0 sm:ml-10">
-  <p className="text-base sm:text-xl text-black mb-2 dark:text-neutral-200 font-semibold">
-    {sections[currentSection].title}
-  </p>
-  <p className="text-sm text-neutral-600 dark:text-neutral-400">
-    {sections[currentSection].description}
-  </p>
-</div>
-
+        <div className="w-full sm:w-1/2 flex flex-col items-center justify-center text-center mt-4 sm:mt-0 sm:ml-10" style={{ height: "200px", width: "400px" }}>
+          <p className="text-base sm:text-xl text-black mb-2 dark:text-neutral-200 font-semibold">
+            {sections[currentSection].title}
+          </p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            {sections[currentSection].description}
+          </p>
+        </div>
       </BackgroundGradient>
     </div>
   );
