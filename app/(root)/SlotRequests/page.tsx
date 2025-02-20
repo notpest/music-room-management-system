@@ -23,4 +23,4 @@ const SlotRequestsPage = () => {
   );
 };
 
-export default SlotRequestsPage
+export default SlotRequestsPage;
