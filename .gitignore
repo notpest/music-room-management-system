@@ -41,4 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 # credentials
-D:\Users\Rejoy\Documents\GitHub\music-room-management-system\credentials.json
+credentials.json
+token.pickle
