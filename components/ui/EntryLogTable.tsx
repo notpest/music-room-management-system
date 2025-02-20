@@ -15,7 +15,7 @@ import axios from "axios";
 
 export type EntryLogType = {
   id: number;
-  equipment_id: string;
+  equipment_id?: string;
   scanned_at: string;
   Equipment?: {
     equipment_name: string;
@@ -46,7 +46,47 @@ interface EntryLogTableProps {
 }
 
 export default function EntryLogTable({ refreshCount, searchQuery, filterCategory, filterDate }: EntryLogTableProps) {
-  const [logs, setLogs] = useState<EntryLogType[]>([]);
+  const [logs, setLogs] = useState<EntryLogType[]>([
+    {
+      id: 1,
+      equipment_id: "1",
+      scanned_at: new Date().toISOString(),
+      Equipment: {
+        equipment_name: "Guitar",
+        category: "guitar",
+      },
+    },
+    {
+      id: 2,
+      equipment_id: "2",
+      scanned_at: new Date().toISOString(),
+      Equipment: {
+        equipment_name: "Keyboard",
+        category: "keyboard",
+      },
+    },
+    {
+      id: 3,
+      equipment_id: "3",
+      scanned_at: new Date().toISOString(),
+      Equipment: {
+        equipment_name: "Microphone",
+        category: "mic",
+      },
+    },
+    {
+      id: 4,
+      equipment_id: "4",
+      scanned_at: new Date().toISOString(),
+      student_name: "Nitin",
+    },
+    {
+      id: 5,
+      equipment_id: "5",
+      scanned_at: new Date().toISOString(),
+      student_name: "Rejoy",
+    },
+  ]);
 
   const fetchLogs = async () => {
     try {
@@ -67,11 +107,9 @@ export default function EntryLogTable({ refreshCount, searchQuery, filterCategor
     const matchesSearch =
       log.equipment_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       equipmentName.toLowerCase().includes(searchQuery.toLowerCase());
-      studentName.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory =
+    const matchesCategory =
       filterCategory === "all" ||
       (log.Equipment && log.Equipment.category.toLowerCase() === filterCategory.toLowerCase());
-      (filterCategory === "student" && log.student_name);
     const logDate = new Date(log.scanned_at).toISOString().split("T")[0];
     const matchesDate = filterDate === "" || logDate === filterDate;
     return matchesSearch && matchesCategory && matchesDate;
@@ -85,14 +123,12 @@ export default function EntryLogTable({ refreshCount, searchQuery, filterCategor
       >
         <TableHeader>
           {columns.map((col) => (
-            <TableColumn key={col.key} className="bg-[#1a2a47] font-semibold">
-            {col.name}
-          </TableColumn>
+            <TableColumn key={col.key}>{col.name}</TableColumn>
           ))}
         </TableHeader>
         <TableBody>
           {filteredLogs.map((log, index) => (
-           <TableRow key={log.id} style={{ height: "50px" }}>
+            <TableRow key={log.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
                 {log.Equipment && log.Equipment.equipment_name
