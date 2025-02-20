@@ -15,7 +15,7 @@ import axios from "axios";
 
 export type EntryLogType = {
   id: number;
-  equipment_id?: string;
+  equipment_id: string;
   scanned_at: string;
   Equipment?: {
     equipment_name: string;
