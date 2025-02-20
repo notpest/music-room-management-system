@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import TableApp from "../../../components/ui/TableApp";
+import SlotsRequestsTable from "../../../components/ui/SlotsRequestTable";
 
 // Import Navbar dynamically with no SSR
 const Navbar = dynamic(() => import("@/components/Navbar"), {
@@ -12,17 +12,17 @@ const Navbar = dynamic(() => import("@/components/Navbar"), {
   ),
 });
 
-const SlotRequests = () => {
+const SlotRequestsPage = () => {
   return (
     <div className="bg-black-100">
       <Navbar aria-label="Main Navigation" />
     <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
       <div className="w-full">
-        <TableApp  />
+        <SlotsRequestsTable  />
       </div>
     </main>
     </div>
   );
 };
 
-export default SlotRequests;
+export default SlotRequestsPage;
