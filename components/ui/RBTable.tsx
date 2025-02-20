@@ -438,12 +438,12 @@ const RBTable = () => {
       <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">
         <TableHeader>
           {[
-            <TableColumn key="time" className="bg-[#1a2a47] font-semibold">
+            <TableColumn key="time" className="w-[200px] bg-[#1a2a47] font-semibold">
               Time
             </TableColumn>,
           ].concat(
             days.map((day) => (
-              <TableColumn key={day.key} className="bg-[#1a2a47] font-semibold">
+              <TableColumn key={day.key} className="w-[200px] bg-[#1a2a47] font-semibold">
                 {day.display}
               </TableColumn>
             ))
@@ -500,7 +500,9 @@ const RBTable = () => {
                       <TableCell
                         key={`${day.key}-${time.key}`}
                         style={{ display: "none" }}
-                      />
+                      >
+                        ""
+                      </TableCell>
                     );
                   }
                   return (
