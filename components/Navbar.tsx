@@ -35,6 +35,7 @@ const NavbarComponent = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
