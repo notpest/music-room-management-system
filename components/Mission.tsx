@@ -69,9 +69,8 @@ const Mission = () => {
                 src={section.image}
                 alt={section.title}
                 fill
-                objectFit="cover"
                 className="rounded-lg"
-                style={{ height: "100%", width: "100%" }}
+                style={{ height: "100%", width: "100%", objectFit: "cover"}}
               />
             </div>
           ))}

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Table,
@@ -17,6 +19,7 @@ import {
   SelectItem,
 } from "@nextui-org/react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 
 // Interfaces
 interface Slot {
@@ -92,7 +95,21 @@ const RBTable = () => {
   // Week Picker Modal states
   const [weekPickerOpen, setWeekPickerOpen] = useState(false);
   const [tempWeekDate, setTempWeekDate] = useState<string>("");
-  
+
+  // Get session from NextAuth
+  const { data: session } = useSession();
+
+  // On mount or when session updates, prefill bandId from session.user.band_id
+  useEffect(() => {
+    if (session && session.user) {
+      // Make sure to have band_id in your session (e.g., via your NextAuth callbacks)
+      // For non-admin users, we set the bandId and disable editing (handled in the input below).
+      // For admin users, we prefill bandId but allow editing.
+      const userBandId = (session.user as any).band_id || "";
+      setBandId(userBandId);
+    }
+  }, [session]);
+
   // Fetch slots from API
   const fetchSlots = async () => {
     try {
@@ -250,7 +267,7 @@ const RBTable = () => {
       const defaultStart = timeKey;
       const defaultEnd = timeSlots[startIndex + 1]
         ? timeSlots[startIndex + 1].key
-        : timeKey; // fallback if there is no next slot
+        : timeKey;
       setBookingStartTime(defaultStart);
       setBookingEndTime(defaultEnd);
       setDefaultStartTime(defaultStart);
@@ -277,7 +294,6 @@ const RBTable = () => {
   };
 
   const handleBookingConfirm = async () => {
-    // Validate using keys instead of display values
     const validStart = timeSlots.some((ts) => ts.key === bookingStartTime);
     const validEnd = timeSlots.some((ts) => ts.key === bookingEndTime);
     if (!validStart || !validEnd) {
@@ -285,7 +301,6 @@ const RBTable = () => {
       return;
     }
 
-    // Look up the display values to pass to parseTime12
     const startSlot = timeSlots.find((ts) => ts.key === bookingStartTime);
     const endSlot = timeSlots.find((ts) => ts.key === bookingEndTime);
     if (!startSlot || !endSlot) {
@@ -306,15 +321,12 @@ const RBTable = () => {
     const localSlotStart = new Date(year, month - 1, day, startHour, startMinute);
     const localSlotEnd = new Date(year, month - 1, day, endHour, endMinute);
 
-    const adjustedSlotStart = localSlotStart;
-    const adjustedSlotEnd = localSlotEnd;
-
     try {
       await axios.post("/api/requests", {
         user_id: bandId,
         status: "pending",
-        slot_start: adjustedSlotStart.toISOString(),
-        slot_end: adjustedSlotEnd.toISOString(),
+        slot_start: localSlotStart.toISOString(),
+        slot_end: localSlotEnd.toISOString(),
         band_id: bandId,
       });
       setModalOpen(false);
@@ -337,7 +349,6 @@ const RBTable = () => {
     setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000));
   };
 
-  // When the user selects a date from the week picker, update the current week (to that date’s Monday)
   const handleWeekSelect = () => {
     if (tempWeekDate) {
       const chosenDate = new Date(tempWeekDate);
@@ -348,7 +359,6 @@ const RBTable = () => {
 
   const mergedCells = React.useMemo(() => {
     if (days.length === 0 || timeSlots.length === 0) return {};
-    // Build a raw data matrix: for each day, an array (one per time slot)
     const rawData: { [dayKey: string]: Array<{ booking: string; band_id?: string; band_name?: string }> } = {};
     days.forEach((day) => {
       rawData[day.key] = timeSlots.map((time) => {
@@ -370,10 +380,6 @@ const RBTable = () => {
       });
     });
 
-    // Now compute merge information per day:
-    // For each day: if the cell is booked and its previous cell (if any) is booked by the same band,
-    // then mark it as merged (show: false). Otherwise, count how many consecutive cells (rows)
-    // have the same booked slot.
     const mergeInfo: {
       [dayKey: string]: Array<{ show: boolean; rowSpan: number; data: { booking: string; band_id?: string; band_name?: string } }>;
     } = {};
@@ -383,10 +389,8 @@ const RBTable = () => {
       for (let i = 0; i < cells.length; i++) {
         const cell = cells[i];
         if (cell.booking?.toLowerCase() !== "booked" || !cell.band_id) {
-          // For "available" or non‑booked cells, no merging is needed.
           mergeInfo[dayKey][i] = { show: true, rowSpan: 1, data: cell };
         } else {
-          // For booked cells, check if the previous cell is booked with the same band.
           if (
             i > 0 &&
             rawData[dayKey][i - 1].booking?.toLowerCase() === "booked" &&
@@ -394,7 +398,6 @@ const RBTable = () => {
           ) {
             mergeInfo[dayKey][i] = { show: false, rowSpan: 0, data: cell };
           } else {
-            // Count how many consecutive rows have the same booked slot.
             let span = 1;
             for (let j = i + 1; j < cells.length; j++) {
               const nextCell = cells[j];
@@ -405,7 +408,6 @@ const RBTable = () => {
               }
             }
             mergeInfo[dayKey][i] = { show: true, rowSpan: span, data: cell };
-            // Mark subsequent rows as merged.
             for (let j = i + 1; j < i + span; j++) {
               mergeInfo[dayKey][j] = { show: false, rowSpan: 0, data: cells[j] };
             }
@@ -418,7 +420,6 @@ const RBTable = () => {
 
   return (
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      {/* Navigation Controls */}
       <div className="flex items-center my-4 space-x-4">
         <Button onPress={handlePrevWeek}>←</Button>
         <div className="text-white">
@@ -434,7 +435,6 @@ const RBTable = () => {
         <Button onPress={() => setWeekPickerOpen(true)}>Pick Week</Button>
       </div>
 
-      {/* Booking Table */}
       <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">
         <TableHeader>
           {[
@@ -566,18 +566,25 @@ const RBTable = () => {
               <ModalHeader>Request Slot</ModalHeader>
               <ModalBody>
                 <Input
-                  isClearable
+                  isClearable={session?.user?.role === "admin"}
                   variant="underlined"
                   fullWidth
                   label="Band ID"
-                  placeholder="Enter your Band ID"
-                  value={bandId}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setBandId(e.target.value)
+                  placeholder={
+                    session?.user?.role === "admin"
+                      ? "Enter Band ID"
+                      : session?.user?.band_id || "Band ID"
                   }
+                  value={session?.user?.role === "admin" ? bandId : undefined}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    if (session?.user?.role === "admin") {
+                      setBandId(e.target.value);
+                    }
+                  }}
                   onClear={() => setBandId("")}
+                  // For non-admin users, disable editing of Band ID.
+                  readOnly={session?.user?.role !== "admin"}
                 />
-                {/* Dropdown for selecting Slot Start Time */}
                 <Select
                   label="Slot Start Time"
                   placeholder={defaultStartTime}
@@ -597,38 +604,35 @@ const RBTable = () => {
                     </SelectItem>
                   ))}
                 </Select>
-                {/* Dropdown for selecting Slot End Time */}
                 <Select
-                label="Slot End Time"
-                placeholder={defaultEndTime}
-                selectedKeys={new Set([bookingEndTime])}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  if (timeSlots.some((ts) => ts.key === selected) || selected === "21:00") {
-                    setBookingEndTime(selected);
-                  } else {
-                    alert("Invalid time slot selected");
-                  }
-                }}
-              >
-                <>
-                  {timeSlots.map((slot) => (
-                    <SelectItem key={slot.key} value={slot.key}>
-                      {slot.display}
+                  label="Slot End Time"
+                  placeholder={defaultEndTime}
+                  selectedKeys={new Set([bookingEndTime])}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    if (timeSlots.some((ts) => ts.key === selected) || selected === "21:00") {
+                      setBookingEndTime(selected);
+                    } else {
+                      alert("Invalid time slot selected");
+                    }
+                  }}
+                >
+                  <>
+                    {timeSlots.map((slot) => (
+                      <SelectItem key={slot.key} value={slot.key}>
+                        {slot.display}
+                      </SelectItem>
+                    ))}
+                    <SelectItem key="21:00" value="21:00">
+                      09:00 PM
                     </SelectItem>
-                  ))}
-                  {/* Append extra option for 9:00 PM */}
-                  <SelectItem key="21:00" value="21:00">
-                    09:00 PM
-                  </SelectItem>
-                </>
-              </Select>
+                  </>
+                </Select>
               </ModalBody>
               <ModalFooter>
                 <Button
                   color="success"
                   onPress={() => {
-                    // Validate that both times exist in the valid timeSlots list
                     const validStart = timeSlots.some(
                       (ts) => ts.key === bookingStartTime
                     );

@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["sequelize"],
+  // If you have other packages to transpile, list them here—but remove "sequelize".
+  transpilePackages: [],
 };
 
-export default nextConfig;
+module.exports = nextConfig;

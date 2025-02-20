@@ -1,8 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "../globals.css";
-import { ThemeProvider } from "next-themes";
-import { NextUIProvider } from "@nextui-org/react";
+import Providers from "../providers";
 
 const geistSans = localFont({
   src: "../fonts/GeistVF.woff",
@@ -18,29 +18,20 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "SWO Kengeri",
   description: "Student Welfare Office Kengeri Campus",
-};  
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{ 
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <NextUIProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
-        </NextUIProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
