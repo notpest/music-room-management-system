@@ -8,7 +8,6 @@ import {
   TableBody,
   TableRow,
   TableCell,
-
 } from "@nextui-org/react";
 import { FaGuitar, FaKeyboard, FaMicrophone, FaUser } from "react-icons/fa";
 import { MdOutlinePiano } from "react-icons/md";
@@ -16,7 +15,7 @@ import axios from "axios";
 
 export type EntryLogType = {
   id: number;
-  equipment_id: string;
+  equipment_id?: string;
   scanned_at: string;
   Equipment?: {
     equipment_name: string;
@@ -66,11 +65,13 @@ export default function EntryLogTable({ refreshCount, searchQuery, filterCategor
     const equipmentName = log.Equipment?.equipment_name || "";
     const studentName = log.student_name || "";
     const matchesSearch =
-      log.equipment_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      equipmentName.toLowerCase().includes(searchQuery.toLowerCase());
+      (log.equipment_id && log.equipment_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      equipmentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      studentName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
       filterCategory === "all" ||
-      (log.Equipment && log.Equipment.category.toLowerCase() === filterCategory.toLowerCase());
+      (log.Equipment && log.Equipment.category.toLowerCase() === filterCategory.toLowerCase()) ||
+      (filterCategory === "student" && log.student_name);
     const logDate = new Date(log.scanned_at).toISOString().split("T")[0];
     const matchesDate = filterDate === "" || logDate === filterDate;
     return matchesSearch && matchesCategory && matchesDate;
@@ -84,12 +85,14 @@ export default function EntryLogTable({ refreshCount, searchQuery, filterCategor
       >
         <TableHeader>
           {columns.map((col) => (
-            <TableColumn key={col.key}>{col.name}</TableColumn>
+            <TableColumn key={col.key} className="bg-[#1a2a47] font-semibold">
+              {col.name}
+            </TableColumn>
           ))}
         </TableHeader>
         <TableBody>
           {filteredLogs.map((log, index) => (
-            <TableRow key={log.id}>
+            <TableRow key={log.id} style={{ height: "50px" }}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
                 {log.Equipment && log.Equipment.equipment_name
