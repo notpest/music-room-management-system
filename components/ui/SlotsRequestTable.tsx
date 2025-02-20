@@ -23,6 +23,9 @@ import {
 import axios from "axios";
 import { EditIcon } from "./EditIcon";
 import { DeleteIcon } from "./DeleteIcon";
+import { FaFilter } from "react-icons/fa";
+import { Calendar } from "@heroui/react";
+import { parseDate, today } from "@internationalized/date";
 
 // --- Icon Components for Approve and Deny Actions ---
 const AcceptIcon = () => (
@@ -104,6 +107,7 @@ export default function SlotsRequestTable() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
+  const [isCalendarOpen, setCalendarOpen] = useState(false);
 
   // --- States for editing a request ---
   // Only allow editing of status and slot times.
@@ -257,17 +261,14 @@ export default function SlotsRequestTable() {
     }
   };
 
+  function getLocalTimeZone(): string {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
   return (
-    <div>
+    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
       {/* --- Search & Filter Controls --- */}
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          marginBottom: "16px",
-          alignItems: "center",
-        }}
-      >
+      <div className="flex items-center my-10 space-x-4" style={{ width: "90%" }}>
         <Input
           isClearable
           variant="underlined"
@@ -276,7 +277,12 @@ export default function SlotsRequestTable() {
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ flex: 1 }}
         />
-        <Button onPress={() => setFilterModalOpen(true)}>Filter</Button>
+        <Tooltip content="Filter">
+          <FaFilter
+            className="text-lg text-default-400 cursor-pointer active:opacity-50"
+            onClick={() => setFilterModalOpen(true)}
+          />
+        </Tooltip>
       </div>
 
       {/* --- Filter Modal --- */}
@@ -299,34 +305,59 @@ export default function SlotsRequestTable() {
             </div>
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ marginRight: "1rem" }}>Request Date:</label>
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                style={{ padding: "0.5rem" }}
+              <div
+                style={{
+                  padding: "0.5rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setCalendarOpen(true)}
+              >
+                {dateFilter ? new Date(dateFilter).toLocaleDateString("en-GB") : "dd-mm-yyyy"}
+              </div>
+              {isCalendarOpen && (
+                <Calendar
+                  aria-label="Date Picker"
+                  defaultValue={dateFilter ? parseDate(dateFilter) : today(getLocalTimeZone())}
+                  onChange={(e) => {
+                    setDateFilter(e.toString());
+                    setCalendarOpen(false);
+                  }}
               />
+              )}
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button onPress={() => setFilterModalOpen(false)}>
+            <Button color="success" onPress={() => setFilterModalOpen(false)}>
               Apply Filters
+            </Button>
+            <Button color="danger" onPress={() => setFilterModalOpen(false)}>
+              Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
       {/* --- Requests Table --- */}
-      <Table>
+      <Table
+        aria-label="Requests Table"
+        className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white"
+      >
         <TableHeader>
           {columns.map((col) => (
-            <TableColumn key={col.key}>{col.name}</TableColumn>
+            <TableColumn key={col.key} className="bg-[#1a2a47] font-semibold">
+              {col.name}
+            </TableColumn>
           ))}
         </TableHeader>
         <TableBody>
           {filteredRequests.map((req) => (
-            <TableRow key={req.id}>
+            <TableRow key={req.id} style={{ height: "50px" }}>
               {columns.map((col) => (
-                <TableCell key={col.key}>{renderCell(req, col.key)}</TableCell>
+                <TableCell key={col.key}>
+                  {renderCell(req, col.key)}
+                </TableCell>
               ))}
             </TableRow>
           ))}
@@ -378,7 +409,12 @@ export default function SlotsRequestTable() {
             />
           </ModalBody>
           <ModalFooter>
-            <Button onPress={submitEditForm}>Save Changes</Button>
+            <Button color="success" onPress={submitEditForm}>
+              Save Changes
+            </Button>
+            <Button color="danger" onPress={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
