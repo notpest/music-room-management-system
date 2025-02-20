@@ -15,14 +15,16 @@ const Navbar = dynamic(() => import("@/components/Navbar"), {
 
 export default function Home() {
   return (
+    <div className="bg-black-100">
+      <Navbar/>
     <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
       <div className="w-full">
-        <Navbar />
         <Hero />
         <Mission />
         <Branches />
         <Events />
       </div>
     </main>
+    </div>
   );
 }
