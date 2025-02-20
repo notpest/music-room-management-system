@@ -57,9 +57,10 @@ const EntryLogPage = () => {
   }, []);
 
   return (
+    <div className="bg-black-100">
+    <Navbar aria-label="Main Navigation" />
     <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
-      <div className="w-full" style={{ padding: "2rem" }}>
-        <Navbar aria-label="Main Navigation" />
+      <div className="w-full" style={{ padding: "2rem" }}>     
         <h1> </h1>
         {/* Refresh button and search bar with filter button */}
         <div
@@ -132,6 +133,7 @@ const EntryLogPage = () => {
         />
       </div>
     </main>
+    </div>
   );
 };
 
