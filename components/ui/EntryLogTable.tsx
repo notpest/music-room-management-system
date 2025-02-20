@@ -11,6 +11,7 @@ import {
 
 } from "@nextui-org/react";
 import { FaGuitar, FaKeyboard, FaMicrophone, FaUser } from "react-icons/fa";
+import { MdOutlinePiano } from "react-icons/md";
 import axios from "axios";
 
 export type EntryLogType = {
@@ -33,7 +34,7 @@ const columns = [
 
 const equipmentIcons: { [key: string]: JSX.Element } = {
   guitar: <FaGuitar />,
-  keyboard: <FaKeyboard />,
+  instrument: <MdOutlinePiano />,
   mic: <FaMicrophone />,
   student: <FaUser />,
 };
@@ -46,47 +47,7 @@ interface EntryLogTableProps {
 }
 
 export default function EntryLogTable({ refreshCount, searchQuery, filterCategory, filterDate }: EntryLogTableProps) {
-  const [logs, setLogs] = useState<EntryLogType[]>([
-    {
-      id: 1,
-      equipment_id: "1",
-      scanned_at: new Date().toISOString(),
-      Equipment: {
-        equipment_name: "Guitar",
-        category: "guitar",
-      },
-    },
-    {
-      id: 2,
-      equipment_id: "2",
-      scanned_at: new Date().toISOString(),
-      Equipment: {
-        equipment_name: "Keyboard",
-        category: "keyboard",
-      },
-    },
-    {
-      id: 3,
-      equipment_id: "3",
-      scanned_at: new Date().toISOString(),
-      Equipment: {
-        equipment_name: "Microphone",
-        category: "mic",
-      },
-    },
-    {
-      id: 4,
-      equipment_id: "4",
-      scanned_at: new Date().toISOString(),
-      student_name: "Nitin",
-    },
-    {
-      id: 5,
-      equipment_id: "5",
-      scanned_at: new Date().toISOString(),
-      student_name: "Rejoy",
-    },
-  ]);
+  const [logs, setLogs] = useState<EntryLogType[]>([]);
 
   const fetchLogs = async () => {
     try {
