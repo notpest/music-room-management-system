@@ -1,4 +1,4 @@
-import React, { SVGProps, useState } from "react";
+import React, { SVGProps, useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -16,7 +16,8 @@ import {
 } from "@nextui-org/react";
 import { Calendar } from "@heroui/react";
 import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
-import { FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
+import { FaCalendarAlt, FaInfoCircle, FaGuitar, FaKeyboard, FaMicrophone } from "react-icons/fa";
+import axios from "axios";
 
 // Define SVG icon props
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -42,25 +43,37 @@ type EquipmentType = {
 };
 
 // Equipment data
-const equipment: EquipmentType[] = [
-  {
-    id: 1,
-    name: "MX61",
-    category: "Keyboard",
-    availability: "Available",
-    returnDate: "2023-10-01",
-  },
-  {
-    id: 2,
-    name: "Yamaha",
-    category: "Guitar",
-    availability: "Booked",
-    returnDate: "2023-10-02",
-  },
-];
+const equipmentIcons: { [key: string]: JSX.Element } = {
+  guitar: <FaGuitar />,
+  keyboard: <FaKeyboard />,
+  mic: <FaMicrophone />,
+};
 
 // Equipment table component
 const TableEquip = () => {
+  const [equipment, setEquipment] = useState<EquipmentType[]>([
+    {
+      id: 1,
+      name: "Guitar",
+      category: "guitar",
+      availability: "Available",
+      returnDate: "N/A",
+    },
+    {
+      id: 2,
+      name: "Keyboard",
+      category: "keyboard",
+      availability: "Booked",
+      returnDate: "2024-03-10",
+    },
+    {
+      id: 3,
+      name: "Microphone",
+      category: "mic",
+      availability: "Available",
+      returnDate: "N/A",
+    },
+  ]);
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | null>(null);
   const [isStartDateModalOpen, setStartDateModalOpen] = useState(false);
   const [isEndDateModalOpen, setEndDateModalOpen] = useState(false);
@@ -68,6 +81,21 @@ const TableEquip = () => {
   const [isBookingConfirmModalOpen, setBookingConfirmModalOpen] = useState(false);
   const [startDate, setStartDate] = useState(today(getLocalTimeZone()));
   const [endDate, setEndDate] = useState(today(getLocalTimeZone()));
+
+  // Fetch equipment from API
+  const fetchEquipment = async () => {
+    try {
+      const response = await axios.get("/api/equipment");
+      setEquipment(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Initial API fetch on mount
+  useEffect(() => {
+    fetchEquipment();
+  }, []);
 
   const handleDatePick = (item: EquipmentType) => {
     setSelectedEquipment(item);
@@ -94,7 +122,7 @@ const TableEquip = () => {
       case "name":
         return item.name;
       case "category":
-        return item.category;
+        return equipmentIcons[item.category.toLowerCase()] || item.category;
       case "availability":
         return item.availability;
       case "returnDate":
