@@ -136,7 +136,6 @@ const RBTable = () => {
       { key: "15:00", display: "03:00 PM" },
       { key: "16:30", display: "04:30 PM" },
       { key: "18:00", display: "06:00 PM" },
-      { key: "19:30", display: "07:30 PM" },
     ];
   };
 
@@ -266,8 +265,15 @@ const RBTable = () => {
       const startIndex = timeSlots.findIndex((ts) => ts.key === timeKey);
       const defaultStart = timeKey;
       const defaultEnd = timeSlots[startIndex + 1]
-        ? timeSlots[startIndex + 1].key
-        : timeKey;
+      ? timeSlots[startIndex + 1].key
+      : (() => {
+        // Calculate 90 minutes later in "HH:MM" (24‑hr) format.
+        const [h, m] = timeKey.split(":").map(Number);
+        const d = new Date();
+        d.setHours(h, m, 0, 0);
+        d.setMinutes(d.getMinutes() + 90);
+        return d.toTimeString().slice(0, 5);
+      })();
       setBookingStartTime(defaultStart);
       setBookingEndTime(defaultEnd);
       setDefaultStartTime(defaultStart);
@@ -610,7 +616,7 @@ const RBTable = () => {
                   selectedKeys={new Set([bookingEndTime])}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
-                    if (timeSlots.some((ts) => ts.key === selected) || selected === "21:00") {
+                    if (timeSlots.some((ts) => ts.key === selected)) {
                       setBookingEndTime(selected);
                     } else {
                       alert("Invalid time slot selected");
@@ -623,9 +629,6 @@ const RBTable = () => {
                         {slot.display}
                       </SelectItem>
                     ))}
-                    <SelectItem key="21:00" value="21:00">
-                      09:00 PM
-                    </SelectItem>
                   </>
                 </Select>
               </ModalBody>

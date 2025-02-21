@@ -91,6 +91,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Update the request's slot_id with the new slot's id.
           await requestToUpdate.update({ slot_id: newSlot.id, response_date: new Date() });
         }
+        // If the request is already approved and you're editing the slot times, update the slot record.
+        else if (updateData.status === "approved" && prevStatus === "approved" && prevSlotId) {
+          const offsetMs = 5.5 * 60 * 60 * 1000;
+          const origStart = new Date(requestToUpdate.slot_start).getTime();
+          const origEnd = new Date(requestToUpdate.slot_end).getTime();
+          const adjustedSlotStart = new Date(origStart + offsetMs).toISOString();
+          const adjustedSlotEnd = new Date(origEnd + offsetMs).toISOString();
+
+          await Slot.update(
+            { slot_start: adjustedSlotStart, slot_end: adjustedSlotEnd },
+            { where: { id: prevSlotId } }
+          );
+        }
         // If the request was previously approved but now changed to pending/denied,
         // delete the corresponding slot using the stored slot_id.
         else if (prevStatus === "approved" && updateData.status !== "approved" && prevSlotId) {

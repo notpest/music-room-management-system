@@ -15,7 +15,7 @@ const getSlots = async (req: NextApiRequest, res: NextApiResponse) => {
       ...slot,
       slot_start: new Date(slot.slot_start).toISOString(), // Ensure UTC format
       slot_end: new Date(slot.slot_end).toISOString(), // Ensure UTC format
-      band_name: slot['Band.name'],
+      band_name: (slot as any)['Band.name'],
     }));
 
     res.json(formattedSlots);
