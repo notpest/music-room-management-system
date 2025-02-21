@@ -61,10 +61,13 @@ export type RequestType = {
   slot_end: string;
   request_date: string;
   response_date: string | null;
+  user_name?: string;
+  band_name?: string;
 };
 
 const columns = [
-  { key: "user_id", name: "USER ID" },
+  { key: "user_name", name: "USER NAME" },
+  { key: "band_name", name: "BAND NAME" },
   { key: "status", name: "STATUS" },
   { key: "slot_start", name: "SLOT START TIME" },
   { key: "slot_end", name: "SLOT END TIME" },
@@ -102,6 +105,24 @@ const combineDateAndTime = (originalISO: string, newTime: string): string => {
 };
 
 export default function SlotsRequestTable() {
+  interface TimeSlot {
+    key: string;
+    display: string;
+  }
+
+  const timeSlots: TimeSlot[] = [
+    { key: "07:30", display: "07:30 AM" },
+    { key: "09:00", display: "09:00 AM" },
+    { key: "10:30", display: "10:30 AM" },
+    { key: "12:00", display: "12:00 PM" },
+    { key: "13:30", display: "01:30 PM" },
+    { key: "15:00", display: "03:00 PM" },
+    { key: "16:30", display: "04:30 PM" },
+    { key: "18:00", display: "06:00 PM" },
+  ];
+  
+  const [defaultStartTime, setDefaultStartTime] = useState<string>("");
+  const [defaultEndTime, setDefaultEndTime] = useState<string>("");
   const [requests, setRequests] = useState<RequestType[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -155,11 +176,15 @@ export default function SlotsRequestTable() {
   // --- Edit: Open modal and populate form with current status and times ---
   const handleEdit = (req: RequestType) => {
     setSelectedRequest(req);
+    const formattedStart = formatTime(req.slot_start); // returns "HH:mm"
+    const formattedEnd = formatTime(req.slot_end);
     setEditForm({
       status: req.status,
       slot_start: formatTime(req.slot_start),
       slot_end: formatTime(req.slot_end),
     });
+    setDefaultStartTime(formattedStart);
+    setDefaultEndTime(formattedEnd);
     setEditModalOpen(true);
   };
 
@@ -198,7 +223,7 @@ export default function SlotsRequestTable() {
 
   // --- Filter the requests based on search and filters ---
   const filteredRequests = requests.filter((req) => {
-    const matchesSearch = req.user_id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (req.user_name || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || req.status === statusFilter;
     const matchesDate = dateFilter === "" || req.request_date.startsWith(dateFilter);
     return matchesSearch && matchesStatus && matchesDate;
@@ -207,8 +232,10 @@ export default function SlotsRequestTable() {
   // --- Render each cell based on the column key ---
   const renderCell = (req: RequestType, columnKey: string) => {
     switch (columnKey) {
-      case "user_id":
-        return <span>{req.user_id}</span>;
+      case "user_name":
+        return <span>{req.user_name || "N/A"}</span>;
+      case "band_name":
+        return <span>{req.band_name || "N/A"}</span>;
       case "status":
         return (
           <Chip color={statusColorMap[req.status]}>
@@ -369,44 +396,67 @@ export default function SlotsRequestTable() {
         <ModalContent>
           <ModalHeader>Edit Request</ModalHeader>
           <ModalBody>
-          <Select
-            label="Status"
-            selectedKeys={new Set([editForm.status])}
-            onSelectionChange={(keys) => {
+            <Select
+              label="Status"
+              selectedKeys={new Set([editForm.status])}
+              onSelectionChange={(keys) => {
                 const selected = Array.from(keys)[0] as string;
                 setEditForm({ ...editForm, status: selected });
-            }}
+              }}
             >
-            <SelectItem key="pending" value="pending">
+              <SelectItem key="pending" value="pending">
                 Pending
-            </SelectItem>
-            <SelectItem key="approved" value="approved">
+              </SelectItem>
+              <SelectItem key="approved" value="approved">
                 Approved
-            </SelectItem>
-            <SelectItem key="denied" value="denied">
+              </SelectItem>
+              <SelectItem key="denied" value="denied">
                 Denied
-            </SelectItem>
+              </SelectItem>
             </Select>
-            <Input
-              type="time"
-              label="Slot Start"
-              value={editForm.slot_start}
-              onChange={(e) =>
-                setEditForm({ ...editForm, slot_start: e.target.value })
-              }
-              variant="underlined"
-              fullWidth
-            />
-            <Input
-              type="time"
-              label="Slot End"
-              value={editForm.slot_end}
-              onChange={(e) =>
-                setEditForm({ ...editForm, slot_end: e.target.value })
-              }
-              variant="underlined"
-              fullWidth
-            />
+            <Select
+              label="Slot Start Time"
+              placeholder={defaultStartTime}
+              selectedKeys={new Set([editForm.slot_start])}
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys)[0] as string;
+                if (timeSlots.some((ts) => ts.key === selected)) {
+                  setEditForm({ ...editForm, slot_start: selected });
+                } else {
+                  alert("Invalid time slot selected");
+                }
+              }}
+            >
+              {timeSlots.map((slot) => (
+                <SelectItem key={slot.key} value={slot.key}>
+                  {slot.display}
+                </SelectItem>
+              ))}
+            </Select>
+            <Select
+              label="Slot End Time"
+              placeholder={defaultEndTime}
+              selectedKeys={new Set([editForm.slot_end])}
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys)[0] as string;
+                if (timeSlots.some((ts) => ts.key === selected) || selected === "19:30") {
+                  setEditForm({ ...editForm, slot_end: selected });
+                } else {
+                  alert("Invalid time slot selected");
+                }
+              }}
+            >
+              <>
+                {timeSlots.map((slot) => (
+                  <SelectItem key={slot.key} value={slot.key}>
+                    {slot.display}
+                  </SelectItem>
+                ))}
+                <SelectItem key="19:30" value="19:30">
+                  07:30 PM
+                </SelectItem>
+              </>
+            </Select>
           </ModalBody>
           <ModalFooter>
             <Button color="success" onPress={submitEditForm}>

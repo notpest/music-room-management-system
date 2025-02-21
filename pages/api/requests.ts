@@ -2,6 +2,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Request from "../../models/Request";
 import Slot from "../../models/Slot";
+import User from "../../models/User";
+import Band from "../../models/Band";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Handle preflight OPTIONS request
@@ -20,13 +22,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const requests = await Request.findAll({
           order: [["request_date", "ASC"]],
         });
-        res.status(200).json(requests);
+        // Enhance each request with user_name and band_name.
+        const enhancedRequests = await Promise.all(
+          requests.map(async (reqItem) => {
+            // Use toJSON() to get plain object data.
+            const requestData = reqItem.toJSON() as any;
+            // Fetch the user by user_id.
+            const user = await User.findOne({ where: { id: requestData.user_id } });
+            let user_name = null;
+            let band_name = null;
+            if (user) {
+              user_name = user.name;
+              // user.band_id connects the user to the band.
+              if (user.band_id) {
+                const band = await Band.findOne({ where: { id: user.band_id } });
+                if (band) {
+                  band_name = band.name;
+                }
+              }
+            }
+            return {
+              ...requestData,
+              user_name,
+              band_name,
+            };
+          })
+        );
+        res.status(200).json(enhancedRequests);
       } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching requests" });
       }
       break;
 
+    // ... (the POST, PUT, DELETE cases remain unchanged)
     case "POST":
       try {
         const { user_id, slot_start, slot_end } = req.body;
@@ -82,11 +111,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const adjustedSlotEnd = new Date(origEnd + offsetMs).toISOString();
 
           console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
+          
+          // Fetch the user record to get the stored band_id
+          const userRecord = await User.findOne({ where: { id: requestToUpdate.user_id } });
+          const bandIdToInsert = userRecord?.band_id;
+
           const newSlot = await Slot.create({
             slot_start: adjustedSlotStart,
             slot_end: adjustedSlotEnd,
             status: "booked",
-            band_id: requestToUpdate.user_id,
+            band_id: bandIdToInsert,
           });
           // Update the request's slot_id with the new slot's id.
           await requestToUpdate.update({ slot_id: newSlot.id, response_date: new Date() });

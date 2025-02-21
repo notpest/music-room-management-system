@@ -1,5 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../database';
+import User from "./User";
 
 interface BandAttributes {
   id: number;

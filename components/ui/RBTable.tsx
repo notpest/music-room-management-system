@@ -301,14 +301,14 @@ const RBTable = () => {
 
   const handleBookingConfirm = async () => {
     const validStart = timeSlots.some((ts) => ts.key === bookingStartTime);
-    const validEnd = timeSlots.some((ts) => ts.key === bookingEndTime);
+    const validEnd = timeSlots.some((ts) => ts.key === bookingEndTime || bookingEndTime === "19:30");
     if (!validStart || !validEnd) {
       alert("One or both time slots are invalid.");
       return;
     }
 
     const startSlot = timeSlots.find((ts) => ts.key === bookingStartTime);
-    const endSlot = timeSlots.find((ts) => ts.key === bookingEndTime);
+    const endSlot = timeSlots.find((ts) => ts.key === bookingEndTime || bookingEndTime === "19:30");
     if (!startSlot || !endSlot) {
       alert("Invalid time slot selection.");
       return;
@@ -329,7 +329,7 @@ const RBTable = () => {
 
     try {
       await axios.post("/api/requests", {
-        user_id: bandId,
+        user_id: session?.user?.id,
         status: "pending",
         slot_start: localSlotStart.toISOString(),
         slot_end: localSlotEnd.toISOString(),
@@ -616,7 +616,7 @@ const RBTable = () => {
                   selectedKeys={new Set([bookingEndTime])}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
-                    if (timeSlots.some((ts) => ts.key === selected)) {
+                    if (timeSlots.some((ts) => ts.key === selected) || selected == "19:30") {
                       setBookingEndTime(selected);
                     } else {
                       alert("Invalid time slot selected");
@@ -629,6 +629,9 @@ const RBTable = () => {
                         {slot.display}
                       </SelectItem>
                     ))}
+                    <SelectItem key="19:30" value="19:30">
+                      07:30 PM
+                    </SelectItem>
                   </>
                 </Select>
               </ModalBody>
@@ -640,7 +643,7 @@ const RBTable = () => {
                       (ts) => ts.key === bookingStartTime
                     );
                     const validEnd = timeSlots.some(
-                      (ts) => ts.key === bookingEndTime
+                      (ts) => ts.key === bookingEndTime || bookingEndTime === "19:30"
                     );
                     if (!validStart || !validEnd) {
                       alert("One or both time slots are invalid.");

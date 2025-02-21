@@ -2,6 +2,7 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../database";
 import Band from "./Band";
+import Request from "./Request";
 
 class User extends Model {
   public id!: string;
