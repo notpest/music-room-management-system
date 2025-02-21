@@ -20,6 +20,8 @@ import {
 } from "@nextui-org/react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
+import { Session } from "next-auth";
+import { FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 
 // Interfaces
 interface Slot {
@@ -79,6 +81,7 @@ const RBTable = () => {
 
   // Modal and booking states
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   // "book" = booking modal; "alreadyBooked" = error modal
   const [modalType, setModalType] = useState<"book" | "alreadyBooked" | null>(null);
@@ -87,7 +90,7 @@ const RBTable = () => {
   const [bandId, setBandId] = useState<string>("");
   const [bookingStartTime, setBookingStartTime] = useState<string>("");
   const [bookingEndTime, setBookingEndTime] = useState<string>("");
-
+  const { data: session } = useSession();
   // New states to hold default values for placeholders
   const [defaultStartTime, setDefaultStartTime] = useState<string>("");
   const [defaultEndTime, setDefaultEndTime] = useState<string>("");
@@ -95,9 +98,6 @@ const RBTable = () => {
   // Week Picker Modal states
   const [weekPickerOpen, setWeekPickerOpen] = useState(false);
   const [tempWeekDate, setTempWeekDate] = useState<string>("");
-
-  // Get session from NextAuth
-  const { data: session } = useSession();
 
   // On mount or when session updates, prefill bandId from session.user.band_id
   useEffect(() => {
@@ -424,38 +424,61 @@ const RBTable = () => {
     return mergeInfo;
   }, [days, timeSlots, bookings, slots]);
 
+  function toggleRoom(): void {
+    setSelectedRoom((prevRoom) => (prevRoom === 365 ? 366 : 365));
+  }
+
+  // Room details for the tooltip
+  const roomDetails: { [key: number]: string } = {
+    365: "Room 365: Description and details here.",
+    366: "Room 366: Description and details here.",
+  };
+
   return (
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      <div className="flex items-center my-4 space-x-4">
-        <Button onPress={handlePrevWeek}>←</Button>
-        <div className="text-white">
-          Slots of{" "}
-          {currentWeekStart.toLocaleDateString("en-US", {
-            weekday: "long",
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })}
-        </div>
-        <Button onPress={handleNextWeek}>→</Button>
-        <Button onPress={() => setWeekPickerOpen(true)}>Pick Week</Button>
+    <div className="flex items-center justify-between w-full my-4 px-4">
+      {/* Current Room & Info Icon Centered */}
+      <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
+        <span className="ml-40">Current Room: Room {selectedRoom}</span>
       </div>
 
-      <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">
-        <TableHeader>
-          {[
-            <TableColumn key="time" className="w-[200px] bg-[#1a2a47] font-semibold">
-              Time
-            </TableColumn>,
-          ].concat(
-            days.map((day) => (
-              <TableColumn key={day.key} className="w-[200px] bg-[#1a2a47] font-semibold">
-                {day.display}
-              </TableColumn>
-            ))
-          )}
-        </TableHeader>
-        
+      {/* Switch Room Button on Extreme Right */}
+      <Button onPress={toggleRoom} color="primary">
+        Switch to Room {selectedRoom === 365 ? "366" : "365"}
+      </Button>
+    </div>
+
+    <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">
+      <TableHeader>
+      {[
+        <TableColumn key="time" className="w-[200px] bg-[#1a2a47] font-semibold">
+          <div className="flex items-center justify-between">
+            <span>Time</span>
+            <div className="flex items-center space-x-2">
+              <Button isIconOnly size="sm" className="bg-[#1a2a47] font-semibold" onPress={() => setWeekPickerOpen(true)}>
+                <FaCalendarAlt />
+              </Button>
+              <Button isIconOnly className="bg-[#1a2a47] font-semibold" size="sm" onPress={handlePrevWeek}>
+                ←
+              </Button>
+            </div>
+          </div>
+        </TableColumn>,
+      ].concat(
+        days.map((day) => (
+          <TableColumn key={day.key} className="w-[200px] bg-[#1a2a47] font-semibold">
+            <div className="flex items-center justify-between">
+              <span>{day.display}</span>
+              {day.key === days[days.length - 1].key && (
+                <Button isIconOnly size="sm" className="bg-[#1a2a47] font-semibold" onPress={handleNextWeek}>
+                  →
+                </Button>
+              )}
+            </div>
+          </TableColumn>
+        ))
+      )}
+    </TableHeader>
         <TableBody>
           {timeSlots.map((time, rowIndex) => (
             <TableRow key={time.key} style={{ height: "60px" }}>
