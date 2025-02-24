@@ -439,13 +439,13 @@ const RBTable = () => {
     <div className="flex items-center justify-between w-full my-4 px-4">
       {/* Current Room & Info Icon Centered */}
       <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
-        <span className="ml-40">Current Room: Room {selectedRoom}</span>
+        {/* <span className="ml-40">Current Room: Room {selectedRoom}</span> */}
       </div>
 
       {/* Switch Room Button on Extreme Right */}
-      <Button onPress={toggleRoom} color="primary">
+      {/* <Button onPress={toggleRoom} color="primary">
         Switch to Room {selectedRoom === 365 ? "366" : "365"}
-      </Button>
+      </Button> */}
     </div>
 
     <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">

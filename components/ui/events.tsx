@@ -19,25 +19,25 @@ const EventData: EventProps[] = [
   {
     title: "Magnificat",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing twas a dream elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
+      "Magnificat is an annual music festival wherein the University Choir, which is one of the wings of SWO, organises and performs for the students. The fest is planned around Christmas time lasting for a span of 10 days during the course of which the Choir teams of all the three campuses in Bangalore- Central, Kengeri and Bannerghatta- perform in each of the three campuses. Magnificat also witnesses the performances of the Choir teams from other Universities, church groups as well as orchestras. With all the campuses decked and decorated in the colours of Christmas, the spirit of Christmas comes alive in this celebration of music and carols spreading warmth and joy among all.",
     imageSrc: Magnificat, // Use imported image
     altText: "Magnificat",
     visible: false, // Initially hidden
     reverse: false,
   },
   {
-    title: "Sound Curry",
+    title: "Erato",
     description:
-      "Lorem ipsum dolor sit amet, manifesting consectetur adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
+      "Erato organised by The University Choir & the Cultural Teams across all the three campuses in Bangalore. An evening of beautiful choral and band performances showcasing diverse genres of music! We thrill you with exciting performances of intricate harmonies and soulful rhythms!",
     imageSrc: SoundCurry, // Use imported image
-    altText: "SoundCurry",
+    altText: "Erato",
     visible: false, // Initially hidden
     reverse: true,
   },
   {
     title: "Blossoms",
     description:
-      "Lorem ipsum dolor sit amet, rigged consectetur adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
+      "An annual cultural fest organised by the Student Welfare Office, Blossoms seeks to host activities and competitions at the inter deanery level. Much like Darpan in its search for talent and skills among the students and participants, Blossoms provides an opportunity on a bigger scale. With varying categories of activities like, literary, art, performing arts like music, dance and theatre the fest witnesses a remarkable display of flair and brilliance among all those associated with it.",
     imageSrc: band1,
     altText: "Band 1",
     visible: false, // Initially hidden
@@ -45,8 +45,8 @@ const EventData: EventProps[] = [
   },
   {
     title: "Talent Week",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur twas amazing adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
+    description: 
+      "Talent Week is a stage for all students & faculties to showcase their talents through various artforms including music, theatre, streetplay and dance! Each day is dedicated to one artform allowing students from all around the campus to participate and take the stage!",
     imageSrc: TalentWeek,
     altText: "Talent Week",
     visible: false, // Initially hidden
@@ -55,7 +55,7 @@ const EventData: EventProps[] = [
   {
     title: "Nritta",
     description:
-      "Lorem ipsum dolor sit amet, consectetur twas amazing adipiscing elit. Nullam tempor euismod quam, vel placerat augue faucibus id. Phasellus mollis lorem ac orci scelerisque facilisis.",
+      "One of the biggest stages is set for Nritta, the dance fest which showcases the multitude of talents among the students. The fest receives participation from hundreds of students every year who come forth to perform and portray their dancing abilities in numerous dance forms while simultaneously enjoying themselves. A robust and vibrant range of colours and performances are given by various groups from across all three campuses in Bangalore along with that of the cultural teams in each of the campuses.",
     imageSrc: SoundCurry,
     altText: "Nritta",
     visible: false, // Initially hidden
