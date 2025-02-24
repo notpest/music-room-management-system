@@ -358,6 +358,7 @@ const RBTable = () => {
   const handleWeekSelect = () => {
     if (tempWeekDate) {
       const chosenDate = new Date(tempWeekDate);
+      const chosenDate = new Date(tempWeekDate);
       setCurrentWeekStart(getMonday(chosenDate));
       setWeekPickerOpen(false);
     }
@@ -685,6 +686,28 @@ const RBTable = () => {
 
       {/* Week Picker Modal */}
       <Modal isOpen={weekPickerOpen} onOpenChange={setWeekPickerOpen}>
+        <ModalContent>
+          <ModalHeader>Select Week</ModalHeader>
+          <ModalBody>
+            <Input
+              type="date"
+              fullWidth
+              label="Select a Date"
+              placeholder="Choose a date"
+              value={tempWeekDate}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setTempWeekDate(e.target.value)}
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" onPress={() => setWeekPickerOpen(false)}>
+              Cancel
+            </Button>
+            <Button color="success" onPress={handleWeekSelect}>
+              Select
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
         <ModalContent>
           <ModalHeader>Select Week</ModalHeader>
           <ModalBody>
