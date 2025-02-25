@@ -1,10 +1,23 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import Slot from '../../models/Slot';
 import Band from '../../models/Band';
+import { Op } from 'sequelize';
 
 const getSlots = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
+    const { start, end } = req.query;
+    let where = {};
+    if (start && end) {
+      where = {
+        slot_start: {
+          [Op.gte]: new Date(start as string),
+          [Op.lte]: new Date(end as string),
+        },
+      };
+    }
+    
     const slots = await Slot.findAll({
+      where, // Apply filtering if provided
       include: [{ model: Band, attributes: ['name'] }],
       raw: true,
       order: [['slot_start', 'ASC']],
@@ -60,7 +73,6 @@ const bookSlot = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(500).json({ message: 'Error booking slot' });
   }
 };
-
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (req.method) {

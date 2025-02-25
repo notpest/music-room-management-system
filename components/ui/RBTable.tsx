@@ -17,11 +17,15 @@ import {
   Input,
   Select,
   SelectItem,
+  Tooltip,
 } from "@nextui-org/react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
 import { FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
+import { Calendar } from "@heroui/react";
+import { today, getLocalTimeZone, parseDate, CalendarDate } from "@internationalized/date";
+
 
 // Interfaces
 interface Slot {
@@ -45,6 +49,14 @@ interface Day {
 interface TimeSlot {
   key: string;
   display: string;
+  end: string;
+}
+
+interface SlotConfig {
+  id: string;
+  start_time: string; // e.g., "07:30:00" or "07:30"
+  end_time: string;   // e.g., "09:00:00" or "09:00"
+  enabled: boolean;
 }
 
 // Utility functions to generate consistent keys
@@ -97,7 +109,10 @@ const RBTable = () => {
 
   // Week Picker Modal states
   const [weekPickerOpen, setWeekPickerOpen] = useState(false);
-  const [tempWeekDate, setTempWeekDate] = useState<string>("");
+  const [tempWeekDate, setTempWeekDate] = useState<CalendarDate | null>(null);
+  const [selectedDate, setSelectedDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
+  const [cachedRange, setCachedRange] = useState<{ start: string; end: string } | null>(null);
+  const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
 
   // On mount or when session updates, prefill bandId from session.user.band_id
   useEffect(() => {
@@ -110,49 +125,90 @@ const RBTable = () => {
     }
   }, [session]);
 
+   // Update the current week start based on the selected date
+  useEffect(() => {
+    if (selectedDate) {
+      const date = new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day);
+      setCurrentWeekStart(getMonday(date));
+    }
+  }, [selectedDate]);
+
   // Fetch slots from API
   const fetchSlots = async () => {
+    // Calculate range: from one week before currentWeekStart to one week after the current week.
+    const rangeStart = new Date(currentWeekStart);
+    rangeStart.setDate(rangeStart.getDate() - 7);
+    const rangeEnd = new Date(currentWeekStart);
+    rangeEnd.setDate(rangeEnd.getDate() + 14); // current week (7 days) + next week (7 days) = 14 days ahead
+  
+    const rangeStartISO = rangeStart.toISOString();
+    const rangeEndISO = rangeEnd.toISOString();
+  
+    // If we have cached data that covers this range, use it.
+    if (
+      cachedRange &&
+      cachedRange.start <= rangeStartISO &&
+      cachedRange.end >= rangeEndISO
+    ) {
+      setSlots(cachedSlots);
+      return;
+    }
+  
     try {
-      const response = await axios.get("/api/slots");
+      const response = await axios.get("/api/slots", {
+        params: {
+          start: rangeStartISO,
+          end: rangeEndISO,
+        },
+      });
       setSlots(response.data);
+      // Update cache
+      setCachedSlots(response.data);
+      setCachedRange({ start: rangeStartISO, end: rangeEndISO });
     } catch (error) {
       console.error(error);
     }
   };
-
   // Initial API fetch on mount
   useEffect(() => {
     fetchSlots();
+  }, [currentWeekStart]);
+
+  const fetchSlotConfigs = async () => {
+    try {
+      const response = await axios.get("/api/slotconfig");
+      // Filter for enabled configurations and sort them by start_time
+      const configs: SlotConfig[] = response.data
+        .filter((config: SlotConfig) => config.enabled)
+        .sort((a: SlotConfig, b: SlotConfig) => a.start_time.localeCompare(b.start_time));
+      // Convert each SlotConfig into a TimeSlot object:
+      // We'll assume the stored time is in "HH:mm:ss" (or at least starts with "HH:mm")
+      const formattedConfigs: TimeSlot[] = configs.map((config) => {
+        const key = config.start_time.substring(0, 5); // e.g., "07:30"
+        // Format to a display string (e.g., "07:30 AM") using toLocaleTimeString:
+        const startDisplay = new Date(`1970-01-01T${config.start_time}Z`).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC",
+          hourCycle: "h12",
+        });
+        const endDisplay = new Date(`1970-01-01T${config.end_time}Z`).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC",
+          hourCycle: "h12",
+        });
+        return { key, display: startDisplay, end: endDisplay };
+      });
+      setTimeSlots(formattedConfigs);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchSlotConfigs();
   }, []);
-
-  // Generate time slots (same for every day)
-  const generateTimeSlots = (): TimeSlot[] => {
-    return [
-      { key: "07:30", display: "07:30 AM" },
-      { key: "09:00", display: "09:00 AM" },
-      { key: "10:30", display: "10:30 AM" },
-      { key: "12:00", display: "12:00 PM" },
-      { key: "13:30", display: "01:30 PM" },
-      { key: "15:00", display: "03:00 PM" },
-      { key: "16:30", display: "04:30 PM" },
-      { key: "18:00", display: "06:00 PM" },
-    ];
-  };
-
-  // Helper function: Given a start time (HH:mm), return the end time (90 minutes later) in HH:MM AM/PM format.
-  const calculateEndTime = (startTime: string): string => {
-    const [hourStr, minuteStr] = startTime.split(":");
-    const hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-    const date = new Date();
-    date.setHours(hour, minute, 0, 0);
-    date.setMinutes(date.getMinutes() + 90);
-    const endHour = date.getHours();
-    const endMinute = date.getMinutes().toString().padStart(2, "0");
-    const period = endHour >= 12 ? "PM" : "AM";
-    const formattedHour = ((endHour % 12) || 12).toString().padStart(2, "0");
-    return `${formattedHour}:${endMinute} ${period}`;
-  };
 
   // Generate week days (Monday to Sunday) based on currentWeekStart
   const generateWeekDays = (weekStart: Date): Day[] => {
@@ -160,23 +216,20 @@ const RBTable = () => {
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(weekStart.getDate() + i);
+      const weekday = d.toLocaleDateString("en-US", { weekday: "long" });
+      const dateFormatted = d.toLocaleDateString("en-GB"); // produces dd/mm/yyyy
       daysArray.push({
         key: formatDayKey(d),
-        display: d.toLocaleDateString("en-US", {
-          weekday: "long",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }).replace(",", " -"),
+        display: `${weekday} - ${dateFormatted}`,
       });
     }
     return daysArray;
-  };
-
+  };  
+  
   // When slots or the selected week change, rebuild the days, times and booking mapping.
   useEffect(() => {
     const weekDays = generateWeekDays(currentWeekStart);
-    const defaultTimeSlots = generateTimeSlots();
+    const defaultTimeSlots = timeSlots;
     const defaultBookings: Bookings = {};
 
     // Override with API slots (if any fall within the week), marking all time cells that fall within the booking range.
@@ -357,8 +410,7 @@ const RBTable = () => {
 
   const handleWeekSelect = () => {
     if (tempWeekDate) {
-      const chosenDate = new Date(tempWeekDate);
-      const chosenDate = new Date(tempWeekDate);
+      const chosenDate = new Date(tempWeekDate.year, tempWeekDate.month - 1, tempWeekDate.day);
       setCurrentWeekStart(getMonday(chosenDate));
       setWeekPickerOpen(false);
     }
@@ -435,24 +487,30 @@ const RBTable = () => {
     366: "Room 366: Description and details here.",
   };
 
+  const [isCalendarOpen, setCalendarOpen] = useState(false);
+
+  function setTempDate(e: CalendarDate): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
     <div className="flex items-center justify-between w-full my-4 px-4">
       {/* Current Room & Info Icon Centered */}
       <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
-        {/* <span className="ml-40">Current Room: Room {selectedRoom}</span> */}
+        <span className="ml-40">Current Room: Room {selectedRoom}</span>
       </div>
 
       {/* Switch Room Button on Extreme Right */}
-      {/* <Button onPress={toggleRoom} color="primary">
+      <Button onPress={toggleRoom} color="primary">
         Switch to Room {selectedRoom === 365 ? "366" : "365"}
-      </Button> */}
+      </Button>
     </div>
 
     <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">
       <TableHeader>
       {[
-        <TableColumn key="time" className="w-[200px] bg-[#1a2a47] font-semibold">
+        <TableColumn key="time" className="w-[100px] bg-[#1a2a47] font-semibold">
           <div className="flex items-center justify-between">
             <span>Time</span>
             <div className="flex items-center space-x-2">
@@ -482,7 +540,7 @@ const RBTable = () => {
     </TableHeader>
         <TableBody>
           {timeSlots.map((time, rowIndex) => (
-            <TableRow key={time.key} style={{ height: "60px" }}>
+            <TableRow key={time.key} style={{ height: "50px" }}>
               {[
                 <TableCell
                   key={`time-${time.key}`}
@@ -492,7 +550,7 @@ const RBTable = () => {
                   }}
                 >
                   {(rowIndex === 0 ||
-                    time.display !== calculateEndTime(timeSlots[rowIndex - 1].key)) && (
+                    time.display !== timeSlots[rowIndex - 1].end) && (
                     <span
                       style={{
                         position: "absolute",
@@ -519,7 +577,7 @@ const RBTable = () => {
                       padding: "0 4px",
                     }}
                   >
-                    {calculateEndTime(time.key)}
+                    {time.end}
                   </span>
                 </TableCell>,
               ].concat(
@@ -689,42 +747,48 @@ const RBTable = () => {
         <ModalContent>
           <ModalHeader>Select Week</ModalHeader>
           <ModalBody>
-            <Input
-              type="date"
-              fullWidth
-              label="Select a Date"
-              placeholder="Choose a date"
-              value={tempWeekDate}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setTempWeekDate(e.target.value)}
-            />
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ marginRight: "1rem" }}>Request Date:</label>
+        <div
+          style={{
+            padding: "0.5rem",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+          onClick={() => setCalendarOpen(true)}
+        >
+          {tempWeekDate ? tempWeekDate.toString() : "dd-mm-yyyy"}
+        </div>
+        {isCalendarOpen && (
+          <Calendar
+            aria-label="Date Picker"
+            defaultValue={selectedDate ? selectedDate : (today(getLocalTimeZone()) as any)}
+            onChange={(e) => setTempWeekDate(e as any)} // Only update tempDate, not selectedDate yet
+          />
+        )}
+      </div>
           </ModalBody>
           <ModalFooter>
-            <Button color="danger" onPress={() => setWeekPickerOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="success" onPress={handleWeekSelect}>
-              Select
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-        <ModalContent>
-          <ModalHeader>Select Week</ModalHeader>
-          <ModalBody>
-            <Input
-              type="date"
-              fullWidth
-              label="Select a Date"
-              placeholder="Choose a date"
-              value={tempWeekDate}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setTempWeekDate(e.target.value)}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button color="danger" onPress={() => setWeekPickerOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="success" onPress={handleWeekSelect}>
+            <Button
+              color="danger"
+              onPress={() => {
+                setTempDate(selectedDate); // Reset temp date
+                setWeekPickerOpen(false); // Close modal
+              }}
+            >
+                    Cancel
+                  </Button>
+            <Button
+              color="success"
+              onPress={() => {
+                if (tempWeekDate) {
+                  setSelectedDate(tempWeekDate); // Confirm selection
+                }
+                setWeekPickerOpen(false); // Close modal
+                handleWeekSelect(); // Call function to process selected date
+              }}
+            >
               Select
             </Button>
           </ModalFooter>
