@@ -1,34 +1,41 @@
+// pages/api/slots.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import Slot from '../../models/Slot';
 import Band from '../../models/Band';
+import Room from '../../models/Room';
 import { Op } from 'sequelize';
 
 const getSlots = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const { start, end } = req.query;
-    let where = {};
+    const { start, end, roomNumber } = req.query;
+    let where: any = {};
     if (start && end) {
-      where = {
-        slot_start: {
-          [Op.gte]: new Date(start as string),
-          [Op.lte]: new Date(end as string),
-        },
+      where.slot_start = {
+        [Op.gte]: new Date(start as string),
+        [Op.lte]: new Date(end as string),
       };
+    }
+    // If roomNumber is provided, filter by the associated Room's number.
+    if (roomNumber) {
+      where['$Room.number$'] = roomNumber;
     }
     
     const slots = await Slot.findAll({
-      where, // Apply filtering if provided
-      include: [{ model: Band, attributes: ['name'] }],
+      where,
+      include: [
+        { model: Band, attributes: ['name'] },
+        { model: Room, attributes: ['number', 'name'] }
+      ],
       raw: true,
       order: [['slot_start', 'ASC']],
     });
 
-    // Convert slot_start and slot_end to UTC before sending the response
     const formattedSlots = slots.map((slot) => ({
       ...slot,
-      slot_start: new Date(slot.slot_start).toISOString(), // Ensure UTC format
-      slot_end: new Date(slot.slot_end).toISOString(), // Ensure UTC format
+      slot_start: new Date(slot.slot_start).toISOString(),
+      slot_end: new Date(slot.slot_end).toISOString(),
       band_name: (slot as any)['Band.name'],
+      room_number: (slot as any)['Room.number'], // optionally include room number
     }));
 
     res.json(formattedSlots);
@@ -40,30 +47,26 @@ const getSlots = async (req: NextApiRequest, res: NextApiResponse) => {
 
 const bookSlot = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const { slot_start, slot_end, band_id } = req.body;
+    const { slot_start, slot_end, band_id, room_id } = req.body;
 
-    // Convert slot_start to UTC
     const slotStartUTC = new Date(slot_start);
-
-    // Use provided slot_end if available; otherwise default to 1.5 hours after slot_start
     const slotEndUTC = slot_end ? new Date(slot_end) : new Date(slotStartUTC.getTime() + 90 * 60000);
 
-    // Check if the slot already exists (using slot_start as unique key)
-    const existingSlot = await Slot.findOne({ where: { slot_start: slotStartUTC } });
+    // Use room_id in the lookup
+    const existingSlot = await Slot.findOne({ where: { slot_start: slotStartUTC, room_id } });
     if (existingSlot) {
       if (existingSlot.status === "booked") {
         res.status(400).json({ message: 'Slot is already booked' });
         return;
       }
-      // Update existing slot with new status, band_id and slot_end from the request
       await existingSlot.update({ status: 'booked', band_id, slot_end: slotEndUTC });
     } else {
-      // Create a new slot using both provided slot_start and slot_end
       await Slot.create({
         slot_start: slotStartUTC,
         slot_end: slotEndUTC,
         status: 'booked',
         band_id,
+        room_id,
       });
     }
 

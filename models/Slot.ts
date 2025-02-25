@@ -2,6 +2,7 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../database';
 import Band from './Band';
+import Room from './Room';
 
 class Slot extends Model {
   public id!: number;
@@ -9,7 +10,10 @@ class Slot extends Model {
   public slot_end!: Date;
   public status!: string; // Define the status property
   public band_id!: number;
+  public room_id!: string;
+
   public Band?: Band;
+  public Room?: Room;
 }
 
 Slot.init(
@@ -31,6 +35,14 @@ Slot.init(
         key: 'id',
       },
     },
+    room_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: Room,
+        key: 'id',
+      },
+    },
     slot_start: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -49,4 +61,5 @@ Slot.init(
 );
 
 Slot.belongsTo(Band, { foreignKey: 'band_id' });
+Slot.belongsTo(Room, { foreignKey: 'room_id' });
 export default Slot;

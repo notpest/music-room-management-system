@@ -93,7 +93,7 @@ const RBTable = () => {
 
   // Modal and booking states
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<number>(365);
   const [isModalOpen, setModalOpen] = useState(false);
   // "book" = booking modal; "alreadyBooked" = error modal
   const [modalType, setModalType] = useState<"book" | "alreadyBooked" | null>(null);
@@ -159,6 +159,7 @@ const RBTable = () => {
         params: {
           start: rangeStartISO,
           end: rangeEndISO,
+          roomNumber: selectedRoom.toString(),
         },
       });
       setSlots(response.data);
@@ -172,7 +173,7 @@ const RBTable = () => {
   // Initial API fetch on mount
   useEffect(() => {
     fetchSlots();
-  }, [currentWeekStart]);
+  }, [currentWeekStart, selectedRoom]);
 
   const fetchSlotConfigs = async () => {
     try {
@@ -228,6 +229,8 @@ const RBTable = () => {
   
   // When slots or the selected week change, rebuild the days, times and booking mapping.
   useEffect(() => {
+    if (timeSlots.length === 0) return;
+
     const weekDays = generateWeekDays(currentWeekStart);
     const defaultTimeSlots = timeSlots;
     const defaultBookings: Bookings = {};
@@ -266,9 +269,8 @@ const RBTable = () => {
     });
 
     setDays(weekDays);
-    setTimeSlots(defaultTimeSlots);
     setBookings(defaultBookings);
-  }, [slots, currentWeekStart]);
+  }, [slots, currentWeekStart, timeSlots]);
 
   // Colors for booked slots
   const bandColors: { [key: string]: string } = {
@@ -478,7 +480,12 @@ const RBTable = () => {
   }, [days, timeSlots, bookings, slots]);
 
   function toggleRoom(): void {
-    setSelectedRoom((prevRoom) => (prevRoom === 365 ? 366 : 365));
+    setSelectedRoom((prevRoom) => {
+      const newRoom = prevRoom === 365 ? 366 : 365;
+      // Clear the cache so that a new fetch is forced
+      setCachedRange(null);
+      return newRoom;
+    });
   }
 
   // Room details for the tooltip
