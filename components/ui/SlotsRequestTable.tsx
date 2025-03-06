@@ -29,25 +29,13 @@ import { parseDate, today } from "@internationalized/date";
 
 // --- Icon Components for Approve and Deny Actions ---
 const AcceptIcon = () => (
-  <svg
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    style={{ height: 20, width: 20 }}
-  >
+  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ height: 20, width: 20 }}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
   </svg>
 );
 
 const DenyIcon = () => (
-  <svg
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    style={{ height: 20, width: 20 }}
-  >
+  <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ height: 20, width: 20 }}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
@@ -76,16 +64,12 @@ const columns = [
   { key: "actions", name: "ACTIONS" },
 ];
 
-// Allowed chip colors (NextUI expects these exact strings)
 const statusColorMap: { [key in RequestType["status"]]: "success" | "danger" | "warning" } = {
   approved: "success",
   denied: "danger",
   pending: "warning",
 };
 
-//
-// Helper function: Format an ISO date string into "HH:mm" format.
-//
 const formatTime = (isoString: string): string => {
   const date = new Date(isoString);
   const hours = date.getHours().toString().padStart(2, "0");
@@ -93,10 +77,6 @@ const formatTime = (isoString: string): string => {
   return `${hours}:${minutes}`;
 };
 
-//
-// Helper function: Combine the original date portion of an ISO string with a new time (HH:mm)
-// to create a new ISO string.
-//
 const combineDateAndTime = (originalISO: string, newTime: string): string => {
   const originalDate = new Date(originalISO);
   const [hours, minutes] = newTime.split(":").map(Number);
@@ -121,6 +101,10 @@ export default function SlotsRequestTable() {
     { key: "18:00", display: "06:00 PM" },
   ];
   
+  // State for selected room id – default is room 365.
+  // Replace these with your actual room UUIDs.
+  const [selectedRoom, setSelectedRoom] = useState<string>("25b48b88-7e94-422b-b3b4-97c78aa6966a");
+
   const [defaultStartTime, setDefaultStartTime] = useState<string>("");
   const [defaultEndTime, setDefaultEndTime] = useState<string>("");
   const [requests, setRequests] = useState<RequestType[]>([]);
@@ -130,8 +114,7 @@ export default function SlotsRequestTable() {
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
   const [isCalendarOpen, setCalendarOpen] = useState(false);
 
-  // --- States for editing a request ---
-  // Only allow editing of status and slot times.
+  // Edit modal states
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(null);
   const [editForm, setEditForm] = useState({
@@ -140,10 +123,12 @@ export default function SlotsRequestTable() {
     slot_end: "",
   });
 
-  // --- Fetch requests from API ---
+  // Fetch requests from API with room_id filtering
   const fetchRequests = async () => {
     try {
-      const res = await axios.get("/api/requests");
+      const res = await axios.get("/api/requests", {
+        params: { room_id: selectedRoom },
+      });
       setRequests(res.data);
     } catch (error) {
       console.error("Error fetching requests:", error);
@@ -152,9 +137,8 @@ export default function SlotsRequestTable() {
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [selectedRoom]);
 
-  // --- Approve / Deny actions update the status via PUT ---
   const handleApprove = async (id: string) => {
     try {
       await axios.put(`/api/requests?id=${id}`, { status: "approved" });
@@ -173,22 +157,20 @@ export default function SlotsRequestTable() {
     }
   };
 
-  // --- Edit: Open modal and populate form with current status and times ---
   const handleEdit = (req: RequestType) => {
     setSelectedRequest(req);
-    const formattedStart = formatTime(req.slot_start); // returns "HH:mm"
+    const formattedStart = formatTime(req.slot_start);
     const formattedEnd = formatTime(req.slot_end);
     setEditForm({
       status: req.status,
-      slot_start: formatTime(req.slot_start),
-      slot_end: formatTime(req.slot_end),
+      slot_start: formattedStart,
+      slot_end: formattedEnd,
     });
     setDefaultStartTime(formattedStart);
     setDefaultEndTime(formattedEnd);
     setEditModalOpen(true);
   };
 
-  // --- Delete a request ---
   const handleDelete = async (id: string) => {
     try {
       await axios.delete(`/api/requests?id=${id}`);
@@ -200,17 +182,16 @@ export default function SlotsRequestTable() {
 
   const submitEditForm = async () => {
     if (!selectedRequest) return;
-
-    // Combine the original date portion with the new time values.
+  
     const updatedSlotStart = combineDateAndTime(selectedRequest.slot_start, editForm.slot_start);
     const updatedSlotEnd = combineDateAndTime(selectedRequest.slot_end, editForm.slot_end);
-
+  
     const updateData = {
       status: editForm.status,
       slot_start: updatedSlotStart,
       slot_end: updatedSlotEnd,
     };
-
+  
     try {
       await axios.put(`/api/requests?id=${selectedRequest.id}`, updateData);
       setEditModalOpen(false);
@@ -220,16 +201,14 @@ export default function SlotsRequestTable() {
       console.error("Error editing request:", error);
     }
   };
-
-  // --- Filter the requests based on search and filters ---
+  
   const filteredRequests = requests.filter((req) => {
     const matchesSearch = (req.user_name || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || req.status === statusFilter;
     const matchesDate = dateFilter === "" || req.request_date.startsWith(dateFilter);
     return matchesSearch && matchesStatus && matchesDate;
   });
-
-  // --- Render each cell based on the column key ---
+  
   const renderCell = (req: RequestType, columnKey: string) => {
     switch (columnKey) {
       case "user_name":
@@ -287,14 +266,28 @@ export default function SlotsRequestTable() {
         return null;
     }
   };
-
+  
   function getLocalTimeZone(): string {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
-
+  
+  // (Optionally, you could add a toggle button here to switch selectedRoom between room 365 and 366.)
+  // For example:
+  const toggleRoom = () => {
+    setSelectedRoom((prev) => (prev === "25b48b88-7e94-422b-b3b4-97c78aa6966a" ? "3abca8d0-8c88-437c-b7fd-9d5c67fcfee0" : "25b48b88-7e94-422b-b3b4-97c78aa6966a"));
+  };
+  
   return (
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      {/* --- Search & Filter Controls --- */}
+      <div className="flex items-center justify-between w-full my-10 px-4">
+        <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
+          <span>Current Room: Room {selectedRoom === "uuid365" ? 365 : 366}</span>
+        </div>
+        <Button onPress={toggleRoom} color="primary">
+          Switch Room {selectedRoom === "uuid365" ? "366" : "365"}
+        </Button>
+      </div>
+  
       <div className="flex items-center my-10 space-x-4" style={{ width: "90%" }}>
         <Input
           isClearable
@@ -311,62 +304,7 @@ export default function SlotsRequestTable() {
           />
         </Tooltip>
       </div>
-
-      {/* --- Filter Modal --- */}
-      <Modal isOpen={isFilterModalOpen} onOpenChange={setFilterModalOpen}>
-        <ModalContent>
-          <ModalHeader>Filter Requests</ModalHeader>
-          <ModalBody>
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ marginRight: "1rem" }}>Status:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ padding: "0.5rem" }}
-              >
-                <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="denied">Denied</option>
-              </select>
-            </div>
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ marginRight: "1rem" }}>Request Date:</label>
-              <div
-                style={{
-                  padding: "0.5rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-                onClick={() => setCalendarOpen(true)}
-              >
-                {dateFilter ? new Date(dateFilter).toLocaleDateString("en-GB") : "dd-mm-yyyy"}
-              </div>
-              {isCalendarOpen && (
-                <Calendar
-                  aria-label="Date Picker"
-                  defaultValue={dateFilter ? parseDate(dateFilter) : today(getLocalTimeZone())}
-                  onChange={(e) => {
-                    setDateFilter(e.toString());
-                    setCalendarOpen(false);
-                  }}
-              />
-              )}
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="success" onPress={() => setFilterModalOpen(false)}>
-              Apply Filters
-            </Button>
-            <Button color="danger" onPress={() => setFilterModalOpen(false)}>
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* --- Requests Table --- */}
+  
       <Table
         aria-label="Requests Table"
         className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white"
@@ -390,8 +328,7 @@ export default function SlotsRequestTable() {
           ))}
         </TableBody>
       </Table>
-
-      {/* --- Edit Request Modal --- */}
+  
       <Modal isOpen={isEditModalOpen} onOpenChange={setEditModalOpen}>
         <ModalContent>
           <ModalHeader>Edit Request</ModalHeader>
@@ -463,6 +400,59 @@ export default function SlotsRequestTable() {
               Save Changes
             </Button>
             <Button color="danger" onPress={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+  
+      <Modal isOpen={isFilterModalOpen} onOpenChange={setFilterModalOpen}>
+        <ModalContent>
+          <ModalHeader>Filter Requests</ModalHeader>
+          <ModalBody>
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ marginRight: "1rem" }}>Status:</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{ padding: "0.5rem" }}
+              >
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ marginRight: "1rem" }}>Request Date:</label>
+              <div
+                style={{
+                  padding: "0.5rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setCalendarOpen(true)}
+              >
+                {dateFilter ? new Date(dateFilter).toLocaleDateString("en-GB") : "dd-mm-yyyy"}
+              </div>
+              {isCalendarOpen && (
+                <Calendar
+                  aria-label="Date Picker"
+                  defaultValue={dateFilter ? parseDate(dateFilter) : today(getLocalTimeZone())}
+                  onChange={(e) => {
+                    setDateFilter(e.toString());
+                    setCalendarOpen(false);
+                  }}
+              />
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="success" onPress={() => setFilterModalOpen(false)}>
+              Apply Filters
+            </Button>
+            <Button color="danger" onPress={() => setFilterModalOpen(false)}>
               Cancel
             </Button>
           </ModalFooter>

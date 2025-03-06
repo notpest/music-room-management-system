@@ -36,6 +36,7 @@ const equipmentIcons: { [key: string]: JSX.Element } = {
   instrument: <MdOutlinePiano />,
   mic: <FaMicrophone />,
   student: <FaUser />,
+  teacher: <FaUser />,
 };
 
 interface EntryLogTableProps {

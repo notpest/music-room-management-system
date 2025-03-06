@@ -59,6 +59,18 @@ interface SlotConfig {
   enabled: boolean;
 }
 
+export type RequestType = {
+  id: string;
+  user_id: string;
+  status: "approved" | "denied" | "pending";
+  slot_start: string;
+  slot_end: string;
+  request_date: string;
+  response_date: string | null;
+  user_name?: string;
+  band_name?: string;
+};
+
 // Utility functions to generate consistent keys
 const formatDayKey = (date: Date): string => {
   const year = date.getFullYear();
@@ -82,6 +94,7 @@ const getMonday = (d: Date): Date => {
 };
 
 const RBTable = () => {
+  const [requests, setRequests] = useState<RequestType[]>([]);
   // API slots and booking mapping
   const [slots, setSlots] = useState<Slot[]>([]);
   const [bookings, setBookings] = useState<Bookings>({});
@@ -93,7 +106,11 @@ const RBTable = () => {
 
   // Modal and booking states
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<number>(365);
+  
+  // Inside RBTable component, add:
+  const [roomMapping, setRoomMapping] = useState<{ [key: number]: string }>({});
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<number>(365);
+
   const [isModalOpen, setModalOpen] = useState(false);
   // "book" = booking modal; "alreadyBooked" = error modal
   const [modalType, setModalType] = useState<"book" | "alreadyBooked" | null>(null);
@@ -113,6 +130,43 @@ const RBTable = () => {
   const [selectedDate, setSelectedDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
   const [cachedRange, setCachedRange] = useState<{ start: string; end: string } | null>(null);
   const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
+
+  // Fetch room mapping from API
+  const fetchRooms = async () => {
+    try {
+      const res = await axios.get("/api/rooms");
+      // Assume res.data is an array of room objects with properties: id, number, name.
+      const mapping: { [key: number]: string } = {};
+      res.data.forEach((room: { id: string; number: number; name: string }) => {
+        mapping[room.number] = room.id;
+      });
+      setRoomMapping(mapping);
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRequests = async () => {
+    try {
+      const roomId = roomMapping[selectedRoomNumber];
+      if (!roomId) return; // wait until mapping is loaded
+      const res = await axios.get("/api/requests", {
+        params: { room_id: roomId },
+      });
+      setRequests(res.data);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchRequests();
+  }, [selectedRoomNumber, roomMapping]);
+  
 
   // On mount or when session updates, prefill bandId from session.user.band_id
   useEffect(() => {
@@ -159,7 +213,7 @@ const RBTable = () => {
         params: {
           start: rangeStartISO,
           end: rangeEndISO,
-          roomNumber: selectedRoom.toString(),
+          roomNumber: selectedRoomNumber.toString(),
         },
       });
       setSlots(response.data);
@@ -173,7 +227,7 @@ const RBTable = () => {
   // Initial API fetch on mount
   useEffect(() => {
     fetchSlots();
-  }, [currentWeekStart, selectedRoom]);
+  }, [currentWeekStart, selectedRoomNumber]);
 
   const fetchSlotConfigs = async () => {
     try {
@@ -383,12 +437,18 @@ const RBTable = () => {
     const localSlotEnd = new Date(year, month - 1, day, endHour, endMinute);
 
     try {
+      const roomId = roomMapping[selectedRoomNumber];
+      if (!roomId) {
+        alert("Room mapping not loaded yet.");
+        return;
+      }
       await axios.post("/api/requests", {
         user_id: session?.user?.id,
         status: "pending",
         slot_start: localSlotStart.toISOString(),
         slot_end: localSlotEnd.toISOString(),
         band_id: bandId,
+        room_id: roomId,
       });
       setModalOpen(false);
       setBandId("");
@@ -480,12 +540,7 @@ const RBTable = () => {
   }, [days, timeSlots, bookings, slots]);
 
   function toggleRoom(): void {
-    setSelectedRoom((prevRoom) => {
-      const newRoom = prevRoom === 365 ? 366 : 365;
-      // Clear the cache so that a new fetch is forced
-      setCachedRange(null);
-      return newRoom;
-    });
+    setSelectedRoomNumber((prev) => (prev === 365 ? 366 : 365));
   }
 
   // Room details for the tooltip
@@ -505,12 +560,12 @@ const RBTable = () => {
     <div className="flex items-center justify-between w-full my-4 px-4">
       {/* Current Room & Info Icon Centered */}
       <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
-        <span className="ml-40">Current Room: Room {selectedRoom}</span>
+        <span className="ml-40">Current Room: Room {selectedRoomNumber}</span>
       </div>
 
       {/* Switch Room Button on Extreme Right */}
       <Button onPress={toggleRoom} color="primary">
-        Switch to Room {selectedRoom === 365 ? "366" : "365"}
+        Switch to Room {selectedRoomNumber === 365 ? "366" : "365"}
       </Button>
     </div>
 

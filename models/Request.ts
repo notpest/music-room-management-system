@@ -3,6 +3,7 @@ import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../database";
 import User from "./User";
 import Slot from "./Slot"; // Ensure Slot model is imported
+import Room from "./Room";
 
 interface RequestAttributes {
   id: string;
@@ -13,6 +14,7 @@ interface RequestAttributes {
   request_date: Date;
   response_date: Date | null;
   slot_id?: number | null; // New field to track the created slot's id
+  room_id: string; // change from number to string (UUID)
 }
 
 interface RequestCreationAttributes extends Optional<RequestAttributes, "id" | "request_date" | "response_date" | "slot_id"> {}
@@ -26,6 +28,7 @@ class Request extends Model<RequestAttributes, RequestCreationAttributes> implem
   public request_date!: Date;
   public response_date!: Date | null;
   public slot_id!: number | null;
+  public room_id!: string;
 }
 
 Request.init(
@@ -72,6 +75,15 @@ Request.init(
         key: "id",
       },
     },
+    room_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: Room,
+        key: "id",
+      },
+    },
+
   },
   {
     sequelize,
