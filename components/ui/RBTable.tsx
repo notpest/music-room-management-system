@@ -894,11 +894,11 @@ const RBTable = () => {
                 <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
                   <Calendar
                     aria-label="Date Picker"
-                    defaultValue={selectedDate ? selectedDate : today(getLocalTimeZone())}
+                    defaultValue={selectedDate ? selectedDate : (today(getLocalTimeZone()) as any)}
                     onChange={(e) => {
-                      const selectedDate = e.toString();
-                      setDateFilter(selectedDate);
-                      setInputValue(new Date(selectedDate).toLocaleDateString("en-GB")); // Update input value
+                      const selectedDateStr = (e as any).toString();
+                      setDateFilter(selectedDateStr);
+                      setInputValue(new Date(selectedDateStr).toLocaleDateString("en-GB")); // Update input value
                       setCalendarOpen(false);
                     }}
                   />
