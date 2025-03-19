@@ -51,7 +51,7 @@ const equipmentIcons: { [key: string]: JSX.Element } = {
 };
 
 // Status color mapping
-const statusColorMap = {
+const statusColorMap: { [key: string]: "default" | "primary" | "secondary" | "success" | "warning" | "danger" } = {
   Available: "success",
   Booked: "danger",
 };
@@ -193,13 +193,13 @@ const TableEquip = () => {
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <Calendar
                 aria-label="Start Date Picker"
-                defaultValue={startDate}
+                defaultValue={startDate as any}
                 minValue={
-                  selectedEquipment.availability === "Booked"
+                  (selectedEquipment.availability === "Booked"
                     ? parseDate(selectedEquipment.returnDate).add({ days: 1 })
-                    : today(getLocalTimeZone())
+                    : today(getLocalTimeZone())) as any
                 }
-                onChange={setStartDate}
+                onChange={(e: any) => setStartDate(e)}
               />
               </div>
             </ModalBody>
@@ -222,9 +222,9 @@ const TableEquip = () => {
             <ModalBody>
               <Calendar
                 aria-label="End Date Picker"
-                defaultValue={endDate}
-                minValue={startDate}
-                onChange={setEndDate}
+                defaultValue={endDate as any}
+                minValue={startDate as any}
+                onChange={(e: any) => setEndDate(e)}
               />
             </ModalBody>
             <ModalFooter>

@@ -319,7 +319,7 @@ export default function SlotsRequestTable() {
               {isCalendarOpen && (
                 <Calendar
                   aria-label="Date Picker"
-                  defaultValue={dateFilter ? parseDate(dateFilter) : today(getLocalTimeZone())}
+                  defaultValue={dateFilter ? parseDate(dateFilter) : (today(getLocalTimeZone()) as any)}
                   onChange={(e) => {
                     setDateFilter(e.toString());
                     setCalendarOpen(false);

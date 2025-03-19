@@ -71,10 +71,7 @@ const columns = [
   { key: "actions", name: "ACTIONS" },
 ];
 
-const statusColorMap = {
-  active: "success",
-  paused: "danger",
-  vacation: "warning",
+const statusColorMap: { [key in RequestType["status"]]: "default" | "primary" | "secondary" | "success" | "warning" | "danger" } = {
   approved: "success",
   denied: "danger",
   pending: "warning",
@@ -560,14 +557,14 @@ export default function SlotsRequestTable() {
                 <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
                 <Calendar
                   aria-label="Date Picker"
-                  defaultValue={dateFilter ? parseDate(dateFilter) : today(getLocalTimeZone())}
+                  defaultValue={dateFilter ? parseDate(dateFilter) : (today(getLocalTimeZone()) as any)}
                   onChange={(e) => {
                       const selectedDate = e.toString();
                       setDateFilter(selectedDate);
                       setInputValue(new Date(selectedDate).toLocaleDateString("en-GB"));
-                    setCalendarOpen(false);
-                  }}
-              />
+                      setCalendarOpen(false);
+                    }}
+                />
                 </div>
               )}
             </div>
