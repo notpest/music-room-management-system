@@ -48,11 +48,11 @@ def parse_email(msg_raw):
 
 def insert_entry_log(equipment_id):
     """Inserts a new entry_log record into the database using local time."""
-    DB_HOST = os.environ.get("DB_HOST", "localhost")
-    DB_PORT = os.environ.get("DB_PORT", "5432")
-    DB_NAME = os.environ.get("DB_NAME", "music_room")
-    DB_USER = os.environ.get("DB_USER", "postgres")
-    DB_PASSWORD = os.environ.get("DB_PASSWORD", "admin")
+    DB_HOST = "aws-0-ap-south-1.pooler.supabase.com"
+    DB_PORT = "6543"
+    DB_NAME = "postgres"
+    DB_USER = "postgres.uclellqlhjwdsnchlune"
+    DB_PASSWORD = "pp2y13Lch9cUahj6"
 
     conn = psycopg2.connect(
         host=DB_HOST,
