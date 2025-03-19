@@ -13,6 +13,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  Chip,
 } from "@nextui-org/react";
 import { Calendar } from "@heroui/react";
 import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
@@ -47,6 +48,12 @@ const equipmentIcons: { [key: string]: JSX.Element } = {
   guitar: <FaGuitar />,
   keyboard: <FaKeyboard />,
   mic: <FaMicrophone />,
+};
+
+// Status color mapping
+const statusColorMap = {
+  Available: "success",
+  Booked: "danger",
 };
 
 // Equipment table component
@@ -124,7 +131,11 @@ const TableEquip = () => {
       case "category":
         return equipmentIcons[item.category.toLowerCase()] || item.category;
       case "availability":
-        return item.availability;
+        return (
+          <Chip className="capitalize" color={statusColorMap[item.availability]} size="sm" variant="flat">
+            {item.availability}
+          </Chip>
+        );
       case "returnDate":
         return item.returnDate;
       case "actions":
@@ -153,7 +164,6 @@ const TableEquip = () => {
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
       <Table
         aria-label="Equipment Booking Table"
-        className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white"
       >
         <TableHeader>
           {columns.map((column) => (
@@ -180,6 +190,7 @@ const TableEquip = () => {
           <ModalContent>
             <ModalHeader>Pick Start Date for {selectedEquipment.name}</ModalHeader>
             <ModalBody>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <Calendar
                 aria-label="Start Date Picker"
                 defaultValue={startDate}
@@ -190,6 +201,7 @@ const TableEquip = () => {
                 }
                 onChange={setStartDate}
               />
+              </div>
             </ModalBody>
             <ModalFooter>
               <Button color="primary" onPress={handleStartDateConfirm}>

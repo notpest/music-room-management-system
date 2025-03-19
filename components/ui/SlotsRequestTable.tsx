@@ -19,12 +19,19 @@ import {
   Button,
   Select,
   SelectItem,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Pagination,
+  ButtonGroup,
 } from "@nextui-org/react";
 import axios from "axios";
 import { EditIcon } from "./EditIcon";
 import { DeleteIcon } from "./DeleteIcon";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter, FaCalendarAlt, FaChevronDown } from "react-icons/fa";
 import { Calendar } from "@heroui/react";
+import { ToggleButtonGroup, ToggleButton } from "@mui/material";
 import { parseDate, today } from "@internationalized/date";
 
 // --- Icon Components for Approve and Deny Actions ---
@@ -64,7 +71,10 @@ const columns = [
   { key: "actions", name: "ACTIONS" },
 ];
 
-const statusColorMap: { [key in RequestType["status"]]: "success" | "danger" | "warning" } = {
+const statusColorMap = {
+  active: "success",
+  paused: "danger",
+  vacation: "warning",
   approved: "success",
   denied: "danger",
   pending: "warning",
@@ -104,17 +114,16 @@ export default function SlotsRequestTable() {
   // State for selected room id – default is room 365.
   // Replace these with your actual room UUIDs.
   const [selectedRoom, setSelectedRoom] = useState<string>("25b48b88-7e94-422b-b3b4-97c78aa6966a");
-
+  const [roomAlignment, setRoomAlignment] = useState<string>("365");
   const [defaultStartTime, setDefaultStartTime] = useState<string>("");
   const [defaultEndTime, setDefaultEndTime] = useState<string>("");
   const [requests, setRequests] = useState<RequestType[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
   const [isCalendarOpen, setCalendarOpen] = useState(false);
-
-  // Edit modal states
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RequestType | null>(null);
   const [editForm, setEditForm] = useState({
@@ -122,6 +131,33 @@ export default function SlotsRequestTable() {
     slot_start: "",
     slot_end: "",
   });
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Filtered requests based on search, status, and date
+  const filteredRequests = requests.filter((req) => {
+    const matchesSearch = (req.user_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || req.status === statusFilter;
+    const matchesDate = dateFilter === "" || req.request_date.startsWith(dateFilter);
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  // Paginated requests for the current page
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Sync inputValue with dateFilter
+  useEffect(() => {
+    if (dateFilter) {
+      setInputValue(new Date(dateFilter).toLocaleDateString("en-GB"));
+    } else {
+      setInputValue("");
+    }
+  }, [dateFilter]);
 
   // Fetch requests from API with room_id filtering
   const fetchRequests = async () => {
@@ -202,13 +238,6 @@ export default function SlotsRequestTable() {
     }
   };
   
-  const filteredRequests = requests.filter((req) => {
-    const matchesSearch = (req.user_name || "").toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || req.status === statusFilter;
-    const matchesDate = dateFilter === "" || req.request_date.startsWith(dateFilter);
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-  
   const renderCell = (req: RequestType, columnKey: string) => {
     switch (columnKey) {
       case "user_name":
@@ -217,7 +246,12 @@ export default function SlotsRequestTable() {
         return <span>{req.band_name || "N/A"}</span>;
       case "status":
         return (
-          <Chip color={statusColorMap[req.status]}>
+          <Chip
+            className="capitalize"
+            color={statusColorMap[req.status]}
+            size="sm"
+            variant="flat"
+          >
             {req.status.toUpperCase()}
           </Chip>
         );
@@ -271,21 +305,45 @@ export default function SlotsRequestTable() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
   
-  // (Optionally, you could add a toggle button here to switch selectedRoom between room 365 and 366.)
-  // For example:
+  const handleRoomAlignment = (newAlignment: string) => {
+    setRoomAlignment(newAlignment);
+    setSelectedRoom(newAlignment === "365" ? "25b48b88-7e94-422b-b3b4-97c78aa6966a" : "3abca8d0-8c88-437c-b7fd-9d5c67fcfee0");
+  };
+
   const toggleRoom = () => {
-    setSelectedRoom((prev) => (prev === "25b48b88-7e94-422b-b3b4-97c78aa6966a" ? "3abca8d0-8c88-437c-b7fd-9d5c67fcfee0" : "25b48b88-7e94-422b-b3b4-97c78aa6966a"));
+    setSelectedRoom((prev) =>
+      prev === "25b48b88-7e94-422b-b3b4-97c78aa6966a"
+        ? "3abca8d0-8c88-437c-b7fd-9d5c67fcfee0"
+        : "25b48b88-7e94-422b-b3b4-97c78aa6966a"
+    );
   };
   
   return (
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      <div className="flex items-center justify-between w-full my-10 px-4">
-        <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
-          <span>Current Room: Room {selectedRoom === "uuid365" ? 365 : 366}</span>
-        </div>
-        <Button onPress={toggleRoom} color="primary">
-          Switch Room {selectedRoom === "uuid365" ? "366" : "365"}
+      {/* Room Toggle Button */}
+      <div className="flex items-center w-full my-4 px-4 justify-start">
+  <Dropdown placement="bottom-start">
+    <DropdownTrigger>
+            <Button className="flex items-center gap-2 bg-[#18181b]">
+        {selectedRoom === "25b48b88-7e94-422b-b3b4-97c78aa6966a" ? "Room 365" : "Room 366"}
+        <FaChevronDown />
         </Button>
+    </DropdownTrigger>
+    <DropdownMenu
+      disallowEmptySelection
+      aria-label="Room Selection"
+      className="max-w-[200px] min-w-[100px]"
+      selectedKeys={new Set([selectedRoom])}
+      selectionMode="single"
+      onSelectionChange={(keys) => {
+        const newRoom = Array.from(keys)[0] as string;
+        handleRoomAlignment(newRoom);
+      }}
+    >
+      <DropdownItem key="365">Room 365</DropdownItem>
+      <DropdownItem key="366">Room 366</DropdownItem>
+    </DropdownMenu>
+  </Dropdown>
       </div>
   
       <div className="flex items-center my-10 space-x-4" style={{ width: "90%" }}>
@@ -305,19 +363,16 @@ export default function SlotsRequestTable() {
         </Tooltip>
       </div>
   
-      <Table
-        aria-label="Requests Table"
-        className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white"
-      >
+      <Table aria-label="Requests Table">
         <TableHeader>
           {columns.map((col) => (
-            <TableColumn key={col.key} className="bg-[#1a2a47] font-semibold">
+            <TableColumn key={col.key} className="bg-[#1a2a47] font-sans font-semibold text-sm">
               {col.name}
             </TableColumn>
           ))}
         </TableHeader>
         <TableBody>
-          {filteredRequests.map((req) => (
+          {paginatedRequests.map((req) => (
             <TableRow key={req.id} style={{ height: "50px" }}>
               {columns.map((col) => (
                 <TableCell key={col.key}>
@@ -328,6 +383,17 @@ export default function SlotsRequestTable() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination with < and > buttons */}
+      <div className="flex justify-center mt-4">
+        <Pagination
+          total={Math.ceil(filteredRequests.length / itemsPerPage)}
+          initialPage={1}
+          page={currentPage}
+          onChange={(page) => setCurrentPage(page)}
+          showControls
+        />
+      </div>
   
       <Modal isOpen={isEditModalOpen} onOpenChange={setEditModalOpen}>
         <ModalContent>
@@ -410,41 +476,99 @@ export default function SlotsRequestTable() {
         <ModalContent>
           <ModalHeader>Filter Requests</ModalHeader>
           <ModalBody>
+            {/* Status Filter Dropdown */}
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ marginRight: "1rem" }}>Status:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ padding: "0.5rem" }}
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button className="capitalize" variant="bordered">
+                    {statusFilter === "all" ? "All" : statusFilter}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Status filter"
+                  closeOnSelect={true}
+                  selectedKeys={new Set([statusFilter])}
+                  selectionMode="single"
+                  variant="flat"
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setStatusFilter(selected);
+                  }}
               >
-                <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="denied">Denied</option>
-              </select>
+                  <DropdownItem key="all">All</DropdownItem>
+                  <DropdownItem key="pending" className="bg-warning-100">
+                    Pending
+                  </DropdownItem>
+                  <DropdownItem key="approved" className="bg-success-100">
+                    Approved
+                  </DropdownItem>
+                  <DropdownItem key="denied" className="bg-danger-100">
+                    Denied
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
+
+            {/* Date Filter Input with Calendar Icon */}
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ marginRight: "1rem" }}>Request Date:</label>
-              <div
-                style={{
-                  padding: "0.5rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-                onClick={() => setCalendarOpen(true)}
-              >
-                {dateFilter ? new Date(dateFilter).toLocaleDateString("en-GB") : "dd-mm-yyyy"}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  placeholder="dd/mm/yyyy"
+                  value={inputValue}
+                  onChange={(e) => {
+                    setInputValue(e.target.value);
+                  }}
+                  onBlur={() => {
+                    // Validate the input when the field loses focus
+                    const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+                    if (regex.test(inputValue)) {
+                      const [day, month, year] = inputValue.split("/");
+                      const isoDate = new Date(`${year}-${month}-${day}`).toISOString();
+                      setDateFilter(isoDate);
+                    } else {
+                      // If the input is invalid, reset to the last valid date or empty
+                      setInputValue(dateFilter ? new Date(dateFilter).toLocaleDateString("en-GB") : "");
+                    }
+                  }}
+                  onKeyPress={(e) => {
+                    // Validate the input when the user presses Enter
+                    if (e.key === "Enter") {
+                      const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+                      if (regex.test(inputValue)) {
+                        const [day, month, year] = inputValue.split("/");
+                        const isoDate = new Date(`${year}-${month}-${day}`).toISOString();
+                        setDateFilter(isoDate);
+                      } else {
+                        setInputValue(dateFilter ? new Date(dateFilter).toLocaleDateString("en-GB") : "");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  isIconOnly
+                  onPress={() => setCalendarOpen(true)}
+                  className="bg-transparent"
+                >
+                  <FaCalendarAlt className="text-lg text-default-400" />
+                </Button>
               </div>
               {isCalendarOpen && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
                 <Calendar
                   aria-label="Date Picker"
                   defaultValue={dateFilter ? parseDate(dateFilter) : today(getLocalTimeZone())}
                   onChange={(e) => {
-                    setDateFilter(e.toString());
+                      const selectedDate = e.toString();
+                      setDateFilter(selectedDate);
+                      setInputValue(new Date(selectedDate).toLocaleDateString("en-GB"));
                     setCalendarOpen(false);
                   }}
               />
+                </div>
               )}
             </div>
           </ModalBody>

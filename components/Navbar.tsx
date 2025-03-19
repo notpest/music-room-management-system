@@ -36,6 +36,8 @@ const NavbarComponent = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -45,6 +47,22 @@ const NavbarComponent = () => {
       router.push("/");
     }
   }, [status, pathname, router]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY < lastScrollY) {
+        setShowNavbar(true);
+      } else {
+        setShowNavbar(false);
+      }
+      setLastScrollY(window.scrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [lastScrollY]);
 
   const handleLogin = async () => {
     const result = await signIn("credentials", {
@@ -65,7 +83,7 @@ const NavbarComponent = () => {
   };
 
   return (
-    <div>
+    <div className={`transition-transform duration-300 ${showNavbar ? "translate-y-0" : "-translate-y-full"}`}>
       <Navbar isBordered className="w-full bg-black-100 backdrop-blur-lg">
           {/* Menu toggle on the left */}
           <NavbarContent justify="start" style={{ marginLeft: "1rem" }}>
@@ -142,6 +160,16 @@ const NavbarComponent = () => {
               <NavbarMenuItem>
                 <Link href="/EntryLog" className={!session ? "opacity-50" : ""}>
                   Entry Log
+                </Link>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <Link href="/Dashboard" className={!session ? "opacity-50" : ""}>
+                  Dashboard
+                </Link>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <Link href="/Register " className={!session ? "opacity-50" : ""}>
+                  Register
                 </Link>
               </NavbarMenuItem>
             </>

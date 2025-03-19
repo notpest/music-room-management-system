@@ -2,7 +2,14 @@
 
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import axios from 'axios';
-import { Button, Input, Table, TableBody, TableCell, TableHeader, TableRow, TableColumn } from '@nextui-org/react';
+import DashboardTable from "../../../components/ui/DashboardTable";
+import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
+
+const NavbarComponent = dynamic(() => import("../../../components/Navbar"), {
+  ssr: false,
+  loading: () => <div className="h-[64px] w-full bg-background/60 backdrop-blur-lg" />,
+});
 
 interface SlotConfig {
   id: number;
@@ -16,6 +23,12 @@ export default function AdminDashboard() {
   const [newStart, setNewStart] = useState("");
   const [newEnd, setNewEnd] = useState("");
   const [newEnabled, setNewEnabled] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7; // Adjust based on table height
+
+  useEffect(() => {
+    fetchConfigs();
+  }, []);
 
   const fetchConfigs = async () => {
     try {
@@ -26,11 +39,7 @@ export default function AdminDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchConfigs();
-  }, []);
-
-  const addConfig = async () => {
+  const addConfig = async (start: string, end: string) => {
     try {
       await axios.post("/api/slotconfig", {
         start_time: newStart,
@@ -57,47 +66,29 @@ export default function AdminDashboard() {
     }
   };
 
-  return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Admin Dashboard: Slot Configuration</h1>
-      <div style={{ marginBottom: "1rem" }}>
-        <Input
-          placeholder="Start Time (HH:mm)"
-          value={newStart}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewStart(e.target.value)}
-        />
-        <Input
-          placeholder="End Time (HH:mm)"
-          value={newEnd}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewEnd(e.target.value)}
-        />
-        <Button onPress={addConfig}>Add Slot</Button>
-      </div>
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
-      <Table>
-      <TableHeader>
-            <TableColumn>ID</TableColumn>
-            <TableColumn>Start Time</TableColumn>
-            <TableColumn>End Time</TableColumn>
-            <TableColumn>Enabled</TableColumn>
-            <TableColumn>Actions</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {configs.map((config) => (
-            <TableRow key={config.id}>
-              <TableCell>{config.id}</TableCell>
-              <TableCell>{config.start_time}</TableCell>
-              <TableCell>{config.end_time}</TableCell>
-              <TableCell>{config.enabled ? "Yes" : "No"}</TableCell>
-              <TableCell>
-                <Button onPress={() => toggleEnabled(config.id, config.enabled)}>
-                  Toggle
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+  return (
+    <motion.div 
+      className="h-screen bg-black-100 flex flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <NavbarComponent />
+      <div className="container mx-auto p-4 flex-grow flex items-center justify-center">
+        <DashboardTable 
+          configs={configs} 
+          fetchConfigs={fetchConfigs} 
+          toggleEnabled={toggleEnabled} 
+          addConfig={addConfig} 
+          currentPage={currentPage} 
+          itemsPerPage={itemsPerPage} 
+          handlePageChange={handlePageChange} 
+        />
+      </div>
+    </motion.div>
   );
 }

@@ -18,14 +18,18 @@ import {
   Select,
   SelectItem,
   Tooltip,
+  ButtonGroup,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@nextui-org/react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
-import { FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
+import { FaCalendarAlt, FaInfoCircle, FaChevronDown } from "react-icons/fa";
 import { Calendar } from "@heroui/react";
 import { today, getLocalTimeZone, parseDate, CalendarDate } from "@internationalized/date";
-
 
 // Interfaces
 interface Slot {
@@ -390,6 +394,16 @@ const RBTable = () => {
       setModalOpen(true);
     }
   };
+  const [roomAlignment, setRoomAlignment] = React.useState<string | null>("365");
+  const handleRoomAlignment = (
+    event: any,
+    newAlignment: string | null
+  ) => {
+    if (newAlignment !== null) {
+      setRoomAlignment(newAlignment);
+      setSelectedRoomNumber(parseInt(newAlignment, 10)); // Update the selected room number
+    }
+  };
 
   // Helper: Parse a 12‑hour time string (e.g. "07:30 AM") into an object { hour, minute }
   const parseTime12 = (timeStr: string): { hour: number; minute: number } | null => {
@@ -539,9 +553,9 @@ const RBTable = () => {
     return mergeInfo;
   }, [days, timeSlots, bookings, slots]);
 
-  function toggleRoom(): void {
+  const toggleRoom = () => {
     setSelectedRoomNumber((prev) => (prev === 365 ? 366 : 365));
-  }
+  };
 
   // Room details for the tooltip
   const roomDetails: { [key: number]: string } = {
@@ -550,30 +564,53 @@ const RBTable = () => {
   };
 
   const [isCalendarOpen, setCalendarOpen] = useState(false);
+  const [inputValue, setInputValue] = useState<string>("");
+
 
   function setTempDate(e: CalendarDate): void {
     throw new Error("Function not implemented.");
   }
 
-  return (
-    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-    <div className="flex items-center justify-between w-full my-4 px-4">
-      {/* Current Room & Info Icon Centered */}
-      <div className="flex-1 flex justify-center items-center space-x-2 text-lg font-semibold text-white">
-        <span className="ml-40">Current Room: Room {selectedRoomNumber}</span>
-      </div>
+  function setDateFilter(isoDate: string) {
+    const date = new Date(isoDate);
+    setSelectedDate(parseDate(date.toISOString().split("T")[0]));
+  }
 
-      {/* Switch Room Button on Extreme Right */}
-      <Button onPress={toggleRoom} color="primary">
-        Switch to Room {selectedRoomNumber === 365 ? "366" : "365"}
+  return (
+    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh", paddingBottom: "0px" }}>
+      {/* Room Toggle Button */}
+      <div className="flex items-center w-full my-4 px-4 justify-start">
+  <Dropdown placement="bottom-start" className="bg-[#0d1a33]">
+    <DropdownTrigger>
+      <Button className="flex items-center gap-2 bg-[#18181b]">
+        {selectedRoomNumber.toString() === "365" ? "Room 365" : "Room 366"}
+        <FaChevronDown />
       </Button>
+    </DropdownTrigger>
+    <DropdownMenu
+      disallowEmptySelection
+      aria-label="Room Selection"
+      className="max-w-[200px] min-w-[100px]"
+      selectedKeys={new Set([selectedRoomNumber])}
+      selectionMode="single"
+      onSelectionChange={(keys) => {
+        const newRoom = Array.from(keys)[0] as string;
+        handleRoomAlignment(null, newRoom);
+      }}
+    >
+      <DropdownItem key="365">Room 365</DropdownItem>
+      <DropdownItem key="366">Room 366</DropdownItem>
+    </DropdownMenu>
+  </Dropdown>
     </div>
 
-    <Table className="border border-gray-300 rounded-lg shadow-md text-center bg-[#0d1a33] text-white">
+
+
+      <Table className="border rounded-lg shadow-md text-center bg-[#0d1a33] text-white font-sans font-semibold text-sm">
       <TableHeader>
       {[
         <TableColumn key="time" className="w-[100px] bg-[#1a2a47] font-semibold">
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between font-sans font-semibold text-sm">
             <span>Time</span>
             <div className="flex items-center space-x-2">
               <Button isIconOnly size="sm" className="bg-[#1a2a47] font-semibold" onPress={() => setWeekPickerOpen(true)}>
@@ -587,7 +624,7 @@ const RBTable = () => {
         </TableColumn>,
       ].concat(
         days.map((day) => (
-          <TableColumn key={day.key} className="w-[200px] bg-[#1a2a47] font-semibold">
+        <TableColumn key={day.key} className="w-[200px] bg-[#1a2a47]  ">
             <div className="flex items-center justify-between">
               <span>{day.display}</span>
               {day.key === days[days.length - 1].key && (
@@ -611,9 +648,9 @@ const RBTable = () => {
                     padding: 0,
                   }}
                 >
-                  {(rowIndex === 0 ||
-                    time.display !== timeSlots[rowIndex - 1].end) && (
+                  {(rowIndex === 0 || time.display !== timeSlots[rowIndex - 1].end) && (
                     <span
+              className="flex items-center font-sans font-semibold text-sm text-[#a1a1aa]"
                       style={{
                         position: "absolute",
                         top: 0,
@@ -628,14 +665,14 @@ const RBTable = () => {
                     </span>
                   )}
                   <span
+            className="flex items-center font-sans font-semibold text-sm text-[#a1a1aa]"
                     style={{
                       position: "absolute",
                       bottom: 0,
                       left: 0,
                       right: 0,
                       textAlign: "center",
-                      transform:
-                        rowIndex === timeSlots.length - 1 ? "none" : "translateY(50%)",
+                      transform: rowIndex === timeSlots.length - 1 ? "none" : "translateY(50%)",
                       padding: "0 4px",
                     }}
                   >
@@ -809,47 +846,84 @@ const RBTable = () => {
         <ModalContent>
           <ModalHeader>Select Week</ModalHeader>
           <ModalBody>
-      <div style={{ marginBottom: "1rem" }}>
-        <label style={{ marginRight: "1rem" }}>Request Date:</label>
-        <div
-          style={{
-            padding: "0.5rem",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-          onClick={() => setCalendarOpen(true)}
-        >
-          {tempWeekDate ? tempWeekDate.toString() : "dd-mm-yyyy"}
-        </div>
-        {isCalendarOpen && (
-          <Calendar
-            aria-label="Date Picker"
-            defaultValue={selectedDate ? selectedDate : (today(getLocalTimeZone()) as any)}
-            onChange={(e) => setTempWeekDate(e as any)} // Only update tempDate, not selectedDate yet
+            <div className="flex flex-col items-center gap-4">
+              <label className="text-lg font-semibold">Request Date:</label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="text"
+            placeholder="dd/mm/yyyy"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value); // Allow free typing
+            }}
+            onBlur={() => {
+              // Validate the input when the field loses focus
+              const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+              if (regex.test(inputValue)) {
+                const [day, month, year] = inputValue.split("/");
+                const isoDate = new Date(`${year}-${month}-${day}`).toISOString();
+                setDateFilter(isoDate);
+              } else {
+                // If the input is invalid, reset to the last valid date or empty
+                setInputValue(selectedDate ? new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day).toLocaleDateString("en-GB") : "");
+              }
+            }}
+            onKeyPress={(e) => {
+              // Validate the input when the user presses Enter
+              if (e.key === "Enter") {
+                const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+                if (regex.test(inputValue)) {
+                  const [day, month, year] = inputValue.split("/");
+                  const isoDate = new Date(`${year}-${month}-${day}`).toISOString();
+                  setDateFilter(isoDate);
+                } else {
+                  setInputValue(selectedDate ? new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day).toLocaleDateString("en-GB") : "");
+                }
+              }
+            }}
           />
-        )}
-      </div>
+          <Button
+            isIconOnly
+            onPress={() => setCalendarOpen(true)}
+            className="bg-transparent"
+          >
+            <FaCalendarAlt className="text-lg text-default-400" />
+          </Button>
+            </div>
+              {isCalendarOpen && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
+                  <Calendar
+                    aria-label="Date Picker"
+                    defaultValue={selectedDate ? selectedDate : today(getLocalTimeZone())}
+                    onChange={(e) => {
+                      const selectedDate = e.toString();
+                      setDateFilter(selectedDate);
+                      setInputValue(new Date(selectedDate).toLocaleDateString("en-GB")); // Update input value
+                      setCalendarOpen(false);
+                    }}
+                  />
+                </div>
+              )}
+          </div>
           </ModalBody>
           <ModalFooter>
             <Button
               color="danger"
               onPress={() => {
-                setTempDate(selectedDate); // Reset temp date
+                setInputValue(selectedDate ? new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day).toLocaleDateString("en-GB") : ""); // Reset input value
                 setWeekPickerOpen(false); // Close modal
               }}
             >
-                    Cancel
-                  </Button>
+              Cancel
+            </Button>
             <Button
               color="success"
               onPress={() => {
-                if (tempWeekDate) {
-                  setSelectedDate(tempWeekDate); // Confirm selection
-                }
-                setWeekPickerOpen(false); // Close modal
-                handleWeekSelect(); // Call function to process selected date
-              }}
+              if (inputValue) {
+                setSelectedDate(parseDate(new Date(inputValue.split("/").reverse().join("-")).toISOString().split("T")[0])); // Confirm selection
+                    }
+                    setWeekPickerOpen(false); // Close modal
+                  }}
             >
               Select
             </Button>

@@ -89,12 +89,13 @@ const Event: React.FC<EventProps> = ({
         </div>
 
         {/* Image Section */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4" style={{ height: "400px", width: "600px" }}>
           <Image
             src={imageSrc}
             alt={altText}
             className="rounded-lg shadow-lg"
             placeholder="blur" // Optional: Adds a blur placeholder for optimized images
+            style={{ height: "100%", width: "100%", objectFit: "cover" }}
           />
         </div>
       </div>
