@@ -20,6 +20,7 @@ import CIcon from '@coreui/icons-react';
 import { cilReload } from '@coreui/icons';
 import { Calendar } from "@heroui/react";
 import { parseDate, today } from "@internationalized/date";
+import type { CalendarDate } from "@internationalized/date";
 import axios from "axios";
 import { motion } from "framer-motion";
 
@@ -149,9 +150,9 @@ const EntryLogPage = () => {
                   {isCalendarOpen && (
                     <Calendar
                       aria-label="Date Picker"
-                      defaultValue={filterDate ? parseDate(filterDate) : today(getLocalTimeZone())}
+                      defaultValue={filterDate ? parseDate(filterDate) : (today(getLocalTimeZone()) as any)}
                       onChange={(e) => {
-                        setFilterDate(e.toString());
+                        setFilterDate((e as any).toString());
                         setCalendarOpen(false);
                       }}
                     />
