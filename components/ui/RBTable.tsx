@@ -176,8 +176,7 @@ const RBTable = () => {
   useEffect(() => {
     if (session && session.user) {
       if (session.user.role !== "admin") {
-        const userBandId = (session.user as any).band_id || "";
-        setBandId(userBandId);
+        setBandId((session.user as any).band_id || "");
       }
     }
   }, [session]);
@@ -775,7 +774,7 @@ const RBTable = () => {
                       ? "Enter Band ID"
                       : session?.user?.band_id || "Band ID"
                   }
-                  value={session?.user?.role === "admin" ? bandId : (session?.user?.band_id || "")}
+                  value={session?.user?.role === "admin" ? bandId : session?.user?.band_id || ""}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     if (session?.user?.role === "admin") {
                       setBandId(e.target.value);
