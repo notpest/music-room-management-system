@@ -517,8 +517,8 @@ const RBTable = () => {
         const [tHour, tMinute] = time.key.split(":").map(Number);
         const cellDateTime = new Date(dYear, dMonth - 1, dDay, tHour, tMinute);
         const apiSlot = slots.find((s) => {
-          const slotStart = new Date(s.slot_start);
-          const slotEnd = new Date(s.slot_end);
+          const slotStart = parseLocalTime(s.slot_start);
+          const slotEnd = parseLocalTime(s.slot_end);
           return cellDateTime >= slotStart && cellDateTime < slotEnd;
         });
         return {
