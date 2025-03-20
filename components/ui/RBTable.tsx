@@ -230,7 +230,6 @@ const RBTable = () => {
   // Initial API fetch on mount
   useEffect(() => {
     fetchSlots();
-    fetchRequests();
   }, [currentWeekStart, selectedRoomNumber]);
 
   const fetchSlotConfigs = async () => {
