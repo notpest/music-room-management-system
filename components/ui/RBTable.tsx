@@ -172,14 +172,14 @@ const RBTable = () => {
   }, [selectedRoomNumber, roomMapping]);
   
 
-  // On mount or when session updates, prefill bandId from session.user.band_id
-  useEffect(() => {
-    if (session && session.user) {
-      if (session.user.role !== "admin") {
-        setBandId((session.user as any).band_id || "");
-      }
-    }
-  }, [session]);
+  // // On mount or when session updates, prefill bandId from session.user.band_id
+  // useEffect(() => {
+  //   if (session && session.user) {
+  //     if (session.user.role !== "admin") {
+  //       setBandId((session.user as any).band_id || "");
+  //     }
+  //   }
+  // }, [session]);
 
    // Update the current week start based on the selected date
   useEffect(() => {
