@@ -14,16 +14,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ message: 'Error fetching slot configurations' });
       }
       break;
-    case 'POST':
-      try {
-        const { start_time, end_time, enabled } = req.body;
-        const newConfig = await SlotConfig.create({ start_time, end_time, enabled });
-        res.status(201).json(newConfig);
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error creating slot configuration' });
-      }
-      break;
+    
+      case 'POST':
+        try {
+          let { start_time, end_time, enabled } = req.body;
+      
+          if (!start_time || !end_time) {
+            return res.status(400).json({ message: "Start time and end time are required." });
+          }
+      
+          const newConfig = await SlotConfig.create({ start_time, end_time, enabled });
+          res.status(201).json(newConfig);
+        } catch (error) {
+          console.error("Error creating slot configuration:", error);
+          res.status(500).json({ message: "Error creating slot configuration" });
+        }
+        break;
+    
     case 'PUT':
       try {
         const { id, start_time, end_time, enabled } = req.body;

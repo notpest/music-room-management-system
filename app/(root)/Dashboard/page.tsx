@@ -39,7 +39,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const addConfig = async (start: string, end: string) => {
+  const addConfig = async () => {
+    if (!newStart || !newEnd) {
+      console.error("Start time and end time are required.");
+      return;
+    }
+  
     try {
       await axios.post("/api/slotconfig", {
         start_time: newStart,
@@ -50,9 +55,9 @@ export default function AdminDashboard() {
       setNewEnd("");
       fetchConfigs();
     } catch (error) {
-      console.error(error);
+      console.error("Error creating slot configuration:", error);
     }
-  };
+  };  
 
   const toggleEnabled = async (id: number, current: boolean) => {
     try {
