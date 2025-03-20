@@ -285,6 +285,15 @@ const RBTable = () => {
     return daysArray;
   };  
   
+  // Helper function to parse time as local
+  const parseLocalTime = (timeValue: string | Date): Date => {
+    if (timeValue instanceof Date) {
+      return timeValue;
+    }
+    const cleaned = timeValue.endsWith("Z") ? timeValue.slice(0, -1) : timeValue;
+    return new Date(cleaned);
+  };  
+
   // When slots or the selected week change, rebuild the days, times and booking mapping.
   useEffect(() => {
     if (timeSlots.length === 0) return;
@@ -295,8 +304,8 @@ const RBTable = () => {
 
     // Override with API slots (if any fall within the week), marking all time cells that fall within the booking range.
     slots.forEach((slot) => {
-      const slotStart = new Date(slot.slot_start);
-      const slotEnd = new Date(slot.slot_end);
+      const slotStart = parseLocalTime(slot.slot_start);
+      const slotEnd = parseLocalTime(slot.slot_end);
       // Loop over each day in the week
       weekDays.forEach((day) => {
         // Only process the day if it matches the slot's day.
