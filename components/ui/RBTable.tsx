@@ -775,7 +775,7 @@ const RBTable = () => {
                       ? "Enter Band ID"
                       : session?.user?.band_id || "Band ID"
                   }
-                  value={session?.user?.role === "admin" ? bandId : undefined}
+                  value={session?.user?.role === "admin" ? bandId : (session?.user?.band_id || "")}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     if (session?.user?.role === "admin") {
                       setBandId(e.target.value);
