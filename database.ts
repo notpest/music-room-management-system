@@ -1,6 +1,6 @@
 // database.ts
 import { Sequelize } from 'sequelize';
-import * as pg from "pg";
+import pg from 'pg';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -10,6 +10,7 @@ console.log("DATABASE_URL:", connectionString);
 
 const sequelize = new Sequelize(connectionString, {
   dialect: "postgres",
+  dialectModule: pg,
   dialectOptions: {
     ssl: { require: true, rejectUnauthorized: false },
   },
