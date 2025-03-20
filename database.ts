@@ -2,7 +2,13 @@
 import { Sequelize } from 'sequelize';
 import * as pg from "pg";
 
-const sequelize = new Sequelize(process.env.DATABASE_URL!, {
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not set");
+}
+console.log("DATABASE_URL:", connectionString);
+
+const sequelize = new Sequelize(connectionString, {
   dialect: "postgres",
   dialectOptions: {
     ssl: { require: true, rejectUnauthorized: false },
