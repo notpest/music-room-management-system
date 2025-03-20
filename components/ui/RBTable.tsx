@@ -175,11 +175,10 @@ const RBTable = () => {
   // On mount or when session updates, prefill bandId from session.user.band_id
   useEffect(() => {
     if (session && session.user) {
-      // Make sure to have band_id in your session (e.g., via your NextAuth callbacks)
-      // For non-admin users, we set the bandId and disable editing (handled in the input below).
-      // For admin users, we prefill bandId but allow editing.
-      const userBandId = (session.user as any).band_id || "";
-      setBandId(userBandId);
+      if (session.user.role !== "admin") {
+        const userBandId = (session.user as any).band_id || "";
+        setBandId(userBandId);
+      }
     }
   }, [session]);
 
