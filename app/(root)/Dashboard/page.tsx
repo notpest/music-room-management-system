@@ -39,20 +39,18 @@ export default function AdminDashboard() {
     }
   };
 
-  const addConfig = async () => {
-    if (!newStart || !newEnd) {
+  const addConfig = async (start: string, end: string) => {
+    if (!start || !end) {
       console.error("Start time and end time are required.");
       return;
     }
   
     try {
       await axios.post("/api/slotconfig", {
-        start_time: newStart,
-        end_time: newEnd,
+        start_time: start,
+        end_time: end,
         enabled: newEnabled,
       });
-      setNewStart("");
-      setNewEnd("");
       fetchConfigs();
     } catch (error) {
       console.error("Error creating slot configuration:", error);
