@@ -22,4 +22,9 @@ const sequelize = new Sequelize(connectionString, {
   },
 });
 
+// Test the connection
+sequelize.authenticate()
+  .then(() => console.log("Database connection established successfully"))
+  .catch((err) => console.error("Error connecting to the database:", err));
+
 export default sequelize;
