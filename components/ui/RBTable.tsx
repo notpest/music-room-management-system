@@ -765,24 +765,16 @@ const RBTable = () => {
               <ModalHeader>Request Slot</ModalHeader>
               <ModalBody>
                 <Input
-                  isClearable={session?.user?.role === "admin"}
+                  isClearable
                   variant="underlined"
                   fullWidth
                   label="Band ID"
-                  placeholder={
-                    session?.user?.role === "admin"
-                      ? "Enter Band ID"
-                      : session?.user?.band_id || "Band ID"
+                  placeholder="Enter Band ID"
+                  value={bandId}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setBandId(e.target.value)
                   }
-                  value={session?.user?.role === "admin" ? bandId : session?.user?.band_id || ""}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    if (session?.user?.role === "admin") {
-                      setBandId(e.target.value);
-                    }
-                  }}
                   onClear={() => setBandId("")}
-                  // For non-admin users, disable editing of Band ID.
-                  readOnly={session?.user?.role !== "admin"}
                 />
                 <Select
                   label="Slot Start Time"
