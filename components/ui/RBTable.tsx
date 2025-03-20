@@ -304,8 +304,13 @@ const RBTable = () => {
 
     // Override with API slots (if any fall within the week), marking all time cells that fall within the booking range.
     slots.forEach((slot) => {
+      console.log("Slot:", slot);
+
       const slotStart = parseLocalTime(slot.slot_start);
       const slotEnd = parseLocalTime(slot.slot_end);
+
+      console.log("Parsed Slot Start:", slot.slot_start);
+      console.log("Parsed Slot End:", slot.slot_end);
       // Loop over each day in the week
       weekDays.forEach((day) => {
         // Only process the day if it matches the slot's day.
