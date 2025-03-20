@@ -567,6 +567,8 @@ const RBTable = () => {
 
   const toggleRoom = () => {
     setSelectedRoomNumber((prev) => (prev === 365 ? 366 : 365));
+    fetchSlots();
+    fetchRequests();
   };
 
   // Room details for the tooltip
