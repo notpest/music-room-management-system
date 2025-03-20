@@ -169,6 +169,7 @@ const RBTable = () => {
   
   useEffect(() => {
     fetchRequests();
+    fetchSlots();
   }, [selectedRoomNumber, roomMapping]);
   
 
