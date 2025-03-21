@@ -132,7 +132,11 @@ const RBTable = () => {
   const [weekPickerOpen, setWeekPickerOpen] = useState(false);
   const [tempWeekDate, setTempWeekDate] = useState<CalendarDate | null>(null);
   const [selectedDate, setSelectedDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-  const [cachedRange, setCachedRange] = useState<{ start: string; end: string } | null>(null);
+  const [cachedRange, setCachedRange] = useState<{ 
+    start: string; 
+    end: string;
+    roomNumber: string;
+  } | null>(null);
   const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
 
   const isAdmin = session?.user?.role === "admin";
@@ -170,9 +174,9 @@ const RBTable = () => {
   };
   
   useEffect(() => {
-    fetchRequests();
     fetchSlots();
-  }, [selectedRoomNumber, roomMapping]);
+    fetchRequests();
+  }, [selectedRoomNumber, roomMapping, currentWeekStart]);
 
   // On mount or when session updates, prefill bandId from session.user.band_id
   useEffect(() => {
@@ -201,12 +205,15 @@ const RBTable = () => {
   
     const rangeStartISO = rangeStart.toISOString();
     const rangeEndISO = rangeEnd.toISOString();
-  
+    
+    const cacheKey = `${selectedRoomNumber}-${rangeStartISO}-${rangeEndISO}`;
+
     // If we have cached data that covers this range, use it.
     if (
       cachedRange &&
       cachedRange.start <= rangeStartISO &&
-      cachedRange.end >= rangeEndISO
+      cachedRange.end >= rangeEndISO &&
+      cachedRange.roomNumber === selectedRoomNumber.toString()
     ) {
       setSlots(cachedSlots);
       return;
@@ -223,7 +230,11 @@ const RBTable = () => {
       setSlots(response.data);
       // Update cache
       setCachedSlots(response.data);
-      setCachedRange({ start: rangeStartISO, end: rangeEndISO });
+      setCachedRange({ 
+        start: rangeStartISO, 
+        end: rangeEndISO,
+        roomNumber: selectedRoomNumber.toString()  
+      });
     } catch (error) {
       console.error(error);
     }
@@ -416,6 +427,8 @@ const RBTable = () => {
     if (newAlignment !== null) {
       setRoomAlignment(newAlignment);
       setSelectedRoomNumber(parseInt(newAlignment, 10)); // Update the selected room number
+      setCachedSlots([]);
+      setCachedRange(null);
     }
   };
 
