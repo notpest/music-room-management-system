@@ -135,6 +135,8 @@ const RBTable = () => {
   const [cachedRange, setCachedRange] = useState<{ start: string; end: string } | null>(null);
   const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
 
+  const isAdmin = session?.user?.role === "admin";
+
   // Fetch room mapping from API
   const fetchRooms = async () => {
     try {
@@ -171,16 +173,15 @@ const RBTable = () => {
     fetchRequests();
     fetchSlots();
   }, [selectedRoomNumber, roomMapping]);
-  
 
-  // // On mount or when session updates, prefill bandId from session.user.band_id
-  // useEffect(() => {
-  //   if (session && session.user) {
-  //     if (session.user.role !== "admin") {
-  //       setBandId((session.user as any).band_id || "");
-  //     }
-  //   }
-  // }, [session]);
+  // On mount or when session updates, prefill bandId from session.user.band_id
+  useEffect(() => {
+    if (session && session.user) {
+      if (session.user.role !== "admin") {
+        setBandId((session.user as any).band_id || "");
+      }
+    }
+  }, [session]);
 
    // Update the current week start based on the selected date
   useEffect(() => {
@@ -768,15 +769,15 @@ const RBTable = () => {
               <ModalHeader>Request Slot</ModalHeader>
               <ModalBody>
                 <Input
-                  isClearable
+                  isClearable={isAdmin}
                   variant="underlined"
                   fullWidth
                   label="Band ID"
-                  placeholder="Enter Band ID"
-                  value={bandId}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setBandId(e.target.value)
-                  }
+                   // For non-admins, use the band id from session as placeholder and value.
+                  placeholder={isAdmin ? "Enter Band ID" : session?.user?.band_id || "Band ID"}
+                  value={isAdmin ? bandId : session?.user?.band_id || ""}
+                  onChange={isAdmin ? (e: ChangeEvent<HTMLInputElement>) => setBandId(e.target.value) : undefined}
+                  readOnly={!isAdmin}
                   onClear={() => setBandId("")}
                 />
                 <Select
