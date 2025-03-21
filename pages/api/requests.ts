@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         const requests = await Request.findAll({
           where,
-          order: [["request_date", "DSC"]],
+          order: [["request_date", "DESC"]],
         });
         const enhancedRequests = await Promise.all(
           requests.map(async (reqItem) => {
