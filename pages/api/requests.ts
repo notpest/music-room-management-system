@@ -105,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
           const userRecord = await User.findOne({ where: { id: requestToUpdate.user_id } });
           // Use the band_id from updateData if provided, otherwise fallback to the user's band_id.
-          const bandIdToInsert = updateData.band_id || userRecord?.band_id;
+          const bandIdToInsert = updateData.band_id || requestToUpdate.band_id || userRecord?.band_id;
 
           const newSlot = await Slot.create({
             slot_start: adjustedSlotStart,
