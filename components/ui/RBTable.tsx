@@ -778,7 +778,7 @@ const RBTable = () => {
                   value={isAdmin ? bandId : session?.user?.band_id || ""}
                   onChange={isAdmin ? (e: ChangeEvent<HTMLInputElement>) => setBandId(e.target.value) : undefined}
                   readOnly={!isAdmin}
-                  onClear={() => setBandId("")}
+                  onClear={() => isAdmin && setBandId("")}
                 />
                 <Select
                   label="Slot Start Time"
