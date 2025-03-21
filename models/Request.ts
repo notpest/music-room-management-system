@@ -4,6 +4,7 @@ import sequelize from "../database";
 import User from "./User";
 import Slot from "./Slot"; // Ensure Slot model is imported
 import Room from "./Room";
+import Band from "./Band";
 
 interface RequestAttributes {
   id: string;
@@ -15,6 +16,7 @@ interface RequestAttributes {
   response_date: Date | null;
   slot_id?: number | null; // New field to track the created slot's id
   room_id: string; // change from number to string (UUID)
+  band_id: string | null; // new field for band id (admin can override, otherwise user session band id)
 }
 
 interface RequestCreationAttributes extends Optional<RequestAttributes, "id" | "request_date" | "response_date" | "slot_id"> {}
@@ -29,6 +31,7 @@ class Request extends Model<RequestAttributes, RequestCreationAttributes> implem
   public response_date!: Date | null;
   public slot_id!: number | null;
   public room_id!: string;
+  public band_id!: string | null;
 }
 
 Request.init(
@@ -83,7 +86,14 @@ Request.init(
         key: "id",
       },
     },
-
+    band_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: Band,
+        key: "id",
+      },
+    },
   },
   {
     sequelize,

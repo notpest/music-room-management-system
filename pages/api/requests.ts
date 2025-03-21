@@ -53,13 +53,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case "POST":
       try {
-        const { user_id, slot_start, slot_end, room_id } = req.body;
+        const { user_id, slot_start, slot_end, room_id, band_id } = req.body;
         const newRequest = await Request.create({
           user_id,
           status: "pending",
           slot_start,
           slot_end,
           room_id,  // include room_id from the request body
+          band_id,
         });
         res.status(201).json(newRequest);
       } catch (error) {
@@ -101,7 +102,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
           const userRecord = await User.findOne({ where: { id: requestToUpdate.user_id } });
-          const bandIdToInsert = userRecord?.band_id;
+          // Use the band_id from updateData if provided, otherwise fallback to the user's band_id.
+          const bandIdToInsert = updateData.band_id || userRecord?.band_id;
+
           const newSlot = await Slot.create({
             slot_start: adjustedSlotStart,
             slot_end: adjustedSlotEnd,
