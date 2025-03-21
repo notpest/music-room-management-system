@@ -24,21 +24,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         const requests = await Request.findAll({
           where,
-          order: [["request_date", "ASC"]],
+          order: [["request_date", "DSC"]],
         });
         const enhancedRequests = await Promise.all(
           requests.map(async (reqItem) => {
             const requestData = reqItem.toJSON() as any;
             const user = await User.findOne({ where: { id: requestData.user_id } });
-            let user_name = null;
+            let user_name = user ? user.name : null;
             let band_name = null;
-            if (user) {
-              user_name = user.name;
-              if (user.band_id) {
-                const band = await Band.findOne({ where: { id: user.band_id } });
-                if (band) {
-                  band_name = band.name;
-                }
+            
+            // If the request has a band_id (e.g. set by an admin), use that; otherwise fallback to the user's band_id.
+            const bandIdToUse = requestData.band_id || (user && user.band_id);
+            if (bandIdToUse) {
+              const band = await Band.findOne({ where: { id: bandIdToUse } });
+              if (band) {
+                band_name = band.name;
               }
             }
             return { ...requestData, user_name, band_name };
@@ -54,13 +54,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case "POST":
       try {
         const { user_id, slot_start, slot_end, room_id, band_id } = req.body;
+        const userRecord = await User.findOne({ where: { id: user_id } });
+        const bandIdToUse = band_id ? band_id : userRecord?.band_id;
         const newRequest = await Request.create({
           user_id,
           status: "pending",
           slot_start,
           slot_end,
           room_id,  // include room_id from the request body
-          band_id,
+          band_id: bandIdToUse,
         });
         res.status(201).json(newRequest);
       } catch (error) {
