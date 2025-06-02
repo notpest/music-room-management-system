@@ -16,6 +16,7 @@
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@heroui/react": "^2.7.2",
+    "@heroui/use-aria-accordion": "^2.2.12",
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
     "@nextui-org/react": "^2.6.11",
