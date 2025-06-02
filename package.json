@@ -19,6 +19,8 @@
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
     "@nextui-org/react": "^2.6.11",
+    "@react-aria/interactions": "^3.25.1",
+    "@react-aria/selection": "^3.24.1",
     "@react-three/fiber": "^8.17.10",
     "@tabler/icons-react": "^3.24.0",
     "axios": "^1.7.9",
