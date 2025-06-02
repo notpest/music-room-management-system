@@ -145,11 +145,11 @@ const NavbarComponent = () => {
               Room Booking
             </Link>
           </NavbarMenuItem>
-          <NavbarMenuItem>
+          {/* <NavbarMenuItem>
             <Link href="/EquipmentBooking" className={!session ? "opacity-50" : ""}>
               Equipment Booking
             </Link>
-          </NavbarMenuItem>
+          </NavbarMenuItem> */}
           {session && session.user?.role === "admin" && (
             <>
               <NavbarMenuItem>
@@ -157,11 +157,11 @@ const NavbarComponent = () => {
                   Approval Page
                 </Link>
               </NavbarMenuItem>
-              <NavbarMenuItem>
+              {/* <NavbarMenuItem>
                 <Link href="/EntryLog" className={!session ? "opacity-50" : ""}>
                   Entry Log
                 </Link>
-              </NavbarMenuItem>
+              </NavbarMenuItem> */}
               <NavbarMenuItem>
                 <Link href="/Dashboard" className={!session ? "opacity-50" : ""}>
                   Dashboard
