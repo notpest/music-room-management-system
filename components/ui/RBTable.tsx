@@ -296,14 +296,12 @@ const RBTable = () => {
     return daysArray;
   };  
   
-  // Helper function to parse time as local
+  // Helper function to parse an ISO timestamp into a Date in the user’s local timezone.
   const parseLocalTime = (timeValue: string | Date): Date => {
-    if (timeValue instanceof Date) {
-      return timeValue;
-    }
-    const cleaned = timeValue.endsWith("Z") ? timeValue.slice(0, -1) : timeValue;
-    return new Date(cleaned);
-  };  
+    return typeof timeValue === "string" 
+      ? new Date(timeValue)    // keep the trailing “Z” so JS knows it's UTC
+      : timeValue;
+  };
 
   // When slots or the selected week change, rebuild the days, times and booking mapping.
   useEffect(() => {
