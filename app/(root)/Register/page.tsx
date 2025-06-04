@@ -350,18 +350,21 @@ const RegisterPage = () => {
       <Navbar aria-label="Main Navigation" />
       <div className="max-w-lg mx-auto mt-10 p-6 bg-black-100 rounded-lg shadow-md text-white">
         <div className="flex flex-col space-y-4">
-          <Button 
-            onPress={() => setUserModalOpen(true)} 
-            className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            Register User
-          </Button>
-          <Button 
-            onPress={() => setBandModalOpen(true)} 
-            className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            Register Band
-          </Button>
+          <div className="flex flex-col lg:flex-row mb-4 space-y-4 lg:space-y-0 lg:space-x-4">
+  <Button 
+    onPress={() => setUserModalOpen(true)} 
+    className="w-full py-2 px-4 bg-[#18181b] text-white rounded transition duration-300 ease-in-out transform hover:scale-105"
+  >
+    Register User
+  </Button>
+  <Button 
+    onPress={() => setBandModalOpen(true)} 
+    className="w-full py-2 px-4 bg-[#18181b] text-white rounded transition duration-300 ease-in-out transform hover:scale-105"
+  >
+    Register Band
+  </Button>
+</div>
+
           
 <div className="flex flex-col lg:flex-row justify-center w-full max-w-[1800px] mx-auto gap-8 px-4">
   {/* Table 1 - Left */}
@@ -432,40 +435,40 @@ const RegisterPage = () => {
           <ModalHeader>Register User</ModalHeader>
           <ModalBody>
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-white">Name:</label>
+              <div>
                 <Input
                   type="text"
+                  label="Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                   className="w-full px-3 py-2"
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-white">Username:</label>
+              <div>
                 <Input
                   type="text"
+                  label="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   className="w-full px-3 py-2"
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-white">Password:</label>
+              <div>
                 <Input
                   type="password"
+                  label="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full px-3 py-2"
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-white">Email:</label>
+              <div>
                 <Input
                   type="email"
+                  label="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -474,12 +477,12 @@ const RegisterPage = () => {
               </div>
 
               {/* Band Dropdown */}
-              <div className="mb-4">
+              <div>
                 <Select
                   label="Select Band"
                   selectedKeys={bandId ? [bandId] : []}
                   onChange={(e) => setBandId(e.target.value)}
-                  className="text-white"
+                  className="text-white w-full px-3 py-2"
                 >
                   {bands.map((band) => (
                     <SelectItem key={band.id} value={band.id}>
@@ -491,19 +494,13 @@ const RegisterPage = () => {
 
               <ModalFooter>
                 <Button 
-                  color="primary" 
+                  color="success" 
                   type="submit" 
-                  className="bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
+                  className="text-black rounded transition duration-300 ease-in-out transform hover:scale-105"
                 >
-                  Register
+                  Confirm
                 </Button>
-                <Button 
-                  color="secondary" 
-                  onPress={() => setUserModalOpen(false)} 
-                  className="bg-gray-500 text-white rounded hover:bg-gray-600 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                  Close
-                </Button>
+                
               </ModalFooter>
             </form>
           </ModalBody>
@@ -515,17 +512,17 @@ const RegisterPage = () => {
           <ModalHeader>Register Band</ModalHeader>
           <ModalBody>
             <form onSubmit={handleBandSubmit}>
-              <div className="mb-4">
-                <label className="block text-white">Band Name:</label>
+              <div>
                 <Input
                   type="text"
+                  label="Band Name:"
                   value={bandId}
                   onChange={(e) => setBandId(e.target.value)}
                   required
                   className="w-full px-3 py-2"
                 />
               </div>
-              <div className="mb-4">
+              <div>
                 <label className="block text-white">Band Color:</label>
                 <div className="flex items-center gap-2">
                   {/* Color Preview Square */}
@@ -576,19 +573,12 @@ const RegisterPage = () => {
                 </div>
               </div>
               <ModalFooter>
-                <Button
-                  color="primary"
-                  type="submit"
-                  className="bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
+                <Button 
+                  color="success" 
+                  type="submit" 
+                  className="text-black rounded transition duration-300 ease-in-out transform hover:scale-105"
                 >
-                  Register
-                </Button>
-                <Button
-                  color="secondary"
-                  onPress={() => setBandModalOpen(false)}
-                  className="bg-gray-500 text-white rounded hover:bg-gray-600 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                  Close
+                  Confirm
                 </Button>
               </ModalFooter>
             </form>
