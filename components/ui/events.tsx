@@ -19,13 +19,13 @@ const EventData: EventProps[] = [
   {
     title: "Magnificat",
     description:
-      "Magnificat is an annual music festival wherein the University Choir, which is one of the wings of SWO, organises and performs for the students. The fest is planned around Christmas time lasting for a span of 10 days during the course of which the Choir teams of all the three campuses in Bangalore- Central, Kengeri and Bannerghatta- perform in each of the three campuses. Magnificat also witnesses the performances of the Choir teams from other Universities, church groups as well as orchestras. With all the campuses decked and decorated in the colours of Christmas, the spirit of Christmas comes alive in this celebration of music and carols spreading warmth and joy among all.",
+      "Magnificat is an annual music festival wherein The University Choir, one of the wings of SWO, organises and performs for the students. The fest is planned around Christmas time during which the Choirs from all four campuses in Bangalore- Central, Kengeri, Bannerghatta and Yeshwantpur- perform in each campus. Magnificat also witnesses the performances of Performing Choirs from other Universities, churches as well as orchestras. With all the campuses decked and decorated in the colours of Christmas, the spirit of Christmas comes alive in this celebration of music and carols spreading warmth and joy among all.",
     imageSrc: Magnificat, // Use imported image
     altText: "Magnificat",
     visible: false, // Initially hidden
     reverse: false,
   },
-  {
+  { 
     title: "Erato",
     description:
       "Erato organised by The University Choir & the Cultural Teams across all the three campuses in Bangalore. An evening of beautiful choral and band performances showcasing diverse genres of music! We thrill you with exciting performances of intricate harmonies and soulful rhythms!",
