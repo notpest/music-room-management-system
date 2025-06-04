@@ -138,7 +138,8 @@ const RBTable = () => {
     roomNumber: string;
   } | null>(null);
   const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
-
+  const [bands, setBands] = useState<Array<{ id: string; name: string }>>([]);
+  const [userBandName, setUserBandName] = useState<string>("");
   const isAdmin = session?.user?.role === "admin";
 
   // Fetch room mapping from API
@@ -187,7 +188,39 @@ const RBTable = () => {
     }
   }, [session]);
 
-   // Update the current week start based on the selected date
+  useEffect(() => {
+    if (!isAdmin) return;
+    axios
+      .get("/api/bands")
+      .then((res) => {
+        // We expect an array of { id, name } from the GET /api/bands endpoint
+        setBands(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching bands:", err);
+      });
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) return;
+    if (!session?.user?.band_id) return;
+
+    axios
+      .get("/api/bands")
+      .then((res) => {
+        const found = (res.data as Array<{ id: string; name: string }>).find(
+          (b) => b.id === (session.user as any).band_id
+        );
+        if (found) {
+          setUserBandName(found.name);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching user’s band:", err);
+      });
+  }, [isAdmin, session?.user?.band_id]);
+
+  // Update the current week start based on the selected date
   useEffect(() => {
     if (selectedDate) {
       const date = new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day);
@@ -779,18 +812,33 @@ const RBTable = () => {
             <>
               <ModalHeader>Request Slot</ModalHeader>
               <ModalBody>
-                <Input
-                  isClearable={isAdmin}
-                  variant="underlined"
-                  fullWidth
-                  label="Band ID"
-                   // For non-admins, use the band id from session as placeholder and value.
-                  placeholder={isAdmin ? "Enter Band ID" : session?.user?.band_id || "Band ID"}
-                  value={isAdmin ? bandId : session?.user?.band_id || ""}
-                  onChange={isAdmin ? (e: ChangeEvent<HTMLInputElement>) => setBandId(e.target.value) : undefined}
-                  readOnly={!isAdmin}
-                  onClear={() => isAdmin && setBandId("")}
-                />
+                {isAdmin ? (
+                  <Select
+                    label="Select Band"
+                    placeholder="Choose a band"
+                    selectedKeys={new Set([bandId])}
+                    onSelectionChange={(keys) => {
+                      const selected = Array.from(keys)[0] as string;
+                      setBandId(selected);
+                    }}
+                  >
+                    {bands.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    variant="underlined"
+                    fullWidth
+                    label="Band Name"
+                    // For non-admins, show their band_id but not editable
+                    placeholder={userBandName || "Loading band…"}
+                    value={userBandName}
+                    readOnly
+                  />
+                )}
                 <Select
                   label="Slot Start Time"
                   placeholder={defaultStartTime}
@@ -847,6 +895,10 @@ const RBTable = () => {
                     );
                     if (!validStart || !validEnd) {
                       alert("One or both time slots are invalid.");
+                      return;
+                    }
+                    if (isAdmin && !bandId) {
+                      alert("Please select a band.");
                       return;
                     }
                     handleBookingConfirm();
