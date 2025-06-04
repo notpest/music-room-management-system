@@ -41,13 +41,6 @@ const NavbarComponent = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // If not authenticated and not on the homepage, redirect to "/"
-  useEffect(() => {
-    if (status === "unauthenticated" && pathname !== "/") {
-      router.push("/");
-    }
-  }, [status, pathname, router]);
-
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY < lastScrollY) {
