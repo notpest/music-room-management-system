@@ -27,6 +27,7 @@ import {
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
+import { signIn } from "next-auth/react";
 import { FaCalendarAlt, FaInfoCircle, FaChevronDown } from "react-icons/fa";
 import { Calendar } from "@heroui/react";
 import { today, getLocalTimeZone, parseDate, CalendarDate } from "@internationalized/date";
@@ -117,7 +118,7 @@ const RBTable = () => {
 
   const [isModalOpen, setModalOpen] = useState(false);
   // "book" = booking modal; "alreadyBooked" = error modal
-  const [modalType, setModalType] = useState<"book" | "alreadyBooked" | null>(null);
+  const [modalType, setModalType] = useState<"book" | "alreadyBooked" | "login" | null>(null);
   const [selectedDayKey, setSelectedDayKey] = useState<string>("");
   const [selectedTimeKey, setSelectedTimeKey] = useState<string>("");
   const [bandId, setBandId] = useState<string>("");
@@ -418,6 +419,11 @@ const RBTable = () => {
 
   // When a cell is clicked, open either a booking modal or an error modal.
   const handleCellClick = (dayKey: string, timeKey: string, display: string) => {
+    if (!session) {
+      setModalType("login");
+      setModalOpen(true);
+      return;
+    }
     const booking = bookings[`${dayKey}-${timeKey}`];
     if (booking?.toLowerCase() === "booked") {
       setModalType("alreadyBooked");
@@ -904,6 +910,15 @@ const RBTable = () => {
                 >
                   Confirm
                 </Button>
+              </ModalFooter>
+            </>
+          ) : modalType === "login" ? (
+            <>
+              <ModalHeader>Login Required</ModalHeader>
+              <ModalBody>
+                <p>You must be signed in before booking a slot.</p>
+              </ModalBody>
+              <ModalFooter>
               </ModalFooter>
             </>
           ) : null}
