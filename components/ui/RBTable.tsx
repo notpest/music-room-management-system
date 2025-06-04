@@ -138,7 +138,8 @@ const RBTable = () => {
     roomNumber: string;
   } | null>(null);
   const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
-  const [bands, setBands] = useState<Array<{ id: string; name: string }>>([]);
+  const [bands, setBands] = useState<Array<{ id: string; name: string; colour: string }>>([]);
+  const [bandColors, setBandColors] = useState<{ [key: string]: string }>({});
   const [userBandName, setUserBandName] = useState<string>("");
   const isAdmin = session?.user?.role === "admin";
 
@@ -189,36 +190,42 @@ const RBTable = () => {
   }, [session]);
 
   useEffect(() => {
-    if (!isAdmin) return;
     axios
       .get("/api/bands")
       .then((res) => {
-        // We expect an array of { id, name } from the GET /api/bands endpoint
-        setBands(res.data);
+        const allBands = res.data as Array<{ id: string; name: string; colour: string }>;
+        setBands(allBands);
+
+         // Build lookup map: band_id → colour
+         const coloursMap: { [key: string]: string } = {};
+         allBands.forEach((b) => {
+          coloursMap[b.id] = b.colour; // e.g. "#ff009f"
+        });
+        setBandColors(coloursMap);
       })
       .catch((err) => {
         console.error("Error fetching bands:", err);
       });
   }, [isAdmin]);
 
-  useEffect(() => {
-    if (isAdmin) return;
-    if (!session?.user?.band_id) return;
+  // useEffect(() => {
+  //   if (isAdmin) return;
+  //   if (!session?.user?.band_id) return;
 
-    axios
-      .get("/api/bands")
-      .then((res) => {
-        const found = (res.data as Array<{ id: string; name: string }>).find(
-          (b) => b.id === (session.user as any).band_id
-        );
-        if (found) {
-          setUserBandName(found.name);
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching user’s band:", err);
-      });
-  }, [isAdmin, session?.user?.band_id]);
+  //   axios
+  //     .get("/api/bands")
+  //     .then((res) => {
+  //       const found = (res.data as Array<{ id: string; name: string }>).find(
+  //         (b) => b.id === (session.user as any).band_id
+  //       );
+  //       if (found) {
+  //         setUserBandName(found.name);
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.error("Error fetching user’s band:", err);
+  //     });
+  // }, [isAdmin, session?.user?.band_id]);
 
   // Update the current week start based on the selected date
   useEffect(() => {
@@ -385,15 +392,6 @@ const RBTable = () => {
     setDays(weekDays);
     setBookings(defaultBookings);
   }, [slots, currentWeekStart, timeSlots]);
-
-  // Colors for booked slots
-  const bandColors: { [key: string]: string } = {
-    "a5631eb3-94a8-4012-9471-2f06565d82fe": "rgba(70, 130, 180, 0.4)", // Midnight Hours (Steel Blue)
-    "66428c87-b0ee-4f72-a7b6-806465924d48": "rgba(128, 0, 128, 0.4)", // Grey Matter (Purple)
-    "2ab048a7-5abb-4220-bec7-1011cf1e0aa0": "rgba(255, 165, 0, 0.4)", // Vismrit (Orange)
-    "404e8947-9c73-4e74-85d5-cd86de4dd631": "rgba(252, 50, 50, 0.4)", // University Choir (Forest Green)
-    "ec5fb5f7-8be6-4ee1-830c-9fcdf918d742": "rgba(248, 7, 56, 0.4)", // CUB (Crimson)
-  };
 
   // Get cell styling based on booking status
   const getCellStyle = (

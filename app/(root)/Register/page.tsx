@@ -1,7 +1,7 @@
 // app/register/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
@@ -44,11 +44,21 @@ const RegisterPage = () => {
 
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isBandModalOpen, setBandModalOpen] = useState(false);
-  const [isEquipmentModalOpen, setEquipmentModalOpen] = useState(false);
 
-  const [equipmentName, setEquipmentName] = useState("");
-  const [equipmentCategory, setEquipmentCategory] = useState("");
-  const [equipmentQuantity, setEquipmentQuantity] = useState<number>(1);
+  const [bands, setBands] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    fetch("/api/bands")
+      .then((res) => res.json())
+      .then((data) => {
+        // Expect data = [ { id, name, colour }, … ]
+        // We only need id & name for the dropdown
+        setBands((data as Array<{ id: string; name: string }>));
+      })
+      .catch((err) => {
+        console.error("Error fetching bands:", err);
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,39 +100,6 @@ const RegisterPage = () => {
     }
   };
   
-  const handleEquipmentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(false);
-  
-    const res = await fetch("/api/equipment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        equipment_name: equipmentName,
-        category: equipmentCategory,
-        quantity: equipmentQuantity,
-      }),
-    });
-  
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.message || "Something went wrong");
-    } else {
-      setSuccess(true);
-      setEquipmentModalOpen(false);
-      // Optionally clear the fields:
-      setEquipmentName("");
-      setEquipmentCategory("");
-      setEquipmentQuantity(0);
-    }
-  };  
-
-  const handleRoleChange = (event: SelectChangeEvent) => {
-    event.stopPropagation(); // Prevent modal from closing
-    setRole(event.target.value);
-  };
-
   return (
     <motion.div 
       className="bg-black-100 min-h-screen"
@@ -144,12 +121,6 @@ const RegisterPage = () => {
             className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
           >
             Register Band
-          </Button>
-          <Button 
-            onPress={() => setEquipmentModalOpen(true)} 
-            className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            Register Equipment
           </Button>
         </div>
       </div>
@@ -199,6 +170,37 @@ const RegisterPage = () => {
                   className="w-full px-3 py-2"
                 />
               </div>
+
+              {/* Band Dropdown */}
+              <div className="mb-4">
+                <FormControl fullWidth>
+                  <InputLabel id="band-label" className="text-white">
+                    Select Band
+                  </InputLabel>
+                  <Select
+                    labelId="band-label"
+                    id="band-select"
+                    value={bandId}
+                    label="Band"
+                    onChange={(e) => {
+                      setBandId(e.target.value as string);
+                    }}
+                    sx={{
+                      backgroundColor: "#1e293b",
+                      color: "white",
+                      "& .MuiSvgIcon-root": { color: "white" },
+                    }}
+                    MenuProps={{ disablePortal: true }}
+                  >
+                    {bands.map((b) => (
+                      <MenuItem key={b.id} value={b.id}>
+                        {b.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+
               <ModalFooter>
                 <Button 
                   color="primary" 
@@ -296,62 +298,6 @@ const RegisterPage = () => {
                 <Button
                   color="secondary"
                   onPress={() => setBandModalOpen(false)}
-                  className="bg-gray-500 text-white rounded hover:bg-gray-600 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                  Close
-                </Button>
-              </ModalFooter>
-            </form>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-      {/* Equipment Registration Modal */}
-      <Modal isOpen={isEquipmentModalOpen} onOpenChange={setEquipmentModalOpen}>
-        <ModalContent>
-          <ModalHeader>Register Equipment</ModalHeader>
-          <ModalBody>
-            <form onSubmit={handleEquipmentSubmit}>
-              <div className="mb-4">
-                <label className="block text-white">Equipment Name:</label>
-                <Input
-                  type="text"
-                  value={equipmentName}
-                  onChange={(e) => setEquipmentName(e.target.value)}
-                  required
-                  className="w-full px-3 py-2"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-white">Category:</label>
-                <Input
-                  type="text"
-                  value={equipmentCategory}
-                  onChange={(e) => setEquipmentCategory(e.target.value)}
-                  required
-                  className="w-full px-3 py-2"
-                />
-              </div>       
-              <div className="mb-4">
-                <label className="block text-white">Quantity:</label>
-                <Input
-                  type="number"
-                  value={equipmentQuantity.toString()}
-                  onChange={(e) => setEquipmentQuantity(Number(e.target.value))}
-                  required
-                  className="w-full px-3 py-2"
-                />
-              </div>
-              <ModalFooter>
-                <Button 
-                  color="primary" 
-                  type="submit" 
-                  className="bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                  Register
-                </Button>
-                <Button 
-                  color="secondary" 
-                  onPress={() => setEquipmentModalOpen(false)} 
                   className="bg-gray-500 text-white rounded hover:bg-gray-600 transition duration-300 ease-in-out transform hover:scale-105"
                 >
                   Close
