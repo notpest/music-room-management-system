@@ -84,6 +84,7 @@ const formatTime = (isoString: string): string => {
   return `${hours}:${minutes}`;
 };
 
+
 const combineDateAndTime = (originalISO: string, newTime: string): string => {
   const originalDate = new Date(originalISO);
   const [hours, minutes] = newTime.split(":").map(Number);
@@ -92,6 +93,8 @@ const combineDateAndTime = (originalISO: string, newTime: string): string => {
 };
 
 export default function SlotsRequestTable() {
+
+
   interface TimeSlot {
     key: string;
     display: string;
@@ -131,7 +134,7 @@ export default function SlotsRequestTable() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(8); // Set to 8 for 8 items per page
 
   // Filtered requests based on search, status, and date
   const filteredRequests = requests.filter((req) => {
@@ -141,7 +144,7 @@ export default function SlotsRequestTable() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Paginated requests for the current page
+ // Paginated requests for the current page - this will now show exactly 8 items per page
   const paginatedRequests = filteredRequests.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -316,53 +319,54 @@ export default function SlotsRequestTable() {
   };
   
   return (
-    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      {/* Room Toggle Button */}
-      <div className="flex items-center w-full my-4 px-4 justify-start">
-  <div className="flex flex-row items-center space-x-4 my-10 w-[90%]">
-  {/* Dropdown */}
-  <Dropdown placement="bottom-start">
-    <DropdownTrigger>
-      <Button className="flex items-center gap-2 bg-[#18181b] text-white px-4 py-2 rounded">
-        {selectedRoom === "25b48b88-7e94-422b-b3b4-97c78aa6966a" ? "Room 365" : "Room 366"}
-        <FaChevronDown />
-      </Button>
-    </DropdownTrigger>
-    <DropdownMenu
-      disallowEmptySelection
-      aria-label="Room Selection"
-      className="max-w-[200px] min-w-[100px]"
-      selectedKeys={new Set([selectedRoom])}
-      selectionMode="single"
-      onSelectionChange={(keys) => {
-        const newRoom = Array.from(keys)[0] as string;
-        handleRoomAlignment(newRoom);
-      }}
-    >
-      <DropdownItem key="365">Room 365</DropdownItem>
-      <DropdownItem key="366">Room 366</DropdownItem>
-    </DropdownMenu>
-  </Dropdown>
+    <div className="flex flex-col items-center max-h-screen" style={{ backgroundColor: "#000319"}}>
+ {/* Room Toggle Button */}
+<div className="flex justify-center w-full my-4 px-4">
+  <div className="flex flex-row items-center space-x-4 my-6 w-full max-w-5xl">
+    {/* Dropdown */}
+    <Dropdown placement="bottom-start">
+      <DropdownTrigger>
+        <Button className="flex items-center gap-2 bg-[#18181b] text-white px-4 py-2 rounded">
+          {selectedRoom === "25b48b88-7e94-422b-b3b4-97c78aa6966a" ? "Room 365" : "Room 366"}
+          <FaChevronDown />
+        </Button>
+      </DropdownTrigger>
+      <DropdownMenu
+        disallowEmptySelection
+        aria-label="Room Selection"
+        className="max-w-[200px] min-w-[100px]"
+        selectedKeys={new Set([selectedRoom])}
+        selectionMode="single"
+        onSelectionChange={(keys) => {
+          const newRoom = Array.from(keys)[0] as string;
+          handleRoomAlignment(newRoom);
+        }}
+      >
+        <DropdownItem key="365">Room 365</DropdownItem>
+        <DropdownItem key="366">Room 366</DropdownItem>
+      </DropdownMenu>
+    </Dropdown>
 
-  {/* Search + Filter Icon */}
-  <div className="flex items-center space-x-2 w-full">
-    <Input
-      isClearable
-      variant="underlined"
-      placeholder="Search by user ID..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="w-full" // 👈 smaller width
-    />
-    <Tooltip content="Filter">
-      <FaFilter
-        className="text-lg text-default-400 cursor-pointer active:opacity-50"
-        onClick={() => setFilterModalOpen(true)}
+    {/* Search + Filter Icon */}
+    <div className="flex items-center space-x-2 flex-grow">
+      <Input
+        isClearable
+        variant="underlined"
+        placeholder="Search by user ID..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full"
       />
-    </Tooltip>
+      <Tooltip content="Filter">
+        <FaFilter
+          className="text-lg text-default-400 cursor-pointer active:opacity-50"
+          onClick={() => setFilterModalOpen(true)}
+        />
+      </Tooltip>
+    </div>
   </div>
 </div>
-</div>
+
 
   
       <Table aria-label="Requests Table">
@@ -387,7 +391,7 @@ export default function SlotsRequestTable() {
       </Table>
 
       {/* Pagination with < and > buttons */}
-      <div className="flex justify-center mt-4">
+      <div className="flex justify-center mt-4 mb-10">
         <Pagination
           total={Math.ceil(filteredRequests.length / itemsPerPage)}
           initialPage={1}

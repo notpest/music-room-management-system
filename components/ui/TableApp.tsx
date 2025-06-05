@@ -119,6 +119,7 @@ export default function SlotsRequestTable() {
     slot_end: "",
   });
 
+  
   // --- Fetch requests from API ---
   const fetchRequests = async () => {
     try {
