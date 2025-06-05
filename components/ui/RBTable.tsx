@@ -641,7 +641,7 @@ const RBTable = () => {
   }
 
   return (
-    <div className="flex flex-col items-center max-h-screen" style={{ backgroundColor: "#000319" }}>
+    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", height:"89vh" }}>
       {/* Room Toggle Button */}
       <div className="flex items-center w-full my-4 px-4 justify-start">
   <Dropdown placement="bottom-start" className="bg-[#0d1a33]">

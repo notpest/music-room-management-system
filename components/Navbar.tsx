@@ -167,7 +167,11 @@ const NavbarComponent = () => {
               </NavbarMenuItem>
             </>
           )}
+            <div className="absolute bottom-4 text-center text-sm text-gray-500" style={{ width: "98%" }}>
+    If you have any queries, kindly contact roshan.yohann@christuniversity.in
+  </div>
         </NavbarMenu>
+        
       </Navbar>
 
       {/* Login Modal */}

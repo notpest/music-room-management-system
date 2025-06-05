@@ -319,7 +319,7 @@ export default function SlotsRequestTable() {
   };
   
   return (
-    <div className="flex flex-col items-center max-h-screen" style={{ backgroundColor: "#000319"}}>
+    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", height:"89vh"}}>
  {/* Room Toggle Button */}
 <div className="flex justify-center w-full my-4 px-4">
   <div className="flex flex-row items-center space-x-4 my-6 w-full max-w-5xl">
@@ -391,7 +391,7 @@ export default function SlotsRequestTable() {
       </Table>
 
       {/* Pagination with < and > buttons */}
-      <div className="flex justify-center mt-4 mb-10">
+      <div className="flex justify-center mt-4">
         <Pagination
           total={Math.ceil(filteredRequests.length / itemsPerPage)}
           initialPage={1}
