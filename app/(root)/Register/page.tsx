@@ -434,6 +434,7 @@ const RegisterPage = () => {
             </Button>
           </div>
 
+          <div className="flex flex-col lg:flex-row justify-center w-full max-w-[1800px] mx-auto gap-8 px-4">
           {/* ── LEFT TABLE: show users fetched from DB ────────────────────────── */}
           <div className="flex-1 min-w-[300px] md:min-w-[500px] lg:min-w-[650px]">
             <Table aria-label="DB Users Table" className="w-full">
@@ -540,6 +541,7 @@ const RegisterPage = () => {
             </Table>
           </div>
         </div>
+      </div>
       </div>
 
       {/* ── User Registration Modal ────────────────────────────────────────── */}
