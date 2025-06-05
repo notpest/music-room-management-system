@@ -319,12 +319,14 @@ export default function SlotsRequestTable() {
     <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
       {/* Room Toggle Button */}
       <div className="flex items-center w-full my-4 px-4 justify-start">
+  <div className="flex flex-row items-center space-x-4 my-10 w-[90%]">
+  {/* Dropdown */}
   <Dropdown placement="bottom-start">
     <DropdownTrigger>
-            <Button className="flex items-center gap-2 bg-[#18181b]">
+      <Button className="flex items-center gap-2 bg-[#18181b] text-white px-4 py-2 rounded">
         {selectedRoom === "25b48b88-7e94-422b-b3b4-97c78aa6966a" ? "Room 365" : "Room 366"}
         <FaChevronDown />
-        </Button>
+      </Button>
     </DropdownTrigger>
     <DropdownMenu
       disallowEmptySelection
@@ -341,24 +343,27 @@ export default function SlotsRequestTable() {
       <DropdownItem key="366">Room 366</DropdownItem>
     </DropdownMenu>
   </Dropdown>
-      </div>
-  
-      <div className="flex items-center my-10 space-x-4" style={{ width: "90%" }}>
-        <Input
-          isClearable
-          variant="underlined"
-          placeholder="Search by user ID..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ flex: 1 }}
-        />
-        <Tooltip content="Filter">
-          <FaFilter
-            className="text-lg text-default-400 cursor-pointer active:opacity-50"
-            onClick={() => setFilterModalOpen(true)}
-          />
-        </Tooltip>
-      </div>
+
+  {/* Search + Filter Icon */}
+  <div className="flex items-center space-x-2 w-full">
+    <Input
+      isClearable
+      variant="underlined"
+      placeholder="Search by user ID..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full" // 👈 smaller width
+    />
+    <Tooltip content="Filter">
+      <FaFilter
+        className="text-lg text-default-400 cursor-pointer active:opacity-50"
+        onClick={() => setFilterModalOpen(true)}
+      />
+    </Tooltip>
+  </div>
+</div>
+</div>
+
   
       <Table aria-label="Requests Table">
         <TableHeader>

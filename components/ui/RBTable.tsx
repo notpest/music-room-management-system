@@ -641,7 +641,7 @@ const RBTable = () => {
   }
 
   return (
-    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh", paddingBottom: "0px" }}>
+    <div className="flex flex-col items-center max-h-screen" style={{ backgroundColor: "#000319" }}>
       {/* Room Toggle Button */}
       <div className="flex items-center w-full my-4 px-4 justify-start">
   <Dropdown placement="bottom-start" className="bg-[#0d1a33]">
@@ -670,7 +670,7 @@ const RBTable = () => {
 
 
 
-      <Table className="border rounded-lg shadow-md text-center bg-[#0d1a33] text-white font-sans font-semibold text-sm">
+      <Table className="border rounded-lg shadow-md text-center bg-[#0d1a33] text-white font-sans font-semibold text-sm mb-14">
       <TableHeader>
       {[
         <TableColumn key="time" className="w-[100px] bg-[#1a2a47] font-semibold">

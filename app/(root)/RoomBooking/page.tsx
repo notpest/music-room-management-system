@@ -22,7 +22,7 @@ const RoomBookingPage = () => {
       transition={{ duration: 0.5 }}
     >
     <Navbar aria-label="Main Navigation" />
-    <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
+    <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10 max-h-screen">
       <div className="w-full">
         <RBTable />
       </div>
