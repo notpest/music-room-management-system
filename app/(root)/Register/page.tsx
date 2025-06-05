@@ -588,11 +588,13 @@ const RegisterPage = () => {
                 onChange={(e) => setBandId(e.target.value)}
                 className="w-full"
               >
-                {bands.map((band) => (
-                  <SelectItem key={band.id} value={band.id}>
-                    {band.name}
-                  </SelectItem>
-                ))}
+                <>
+                  {bands.map((band) => (
+                    <SelectItem key={band.id} value={band.id}>
+                      {band.name}
+                    </SelectItem>
+                  ))}
+                </>               
               </Select>
               <ModalFooter className="justify-end">
                 <Button color="success" type="submit">
@@ -659,6 +661,22 @@ const RegisterPage = () => {
                     <SketchPicker
                       color={bandColor}
                       onChangeComplete={(color) => setBandColor(color.hex)}
+                      styles={{
+                        default: {
+                          picker: {
+                            background: "#1e1e1e",
+                            boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                            borderRadius: "0.5rem",
+                            padding: "1rem",
+                          },
+                          saturation: {
+                            borderRadius: "0.5rem",
+                          },
+                          hue: {
+                            borderRadius: "0.5rem",
+                          },
+                        },
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -703,22 +721,23 @@ const RegisterPage = () => {
                 required
                 className="w-full"
               />
-              <Select<any>
+              <Select
                 label="Select Band"
                 selectedKeys={editBandId ? [editBandId] : []}
                 onChange={(e) => setEditBandId(e.target.value)}
                 className="w-full"
               >
-                <SelectItem key="" value={""}>
-                  None
-                </SelectItem>
-                {bands.map((band) => (
-                  <SelectItem key={band.id} value={band.id}>
-                    {band.name}
+                <>
+                  <SelectItem key="" value={""}>
+                    None
                   </SelectItem>
-                ))}
+                    {bands.map((band) => (
+                      <SelectItem key={band.id} value={band.id}>
+                        {band.name}
+                      </SelectItem>
+                    ))}
+                </>
               </Select>
-
               <ModalFooter className="justify-end">
                 <Button color="success" type="submit">
                   Save
@@ -763,14 +782,46 @@ const RegisterPage = () => {
                 />
                 <Popover placement="bottom">
                   <PopoverTrigger>
-                    <button className="p-2 bg-gray-700 rounded hover:bg-gray-600 transition">
-                      🎨
-                    </button>
+                     <button
+                        type="button"
+                        className="p-2 bg-gray-700 rounded hover:bg-gray-600 transition duration-300 ease-in-out"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          className="w-6 h-6 text-white"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                          />
+                        </svg>
+                      </button>
                   </PopoverTrigger>
                   <PopoverContent>
                     <SketchPicker
-                      color={editBandColour}
-                      onChangeComplete={(c) => setEditBandColour(c.hex)}
+                      color={bandColor}
+                      onChangeComplete={(color) => setBandColor(color.hex)}
+                      styles={{
+                        default: {
+                          picker: {
+                            background: "#1e1e1e",
+                            boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                            borderRadius: "0.5rem",
+                            padding: "1rem",
+                          },
+                          saturation: {
+                            borderRadius: "0.5rem",
+                          },
+                          hue: {
+                            borderRadius: "0.5rem",
+                          },
+                        },
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
