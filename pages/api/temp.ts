@@ -4,7 +4,6 @@ import Band from '../../models/Band';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   console.log("→ Hit /api/bands with method:", req.method);
-  
   switch (req.method) {
     case 'GET':
       try {
@@ -30,34 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
       break;
 
-    case 'PUT':
-      try {
-        const { id } = req.query;
-        const { name, colour } = req.body;
-        
-        if (!id) {
-          return res.status(400).json({ message: 'Band ID is required' });
-        }
-        if (!name || !colour) {
-          return res.status(400).json({ message: 'Name and colour are required' });
-        }
-
-        const band = await Band.findByPk(id as string);
-        if (!band) {
-          return res.status(404).json({ message: 'Band not found' });
-        }
-
-        band.name = name;
-        band.colour = colour;
-        await band.save();
-
-        res.status(200).json(band);
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error updating band' });
-      }
-      break;
-
+    // Add DELETE method handler
     case 'DELETE':
       try {
         const { id } = req.query;

@@ -767,7 +767,7 @@ const RegisterPage = () => {
               />
               <div className="flex items-center gap-2">
                 <div
-                  className="w-6 h-6 rounded-sm border"
+                  className="w-8 h-8 rounded-md border-gray-400"
                   style={{ backgroundColor: editBandColour }}
                 />
                 <Input
@@ -804,8 +804,8 @@ const RegisterPage = () => {
                   </PopoverTrigger>
                   <PopoverContent>
                     <SketchPicker
-                      color={bandColor}
-                      onChangeComplete={(color) => setBandColor(color.hex)}
+                      color={editBandColour}
+                      onChangeComplete={(color) => setEditBandColour(color.hex)}
                       styles={{
                         default: {
                           picker: {
