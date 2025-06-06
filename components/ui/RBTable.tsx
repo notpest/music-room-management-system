@@ -297,30 +297,88 @@ const RBTable = () => {
     fetchSlots();
   }, [currentWeekStart, selectedRoomNumber]);
 
+  // Add this debugging function to your RBTable.tsx component
+  const debugTimeIssue = () => {
+    console.log("=== TIME DEBUGGING ===");
+    
+    // 1. Check what's coming from the server
+    console.log("1. Raw slots from server:", slots);
+    
+    // 2. Check timezone information
+    console.log("2. Browser timezone:", Intl.DateTimeFormat().resolvedOptions().timeZone);
+    console.log("3. Browser timezone offset (minutes):", new Date().getTimezoneOffset());
+    
+    // 3. Check slot configs
+    console.log("4. TimeSlots config:", timeSlots);
+    
+    // 4. Test parsing a specific slot
+    if (slots.length > 0) {
+      const testSlot = slots[0];
+      console.log("5. Testing first slot:");
+      console.log("   - Raw slot_start:", testSlot.slot_start);
+      console.log("   - Raw slot_end:", testSlot.slot_end);
+      
+      // Test different parsing methods
+      const parseMethod1 = new Date(testSlot.slot_start);
+      const parseMethod2 = new Date(testSlot.slot_start + (testSlot.slot_start.endsWith('Z') ? '' : 'Z'));
+      const parseMethod3 = parseUTCTime(testSlot.slot_start);
+      
+      console.log("   - new Date(slot_start):", parseMethod1);
+      console.log("   - new Date(slot_start + 'Z'):", parseMethod2);
+      console.log("   - parseUTCTime(slot_start):", parseMethod3);
+      
+      // Check what formatDayKey and formatTimeKey return
+      console.log("   - formatDayKey:", formatDayKey(parseMethod1));
+      console.log("   - formatTimeKey:", formatTimeKey(parseMethod1));
+    }
+    
+    console.log("=== END DEBUGGING ===");
+  };
+  // Modified fetchSlotConfigs with debugging
   const fetchSlotConfigs = async () => {
     try {
       const response = await axios.get("/api/slotconfig");
+      console.log("Raw slot configs from server:", response.data);
+      
       // Filter for enabled configurations and sort them by start_time
       const configs: SlotConfig[] = response.data
         .filter((config: SlotConfig) => config.enabled)
         .sort((a: SlotConfig, b: SlotConfig) => a.start_time.localeCompare(b.start_time));
+      
+      console.log("Filtered configs:", configs);
+      
       // Convert each SlotConfig into a TimeSlot object:
-      // We'll assume the stored time is in "HH:mm:ss" (or at least starts with "HH:mm")
       const formattedConfigs: TimeSlot[] = configs.map((config) => {
         const key = config.start_time.substring(0, 5); // e.g., "07:30"
-        // Format to a display string (e.g., "07:30 AM") using toLocaleTimeString:
-        const startDisplay = new Date(`1970-01-01T${config.start_time}Z`).toLocaleTimeString("en-US", {
+        
+        // Debug the date creation
+        const dateString = `1970-01-01T${config.start_time}`;
+        console.log(`Creating date from: ${dateString}`);
+        
+        const startDate = new Date(dateString);
+        const endDate = new Date(`1970-01-01T${config.end_time}`);
+        
+        console.log(`Start date object:`, startDate);
+        console.log(`End date object:`, endDate);
+        
+        const startDisplay = startDate.toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
           hourCycle: "h12",
         });
-        const endDisplay = new Date(`1970-01-01T${config.end_time}Z`).toLocaleTimeString("en-US", {
+        const endDisplay = endDate.toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
           hourCycle: "h12",
         });
+        
+        console.log(`Formatted: ${config.start_time} -> ${startDisplay}`);
+        console.log(`Formatted: ${config.end_time} -> ${endDisplay}`);
+        
         return { key, display: startDisplay, end: endDisplay };
       });
+      
+      console.log("Final formatted configs:", formattedConfigs);
       setTimeSlots(formattedConfigs);
     } catch (error) {
       console.error(error);
@@ -357,34 +415,39 @@ const RBTable = () => {
   };
 
   // When slots or the selected week change, rebuild the days, times and booking mapping.
+  // Modified useEffect for slots with debugging
   useEffect(() => {
     if (timeSlots.length === 0) return;
 
+    console.log("=== PROCESSING SLOTS ===");
     const weekDays = generateWeekDays(currentWeekStart);
     const defaultTimeSlots = timeSlots;
     const defaultBookings: Bookings = {};
 
-    // Override with API slots (if any fall within the week), marking all time cells that fall within the booking range.
-    slots.forEach((slot) => {
-      console.log("Slot:", slot);
+    // Override with API slots (if any fall within the week)
+    slots.forEach((slot, index) => {
+      console.log(`Processing slot ${index}:`, slot);
 
       const slotStart = parseUTCTime(slot.slot_start);
       const slotEnd = parseUTCTime(slot.slot_end);
 
-      console.log("Parsed Slot Start:", slot.slot_start);
-      console.log("Parsed Slot End:", slot.slot_end);
-      // Loop over each day in the week
+      console.log(`Slot ${index} - Original times:`, slot.slot_start, slot.slot_end);
+      console.log(`Slot ${index} - Parsed times:`, slotStart, slotEnd);
+      console.log(`Slot ${index} - Formatted day key:`, formatDayKey(slotStart));
+      console.log(`Slot ${index} - Formatted time key:`, formatTimeKey(slotStart));
+
+      // Rest of your existing logic...
       weekDays.forEach((day) => {
-        // Only process the day if it matches the slot's day.
         if (day.key === formatDayKey(slotStart)) {
+          console.log(`Slot ${index} matches day ${day.key}`);
           defaultTimeSlots.forEach((time) => {
-            // Construct the Date for this cell by combining the day and time.
             const [dYear, dMonth, dDay] = day.key.split("-").map(Number);
             const [tHour, tMinute] = time.key.split(":").map(Number);
             const cellDateTime = new Date(dYear, dMonth - 1, dDay, tHour, tMinute);
-            // If the cell's time falls within the slot's range, mark it as booked.
+            
             if (cellDateTime >= slotStart && cellDateTime < slotEnd) {
               const bookingKey = `${day.key}-${time.key}`;
+              console.log(`Marking ${bookingKey} as booked`);
               defaultBookings[bookingKey] = slot.status;
             }
           });
@@ -404,7 +467,31 @@ const RBTable = () => {
 
     setDays(weekDays);
     setBookings(defaultBookings);
+
+    setTimeout(debugTimeIssue, 100);
   }, [slots, currentWeekStart, timeSlots]);
+
+  const parseUTCTime_v1 = (timeValue: string | Date): Date => {
+    if (typeof timeValue === "string") {
+      return new Date(timeValue.endsWith('Z') ? timeValue : timeValue + 'Z');
+    }
+    return timeValue;
+  };
+
+  const parseUTCTime_v2 = (timeValue: string | Date): Date => {
+    if (typeof timeValue === "string") {
+      return new Date(timeValue);
+    }
+    return timeValue;
+  };
+
+  const parseUTCTime_v3 = (timeValue: string | Date): Date => {
+    if (typeof timeValue === "string") {
+      // Remove 'Z' if present and treat as local time
+      return new Date(timeValue.replace('Z', ''));
+    }
+    return timeValue;
+  };
 
   // Get cell styling based on booking status
   const getCellStyle = (
