@@ -414,7 +414,8 @@ const parseMethod2 = new Date(normalized);
   const parseUTCTime = (timeValue: string | Date): Date => {
     if (typeof timeValue === "string") {
       // Preserve UTC time by appending 'Z'
-      return new Date(timeValue.endsWith('Z') ? timeValue : timeValue + 'Z');
+      const timeWithoutZ = timeValue.replace('Z', '');
+      return new Date(timeWithoutZ);
     }
     return timeValue;
   };
