@@ -4,6 +4,17 @@ import Request from "../../models/Request";
 import Slot from "../../models/Slot";
 import User from "../../models/User";
 import Band from "../../models/Band";
+import UserBand from "../../models/UserBand"; // Add this import
+
+// Helper function to get first band ID for a user
+async function getFirstBandId(userId: string): Promise<string | null> {
+  const userBand = await UserBand.findOne({
+    where: { user_id: userId },
+    attributes: ['band_id'],
+    order: [['createdAt', 'ASC']] // Or any other ordering you prefer
+  });
+  return userBand ? userBand.band_id : null;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "OPTIONS") {
@@ -33,13 +44,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             let user_name = user ? user.name : null;
             let band_name = null;
             
-            // If the request has a band_id (e.g. set by an admin), use that; otherwise fallback to the user's band_id.
-            const bandIdToUse = requestData.band_id || (user && user.band_id);
+            // Use helper function instead of user.band_id
+            const userBandId = user ? await getFirstBandId(user.id) : null;
+            const bandIdToUse = requestData.band_id || userBandId;
+
             if (bandIdToUse) {
               const band = await Band.findOne({ where: { id: bandIdToUse } });
-              if (band) {
-                band_name = band.name;
-              }
+              band_name = band ? band.name : null;
             }
             return { ...requestData, user_name, band_name };
           })
@@ -55,7 +66,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         const { user_id, slot_start, slot_end, room_id, band_id } = req.body;
         const userRecord = await User.findOne({ where: { id: user_id } });
-        const bandIdToUse = band_id ? band_id : userRecord?.band_id;
+
+        const userBandId = userRecord ? await getFirstBandId(userRecord.id) : null;
+        const bandIdToUse = band_id || userBandId;
+
         const newRequest = await Request.create({
           user_id,
           status: "pending",
@@ -104,8 +118,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
           const userRecord = await User.findOne({ where: { id: requestToUpdate.user_id } });
-          // Use the band_id from updateData if provided, otherwise fallback to the user's band_id.
-          const bandIdToInsert = updateData.band_id || requestToUpdate.band_id || userRecord?.band_id;
+          const userBandId = userRecord ? await getFirstBandId(userRecord.id) : null;
+          const bandIdToInsert = updateData.band_id || requestToUpdate.band_id || userBandId;
 
           const newSlot = await Slot.create({
             slot_start: adjustedSlotStart,
