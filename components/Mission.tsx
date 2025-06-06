@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { BackgroundGradient } from "./ui/background-gradient";
 import Image from "next/image";
-import bandImage from "../public/Bands/Band1.jpeg";
-import choir1Image from "../public/Choir/Choir3.jpeg";
-import choir2Image from "../public/Choir/Magnificat.jpeg";
-import choir3Image from "../public/Choir/Choir3.jpeg";
+import vision from "../public/Bands/vision.jpeg"
+import mission from "../public/Bands/mission.jpeg"
+import scope from "../public/Bands/scope.jpeg"
+import purpose from "../public/Bands/purpose.jpeg"
 
 // Data
 const missionData = {
@@ -14,25 +14,25 @@ const missionData = {
     title: "Vision",
     description:
       "To inspire excellence and build confident student leaders to create a better world.",
-    image: bandImage,
+    image: scope,
   },
   mission: {
     title: "Mission",
     description:
       "To foster talent and holistic growth by providing students with a multidisciplinary platform of opportunities for service and self-expression.",
-    image: choir1Image,
+    image: mission,
   },
   scope: {
     title: "Scope",
     description:
       "A sense of responsibility in the student community of Christ (Deemed to be University) towards self and society.",
-    image: choir2Image,
+    image: scope,
   },
   purpose: {
     title: "Purpose",
     description:
       "To inspire students to build a better world through holistic development.",
-    image: choir3Image,
+    image: purpose,
   },
 };
 

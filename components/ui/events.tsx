@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect} from "react";
 import Image, { StaticImageData } from "next/image";
-import band1 from "../../public/Bands/Band1.jpeg";
+import Blossoms from "../../public/Bands/blossoms.jpeg";
 import TalentWeek from "../../public/Bands/Talent Week.jpeg";
 import Magnificat from "../../public/Choir/Magnificat.jpeg";
 import Erato from "../../public/Bands/erato.jpeg"
@@ -40,7 +40,7 @@ const EventData: EventProps[] = [
     title: "Blossoms",
     description:
       "An annual cultural fest organised by the Student Welfare Office, Blossoms seeks to host activities and competitions at the inter deanery level. Much like Darpan in its search for talent and skills among the students and participants, Blossoms provides an opportunity on a bigger scale. With varying categories of activities like, literary, art, performing arts like music, dance and theatre the fest witnesses a remarkable display of flair and brilliance among all those associated with it.",
-    imageSrc: band1,
+    imageSrc: Blossoms,
     altText: "Band 1",
     visible: false, // Initially hidden
     reverse: false, 
