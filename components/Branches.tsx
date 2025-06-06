@@ -1,8 +1,8 @@
 import React from "react";
 import { FocusCards } from "./ui/focus-cards";
 import SWO_Logo from "../public/Bands/culturalteam.jpeg"; // Import images correctly
-import Natyarpana from "../public/Bands/culturalteam.jpeg";
-import ckc from "../public/Choir/Magnificat.jpeg";
+import Natyarpana from "../public/Bands/natyarpana.jpeg";
+import ckc from "../public/Bands/choir.jpeg";
 
 const Branches = () => {
   const cards = [

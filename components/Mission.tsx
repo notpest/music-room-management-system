@@ -14,7 +14,7 @@ const missionData = {
     title: "Vision",
     description:
       "To inspire excellence and build confident student leaders to create a better world.",
-    image: scope,
+    image: vision,
   },
   mission: {
     title: "Mission",
