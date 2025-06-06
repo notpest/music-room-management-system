@@ -106,15 +106,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await requestToUpdate.update(updateData, { returning: true });
 
         if (updateData.status === "approved" && prevStatus !== "approved") {
-          const offsetMs = 5.5 * 60 * 60 * 1000;
-          const origStart = requestToUpdate.slot_start instanceof Date
-            ? requestToUpdate.slot_start.getTime()
-            : new Date(requestToUpdate.slot_start).getTime();
-          const origEnd = requestToUpdate.slot_end instanceof Date
-            ? requestToUpdate.slot_end.getTime()
-            : new Date(requestToUpdate.slot_end).getTime();
-          const adjustedSlotStart = new Date(origStart + offsetMs).toISOString();
-          const adjustedSlotEnd = new Date(origEnd + offsetMs).toISOString();
+          const adjustedSlotStart = requestToUpdate.slot_start
+          const adjustedSlotEnd = requestToUpdate.slot_end
 
           console.log("Creating slot with start:", adjustedSlotStart, "and end:", adjustedSlotEnd);
           const userRecord = await User.findOne({ where: { id: requestToUpdate.user_id } });
@@ -130,11 +123,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
           await requestToUpdate.update({ slot_id: newSlot.id, response_date: new Date() });
         } else if (updateData.status === "approved" && prevStatus === "approved" && prevSlotId) {
-          const offsetMs = 5.5 * 60 * 60 * 1000;
-          const origStart = new Date(requestToUpdate.slot_start).getTime();
-          const origEnd = new Date(requestToUpdate.slot_end).getTime();
-          const adjustedSlotStart = new Date(origStart + offsetMs).toISOString();
-          const adjustedSlotEnd = new Date(origEnd + offsetMs).toISOString();
+          const adjustedSlotStart = requestToUpdate.slot_start;
+          const adjustedSlotEnd = requestToUpdate.slot_end;
 
           await Slot.update(
             { slot_start: adjustedSlotStart, slot_end: adjustedSlotEnd },
