@@ -30,7 +30,7 @@ const EventData: EventProps[] = [
   { 
     title: "Erato",
     description:
-      "Erato organised by The University Choir & the Cultural Teams across all the three campuses in Bangalore. An evening of beautiful choral and band performances showcasing diverse genres of music! We thrill you with exciting performances of intricate harmonies and soulful rhythms!",
+      "Erato is a night where music takes center stage. This annual musical festival brings together the rich and diverse notes of Christ University's Bangalore Kengeri Campus, featuring breathtaking performances by the University’s Cultural Team, Choir, and Band. The finest talents of our campus come together for a night of musical artistry. Erato showcases the beauty of music across genres, so let the music speak!",
     imageSrc: Erato, // Use imported image
     altText: "Erato",
     visible: false, // Initially hidden
