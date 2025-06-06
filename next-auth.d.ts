@@ -10,7 +10,7 @@ declare module "next-auth" {
       name: string;
       role: string;
       band_id: string | null;
-    };
+    } & DefaultSession["user"];
   }
   interface User {
     id: string;

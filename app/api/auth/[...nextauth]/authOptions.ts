@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import User from "@/models/User";
 import LoginHistory from "@/models/LoginHistory";
+import UserBand from "@/models/UserBand"; 
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -21,13 +22,20 @@ export const authOptions: NextAuthOptions = {
         
         if (!user) throw new Error("User not found");
         const isValid = await compare(credentials.password, user.hashed_password);
-        return isValid ? {
+        if (!isValid) return null;
+         const userBands = await UserBand.findAll({
+          where: { user_id: user.id },
+          attributes: ["band_id"],
+          limit: 1 // Get just the first band
+        });
+
+        return {
           id: user.id,
           name: user.name,
           username: user.username,
           role: user.role,
-          band_id: user.band_id ?? "",
-        } : null;
+          band_id: userBands[0]?.band_id || null // Use first band or null
+        };
       }
     })
   ],
@@ -38,6 +46,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.username = user.username;
+        token.name = user.name;
         token.role = user.role;
         token.band_id = user.band_id;
       }
@@ -49,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         username: token.username as string,
         name: token.name as string,
         role: token.role as string,
-        band_id: token.band_id as string,
+        band_id: token.band_id as string | null,
       };
       return session;
     }
