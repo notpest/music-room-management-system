@@ -145,6 +145,12 @@ const RBTable = () => {
   const isAdmin = session?.user?.role === "admin";
   const [userBands, setUserBands] = useState<Array<{ id: string; name: string }>>([]);
 
+  const convertUTCToIST = (utcDate: Date | string): Date => {
+    const date = new Date(utcDate);
+    // IST is UTC+5:30
+    return new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+  };
+
   // Fetch room mapping from API
   const fetchRooms = async () => {
     try {
@@ -351,9 +357,12 @@ const RBTable = () => {
   
   // Helper function to parse an ISO timestamp into a Date in the user’s local timezone.
   const parseLocalTime = (timeValue: string | Date): Date => {
-    return typeof timeValue === "string" 
-      ? new Date(timeValue)    // keep the trailing “Z” so JS knows it's UTC
+    const date = typeof timeValue === "string" 
+      ? new Date(timeValue)
       : timeValue;
+      
+    // Convert to IST if needed
+    return convertUTCToIST(date);
   };
 
   // When slots or the selected week change, rebuild the days, times and booking mapping.
@@ -366,10 +375,8 @@ const RBTable = () => {
 
     // Override with API slots (if any fall within the week), marking all time cells that fall within the booking range.
     slots.forEach((slot) => {
-      console.log("Slot:", slot);
-
-      const slotStart = parseLocalTime(slot.slot_start);
-      const slotEnd = parseLocalTime(slot.slot_end);
+      const slotStart = convertUTCToIST(slot.slot_start);
+      const slotEnd = convertUTCToIST(slot.slot_end);
 
       console.log("Parsed Slot Start:", slot.slot_start);
       console.log("Parsed Slot End:", slot.slot_end);
