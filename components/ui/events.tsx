@@ -4,7 +4,9 @@ import Image, { StaticImageData } from "next/image";
 import band1 from "../../public/Bands/Band1.jpeg";
 import TalentWeek from "../../public/Bands/Talent Week.jpeg";
 import Magnificat from "../../public/Choir/Magnificat.jpeg";
-import SoundCurry from "../../public/Choir/Choir3.jpeg";
+import Erato from "../../public/Bands/erato.jpeg"
+import Nritta from "../../public/Bands/nritta.jpeg"
+
 
 interface EventProps {
   title: string;
@@ -29,7 +31,7 @@ const EventData: EventProps[] = [
     title: "Erato",
     description:
       "Erato organised by The University Choir & the Cultural Teams across all the three campuses in Bangalore. An evening of beautiful choral and band performances showcasing diverse genres of music! We thrill you with exciting performances of intricate harmonies and soulful rhythms!",
-    imageSrc: SoundCurry, // Use imported image
+    imageSrc: Erato, // Use imported image
     altText: "Erato",
     visible: false, // Initially hidden
     reverse: true,
@@ -56,7 +58,7 @@ const EventData: EventProps[] = [
     title: "Nritta",
     description:
       "One of the biggest stages is set for Nritta, the dance fest which showcases the multitude of talents among the students. The fest receives participation from hundreds of students every year who come forth to perform and portray their dancing abilities in numerous dance forms while simultaneously enjoying themselves. A robust and vibrant range of colours and performances are given by various groups from across all three campuses in Bangalore along with that of the cultural teams in each of the campuses.",
-    imageSrc: SoundCurry,
+    imageSrc: Nritta,
     altText: "Nritta",
     visible: false, // Initially hidden
     reverse: false,

@@ -312,13 +312,11 @@ const RBTable = () => {
         const startDisplay = new Date(`1970-01-01T${config.start_time}Z`).toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
-          timeZone: "UTC",
           hourCycle: "h12",
         });
         const endDisplay = new Date(`1970-01-01T${config.end_time}Z`).toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
-          timeZone: "UTC",
           hourCycle: "h12",
         });
         return { key, display: startDisplay, end: endDisplay };
