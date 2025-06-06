@@ -320,7 +320,12 @@ const RBTable = () => {
       
       // Test different parsing methods
       const parseMethod1 = new Date(testSlot.slot_start);
-      const parseMethod2 = new Date(testSlot.slot_start + (testSlot.slot_start.endsWith('Z') ? '' : 'Z'));
+      // 1) Convert the Date to its ISO string (always ends in "Z")
+const iso = testSlot.slot_start.toISOString(); 
+// 2) (Optional) check endsWith, but toISOString() already ends with "Z"
+const normalized = iso.endsWith("Z") ? iso : iso + "Z";
+// 3) Parse back into a Date
+const parseMethod2 = new Date(normalized);
       const parseMethod3 = parseUTCTime(testSlot.slot_start);
       
       console.log("   - new Date(slot_start):", parseMethod1);
