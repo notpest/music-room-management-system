@@ -2,10 +2,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import User from "@/models/User";
+import UserBand from "@/models/UserBand";
 
 export async function POST(request: Request) {
   try {
-    const { name, username, password, bandId, email, role } = await request.json();
+    const { name, username, password, bandIds, email, role } = await request.json();
 
     // Validate required fields
     if (!name || !username || !password || !email) {
@@ -33,13 +34,31 @@ export async function POST(request: Request) {
       name,
       username,
       hashed_password,
-      band_id: bandId || null,
       email,
-      role,
+      role: role || "user",
+    });
+
+    if (Array.isArray(bandIds) && bandIds.length > 0) {
+      const pairs = bandIds.map((bId: string) => ({
+        user_id: newUser.id,
+        band_id: bId,
+      }));
+      await UserBand.bulkCreate(pairs);
+    }
+
+    const createdUserWithBands = await User.findOne({
+      where: { id: newUser.id },
+      include: [
+        {
+          model: (await import("@/models/Band")).default,
+          as: "Bands",
+          through: { attributes: [] },
+        },
+      ],
     });
 
     return NextResponse.json(
-      { message: "User registered successfully", user: newUser },
+      { message: "User registered successfully", user: createdUserWithBands },
       { status: 201 }
     );
   } catch (error: any) {

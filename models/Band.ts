@@ -1,5 +1,7 @@
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '../database';
+import User from './User';
+import UserBand from './UserBand';
 
 interface BandAttributes {
   id?: string;
@@ -7,6 +9,8 @@ interface BandAttributes {
   created_date?: Date;
   colour: string;
 }
+
+interface BandCreationAttributes extends Optional<BandAttributes, "id" | "created_date"> {}
 
 class Band extends Model<BandAttributes> implements BandAttributes {
   public id!: string;

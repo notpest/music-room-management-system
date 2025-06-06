@@ -27,4 +27,8 @@ sequelize.authenticate()
   .then(() => console.log("Database connection established successfully"))
   .catch((err) => console.error("Error connecting to the database:", err));
 
+void (async () => {
+  await import("./models/initmodels");
+})();
+
 export default sequelize;

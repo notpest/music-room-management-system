@@ -143,6 +143,7 @@ const RBTable = () => {
   const [bandColors, setBandColors] = useState<{ [key: string]: string }>({});
   const [userBandName, setUserBandName] = useState<string>("");
   const isAdmin = session?.user?.role === "admin";
+  const [userBands, setUserBands] = useState<Array<{ id: string; name: string }>>([]);
 
   // Fetch room mapping from API
   const fetchRooms = async () => {
@@ -209,24 +210,35 @@ const RBTable = () => {
       });
   }, [isAdmin]);
 
-  // useEffect(() => {
-  //   if (isAdmin) return;
-  //   if (!session?.user?.band_id) return;
+  useEffect(() => {
+    if (!session) return;
+    if (session.user.role !== "admin") {
+      axios
+        .get("/api/users")
+        .then((res) => {
+          const allUsers = res.data as Array<{
+            id: string;
+            name: string;
+            username: string;
+            email: string;
+            role: string;
+            bands: Array<{ id: string; name: string }>;
+          }>;
 
-  //   axios
-  //     .get("/api/bands")
-  //     .then((res) => {
-  //       const found = (res.data as Array<{ id: string; name: string }>).find(
-  //         (b) => b.id === (session.user as any).band_id
-  //       );
-  //       if (found) {
-  //         setUserBandName(found.name);
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.error("Error fetching user’s band:", err);
-  //     });
-  // }, [isAdmin, session?.user?.band_id]);
+          const me = allUsers.find((u) => u.id === (session.user as any).id);
+          if (me) {
+            setUserBands(me.bands);
+            // prefill bandId with first band if available
+            if (me.bands.length > 0) {
+              setBandId(me.bands[0].id);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching user’s bands:", err);
+        });
+    }
+  }, [session]);
 
   // Update the current week start based on the selected date
   useEffect(() => {
@@ -833,15 +845,21 @@ const RBTable = () => {
                     ))}
                   </Select>
                 ) : (
-                  <Input
-                    variant="underlined"
-                    fullWidth
-                    label="Band Name"
-                    // For non-admins, show their band_id but not editable
-                    placeholder={userBandName || "Loading band…"}
-                    value={userBandName}
-                    readOnly
-                  />
+                  <Select
+                    label="Select your Band"
+                    placeholder={userBands.length ? "Choose your band" : "Loading…"}
+                    selectedKeys={bandId ? new Set([bandId]) : new Set()}
+                    onSelectionChange={(keys) => {
+                      const chosen = Array.from(keys)[0] as string;
+                      setBandId(chosen);
+                    }}
+                  >
+                    {userBands.map((ub) => (
+                      <SelectItem key={ub.id} value={ub.id}>
+                        {ub.name}
+                      </SelectItem>
+                    ))}
+                  </Select>
                 )}
                 <Select
                   label="Slot Start Time"
@@ -901,7 +919,7 @@ const RBTable = () => {
                       alert("One or both time slots are invalid.");
                       return;
                     }
-                    if (isAdmin && !bandId) {
+                    if (!bandId) {
                       alert("Please select a band.");
                       return;
                     }

@@ -111,9 +111,8 @@ interface DbUser {
   name: string;
   username: string;
   email: string;
-  band_id: string | null;
-  band_name: string | null;
   role: string;
+  bands: Array<{ id: string; name: string }>;
 }
 
 interface Band {
@@ -129,6 +128,7 @@ const RegisterPage = () => {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [bandId, setBandId] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
@@ -149,8 +149,7 @@ const RegisterPage = () => {
   const [editName, setEditName] = useState("");
   const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [editBandId, setEditBandId] = useState<string | null>(null);
-  
+  const [editBandIds, setEditBandIds] = useState<string[]>([]);
   // ------------------------------------------------------------------------
   // Fetch all bands once on mount (for both new‐band dropdown and edit‐user dropdown)
   useEffect(() => {
@@ -200,6 +199,7 @@ const RegisterPage = () => {
 
   // ───────────────────────────────────────────────────────────────────────
   // (3) Edit‐Band modal state & handlers
+  const [editBandId, setEditBandId] = useState<string | null>(null);
   const [isEditBandModalOpen, setEditBandModalOpen] = useState(false);
   const [editBandName, setEditBandName] = useState("");
   const [editBandColour, setEditBandColour] = useState("#000000");
@@ -263,10 +263,20 @@ const RegisterPage = () => {
     setError(null);
     setSuccess(false);
 
+     const payload = {
+      name,
+      username,
+      password,
+      email,
+      role,
+      bandIds: selectedBandIds, // ← send the array
+      // you can still include bandColor if your register needs it
+    };
+
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, username, password, bandId, email, role, bandColor }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
@@ -335,7 +345,7 @@ const RegisterPage = () => {
     setEditName(u.name);
     setEditUsername(u.username);
     setEditEmail(u.email);
-    setEditBandId(u.band_id);
+    setEditBandIds(u.bands.map((b) => b.id));
     setEditModalOpen(true);
   };
 
@@ -351,7 +361,7 @@ const RegisterPage = () => {
           name: editName,
           username: editUsername,
           email: editEmail,
-          band_id: editBandId,
+          bandIds: editBandIds,
         }),
       });
       if (res.ok) {
@@ -376,8 +386,12 @@ const RegisterPage = () => {
         case "username":
           return <>{user.username}</>;
 
-        case "band_name":
-          return <>{user.band_name || "-"}</>;
+        case "bands":
+          return <>
+              {user.bands.length === 0
+                ? "—"
+                : user.bands.map((b) => b.name).join(", ")}
+            </>;
 
         case "actions":
           return (
@@ -442,7 +456,7 @@ const RegisterPage = () => {
                 columns={[
                   { name: "NAME", uid: "name" },
                   { name: "USERNAME", uid: "username" },
-                  { name: "BAND", uid: "band_name" },
+                  { name: "BAND", uid: "bands" },
                   { name: "ACTIONS", uid: "actions" },
                 ]}
               >
@@ -583,9 +597,13 @@ const RegisterPage = () => {
                 className="w-full"
               />
               <Select
-                label="Select Band"
-                selectedKeys={bandId ? [bandId] : []}
-                onChange={(e) => setBandId(e.target.value)}
+                label="Select Bands"
+                selectionMode="multiple"
+                selectedKeys={new Set(selectedBandIds)}
+                onSelectionChange={(keys) => {
+                  // NextUI’s Select passes a Set of selected values
+                  setSelectedBandIds(Array.from(keys) as string[]);
+                }}
                 className="w-full"
               >
                 <>
@@ -722,15 +740,18 @@ const RegisterPage = () => {
                 className="w-full"
               />
               <Select
-                label="Select Band"
-                selectedKeys={editBandId ? [editBandId] : []}
-                onChange={(e) => setEditBandId(e.target.value)}
+                label="Select Bands"
+                selectionMode="multiple"
+                selectedKeys={new Set(editBandIds)} 
+                onSelectionChange={(keys) => {
+                  setEditBandIds(Array.from(keys) as string[]);
+                }}
                 className="w-full"
               >
                 <>
-                  <SelectItem key="" value={""}>
+                  {/* <SelectItem key="" value={""}>
                     None
-                  </SelectItem>
+                  </SelectItem> */}
                     {bands.map((band) => (
                       <SelectItem key={band.id} value={band.id}>
                         {band.name}
