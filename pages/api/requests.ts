@@ -11,7 +11,7 @@ async function getFirstBandId(userId: string): Promise<string | null> {
   const userBand = await UserBand.findOne({
     where: { user_id: userId },
     attributes: ['band_id'],
-    order: [['createdAt', 'ASC']] // Or any other ordering you prefer
+    order: [['band_id', 'ASC']] // Or any other ordering you prefer
   });
   return userBand ? userBand.band_id : null;
 }
