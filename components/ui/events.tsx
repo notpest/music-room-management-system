@@ -57,7 +57,7 @@ const EventData: EventProps[] = [
   {
     title: "Nritta",
     description:
-      "One of the biggest stages is set for Nritta, the dance fest which showcases the multitude of talents among the students. The fest receives participation from hundreds of students every year who come forth to perform and portray their dancing abilities in numerous dance forms while simultaneously enjoying themselves. A robust and vibrant range of colours and performances are given by various groups from across all three campuses in Bangalore along with that of the cultural teams in each of the campuses.",
+      "One of the biggest stages is set for Nritta, the dance fest which showcases the multitude of talents among the students. The fest receives participation from hundreds of students every year who come forth to perform and portray their dancing abilities in numerous dance forms while simultaneously enjoying themselves. A robust and vibrant range of colours and performances are given by various groups from across all four campuses in Bangalore along with that of the cultural teams in each of the campuses.",
     imageSrc: Nritta,
     altText: "Nritta",
     visible: false, // Initially hidden
