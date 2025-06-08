@@ -923,8 +923,8 @@ const parseMethod2 = new Date(normalized);
               <ModalBody>
                 {isAdmin ? (
                   <Select
-                    label="Select Band"
-                    placeholder="Choose a band"
+                    label="Select your Profile"
+                    placeholder="Choose a Profile"
                     selectedKeys={new Set([bandId])}
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] as string;
@@ -939,8 +939,8 @@ const parseMethod2 = new Date(normalized);
                   </Select>
                 ) : (
                   <Select
-                    label="Select your Band"
-                    placeholder={userBands.length ? "Choose your band" : "Loading…"}
+                    label="Select your Profile"
+                    placeholder={userBands.length ? "Choose your Profile" : "Loading…"}
                     selectedKeys={bandId ? new Set([bandId]) : new Set()}
                     onSelectionChange={(keys) => {
                       const chosen = Array.from(keys)[0] as string;
@@ -1013,7 +1013,7 @@ const parseMethod2 = new Date(normalized);
                       return;
                     }
                     if (!bandId) {
-                      alert("Please select a band.");
+                      alert("Please select a Profile.");
                       return;
                     }
                     handleBookingConfirm();

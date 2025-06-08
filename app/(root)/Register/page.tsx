@@ -159,7 +159,7 @@ const RegisterPage = () => {
         setBands(data as Band[]);
       })
       .catch((err) => {
-        console.error("Error fetching bands:", err);
+        console.error("Error fetching Profile:", err);
       });
   }, []);
 
@@ -172,7 +172,7 @@ const RegisterPage = () => {
         setBands(data);
       })
       .catch((err) => {
-        console.error("Error fetching bands:", err);
+        console.error("Error fetching Profile:", err);
       });
   };
 
@@ -184,16 +184,16 @@ const RegisterPage = () => {
   // ───────────────────────────────────────────────────────────────────────
   // (2) Delete a band by ID, then re‐fetch
   const handleDeleteBand = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this band?")) return;
+    if (!confirm("Are you sure you want to delete this Profile?")) return;
     try {
       const res = await fetch(`/api/bands?id=${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchDbBands();
       } else {
-        console.error("Delete band failed");
+        console.error("Delete Profile failed");
       }
     } catch (err) {
-      console.error("Error deleting band:", err);
+      console.error("Error deleting Profile:", err);
     }
   };
 
@@ -231,10 +231,10 @@ const RegisterPage = () => {
         setEditBandModalOpen(false);
         fetchDbBands();
       } else {
-        console.error("Edit band failed");
+        console.error("Edit Profile failed");
       }
     } catch (err) {
-      console.error("Error editing band:", err);
+      console.error("Error editing Profile:", err);
     }
   };
 
@@ -444,7 +444,7 @@ const RegisterPage = () => {
               onPress={() => setBandModalOpen(true)}
               className="w-full py-2 px-4 bg-[#18181b] text-white rounded transition duration-300 ease-in-out transform hover:scale-105"
             >
-              Register Band
+              Register Profile
             </Button>
           </div>
 
@@ -456,7 +456,7 @@ const RegisterPage = () => {
                 columns={[
                   { name: "NAME", uid: "name" },
                   { name: "USERNAME", uid: "username" },
-                  { name: "BAND", uid: "bands" },
+                  { name: "PROFILE", uid: "bands" },
                   { name: "ACTIONS", uid: "actions" },
                 ]}
               >
@@ -495,7 +495,7 @@ const RegisterPage = () => {
             <Table aria-label="Bands Table" className="w-full">
               <TableHeader
                 columns={[
-                  { name: "BAND NAME", uid: "name" },
+                  { name: "PROFILE NAME", uid: "name" },
                   { name: "COLOUR", uid: "colour" },
                   { name: "ACTIONS", uid: "actions" },
                 ]}
@@ -531,7 +531,7 @@ const RegisterPage = () => {
                     {/* ACTIONS */}
                     <TableCell className="py-4 text-base text-right">
                       <div className="flex justify-end items-center gap-2">
-                        <Tooltip content="Edit band">
+                        <Tooltip content="Edit Profile">
                           <span
                             className="cursor-pointer text-default-400 active:opacity-50"
                             onClick={() => openEditBandModal(item as any)}
@@ -539,7 +539,7 @@ const RegisterPage = () => {
                             <EditIcon />
                           </span>
                         </Tooltip>
-                        <Tooltip color="danger" content="Delete band">
+                        <Tooltip color="danger" content="Delete Profile">
                           <span
                             className="cursor-pointer text-danger active:opacity-50"
                             onClick={() => handleDeleteBand((item as any).id)}
@@ -597,7 +597,7 @@ const RegisterPage = () => {
                 className="w-full"
               />
               <Select
-                label="Select Bands"
+                label="Select Profile"
                 selectionMode="multiple"
                 selectedKeys={new Set(selectedBandIds)}
                 onSelectionChange={(keys) => {
@@ -627,11 +627,11 @@ const RegisterPage = () => {
       {/* ── Band Registration Modal ────────────────────────────────────────── */}
       <Modal isOpen={isBandModalOpen} onOpenChange={setBandModalOpen}>
         <ModalContent>
-          <ModalHeader>Register Band</ModalHeader>
+          <ModalHeader>Register Profile</ModalHeader>
           <ModalBody>
             <form onSubmit={handleBandSubmit} className="space-y-4">
               <Input
-                label="Band Name"
+                label="Profile Name"
                 type="text"
                 value={bandId}
                 onChange={(e) => setBandId(e.target.value)}
@@ -644,7 +644,7 @@ const RegisterPage = () => {
                   className="w-8 h-8 rounded-md border border-gray-400"
                 />
                 <Input
-                  label="Band Color (Hex)"
+                  label="Profile Color"
                   type="text"
                   value={bandColor}
                   onChange={(e) => setBandColor(e.target.value)}
@@ -740,7 +740,7 @@ const RegisterPage = () => {
                 className="w-full"
               />
               <Select
-                label="Select Bands"
+                label="Select Profiles"
                 selectionMode="multiple"
                 selectedKeys={new Set(editBandIds)} 
                 onSelectionChange={(keys) => {
@@ -775,11 +775,11 @@ const RegisterPage = () => {
       {/* ── Edit Band Modal ────────────────────────────────────────────────────── */}
       <Modal isOpen={isEditBandModalOpen} onOpenChange={setEditBandModalOpen}>
         <ModalContent>
-          <ModalHeader>Edit Band</ModalHeader>
+          <ModalHeader>Edit Profile</ModalHeader>
           <ModalBody>
             <form onSubmit={handleEditBandSubmit} className="space-y-4">
               <Input
-                label="Band Name"
+                label="Profile Name"
                 type="text"
                 value={editBandName}
                 onChange={(e) => setEditBandName(e.target.value)}

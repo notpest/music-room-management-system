@@ -62,7 +62,7 @@ export type RequestType = {
 
 const columns = [
   { key: "user_name", name: "USER NAME" },
-  { key: "band_name", name: "BAND NAME" },
+  { key: "band_name", name: "PROFILE NAME" },
   { key: "status", name: "STATUS" },
   { key: "slot_start", name: "SLOT START TIME" },
   { key: "slot_end", name: "SLOT END TIME" },
