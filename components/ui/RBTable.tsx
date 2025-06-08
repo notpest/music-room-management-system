@@ -1029,7 +1029,17 @@ const parseMethod2 = new Date(normalized);
               <ModalBody>
                 <p>You must be signed in before booking a slot.</p>
               </ModalBody>
-              <ModalFooter>
+              <ModalFooter className="flex justify-end space-x-2">
+                {/* same primary login button as your Navbar */}
+                <Button
+                  color="primary"
+                  onPress={() => {
+                    setModalOpen(false);
+                    window.dispatchEvent(new Event("openLoginModal"));
+                  }}
+                >
+                  Login
+                </Button>
               </ModalFooter>
             </>
           ) : null}

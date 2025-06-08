@@ -42,6 +42,12 @@ const NavbarComponent = () => {
   const pathname = usePathname();
 
   useEffect(() => {
+    const handler = () => onOpen(); // onOpen is from useDisclosure()
+    window.addEventListener("openLoginModal", handler);
+    return () => window.removeEventListener("openLoginModal", handler);
+  }, [onOpen]);
+
+  useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY < lastScrollY) {
         setShowNavbar(true);
