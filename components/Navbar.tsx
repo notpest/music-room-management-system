@@ -65,7 +65,7 @@ const NavbarComponent = () => {
 
   const handleLogin = async () => {
     const result = await signIn("credentials", {
-      username,
+      identifier: username,
       password,
       redirect: false,
       callbackUrl: "/",
@@ -187,7 +187,7 @@ const NavbarComponent = () => {
           <ModalBody>
             <Input
               type="text"
-              label="Username"
+              label="Email or Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />

@@ -2,6 +2,7 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
+import { Op } from "sequelize";     
 import User from "@/models/User";
 import LoginHistory from "@/models/LoginHistory";
 import UserBand from "@/models/UserBand"; 
@@ -11,13 +12,18 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
+        identifier: { label: "Username or Email", type: "text" },
+        password:   { label: "Password",            type: "password" }
       },
       async authorize(credentials) {
         if (!credentials) throw new Error("No credentials");
         const user = await User.findOne({ 
-          where: { username: credentials.username }
+          where: {
+            [Op.or]: [
+              { username: credentials.identifier },
+              { email:    credentials.identifier },
+            ]
+          }
         });
         
         if (!user) throw new Error("User not found");
