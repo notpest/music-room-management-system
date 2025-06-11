@@ -386,6 +386,9 @@ const RegisterPage = () => {
         case "username":
           return <>{user.username}</>;
 
+        case "email":
+          return <>{user.email}</>;
+          
         case "bands":
           return <>
               {user.bands.length === 0
@@ -456,6 +459,7 @@ const RegisterPage = () => {
                 columns={[
                   { name: "NAME", uid: "name" },
                   { name: "USERNAME", uid: "username" },
+                  { name: "EMAIL", uid: "email" },
                   { name: "PROFILE", uid: "bands" },
                   { name: "ACTIONS", uid: "actions" },
                 ]}
