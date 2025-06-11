@@ -173,7 +173,7 @@ const NavbarComponent = () => {
               </NavbarMenuItem>
             </>
           )}
-            <div className="absolute bottom-4 text-center text-sm text-gray-500 mb-10" style={{ width: "98%" }}>
+            <div className="absolute bottom-4 text-center text-sm text-gray-500 mb-10 w-[93%] sm:w-[93%] md:w-[95%]">
     If you have any queries, kindly contact roshan.yohann@christuniversity.in
   </div>
         </NavbarMenu>
