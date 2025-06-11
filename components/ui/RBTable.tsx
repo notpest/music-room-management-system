@@ -118,7 +118,7 @@ const RBTable = () => {
 
   const [isModalOpen, setModalOpen] = useState(false);
   // "book" = booking modal; "alreadyBooked" = error modal
-  const [modalType, setModalType] = useState<"book" | "alreadyBooked" | "login" | null>(null);
+  const [modalType, setModalType] = useState<"book" | "alreadyBooked" | "login" | "requested" | null>(null);
   const [selectedDayKey, setSelectedDayKey] = useState<string>("");
   const [selectedTimeKey, setSelectedTimeKey] = useState<string>("");
   const [bandId, setBandId] = useState<string>("");
@@ -144,7 +144,7 @@ const RBTable = () => {
   const [userBandName, setUserBandName] = useState<string>("");
   const isAdmin = session?.user?.role === "admin";
   const [userBands, setUserBands] = useState<Array<{ id: string; name: string }>>([]);
-
+  const [requestedBandName, setRequestedBandName] = useState<string>("");
   // Fetch room mapping from API
   const fetchRooms = async () => {
     try {
@@ -297,48 +297,6 @@ const RBTable = () => {
     fetchSlots();
   }, [currentWeekStart, selectedRoomNumber]);
 
-  // Add this debugging function to your RBTable.tsx component
-  const debugTimeIssue = () => {
-    console.log("=== TIME DEBUGGING ===");
-    
-    // 1. Check what's coming from the server
-    console.log("1. Raw slots from server:", slots);
-    
-    // 2. Check timezone information
-    console.log("2. Browser timezone:", Intl.DateTimeFormat().resolvedOptions().timeZone);
-    console.log("3. Browser timezone offset (minutes):", new Date().getTimezoneOffset());
-    
-    // 3. Check slot configs
-    console.log("4. TimeSlots config:", timeSlots);
-    
-    // 4. Test parsing a specific slot
-    if (slots.length > 0) {
-      const testSlot = slots[0];
-      console.log("5. Testing first slot:");
-      console.log("   - Raw slot_start:", testSlot.slot_start);
-      console.log("   - Raw slot_end:", testSlot.slot_end);
-      
-      // Test different parsing methods
-      const parseMethod1 = new Date(testSlot.slot_start);
-      // 1) Convert the Date to its ISO string (always ends in "Z")
-const iso = testSlot.slot_start.toISOString(); 
-// 2) (Optional) check endsWith, but toISOString() already ends with "Z"
-const normalized = iso.endsWith("Z") ? iso : iso + "Z";
-// 3) Parse back into a Date
-const parseMethod2 = new Date(normalized);
-      const parseMethod3 = parseUTCTime(testSlot.slot_start);
-      
-      console.log("   - new Date(slot_start):", parseMethod1);
-      console.log("   - new Date(slot_start + 'Z'):", parseMethod2);
-      console.log("   - parseUTCTime(slot_start):", parseMethod3);
-      
-      // Check what formatDayKey and formatTimeKey return
-      console.log("   - formatDayKey:", formatDayKey(parseMethod1));
-      console.log("   - formatTimeKey:", formatTimeKey(parseMethod1));
-    }
-    
-    console.log("=== END DEBUGGING ===");
-  };
   // Modified fetchSlotConfigs with debugging
   const fetchSlotConfigs = async () => {
     try {
@@ -473,8 +431,6 @@ const parseMethod2 = new Date(normalized);
 
     setDays(weekDays);
     setBookings(defaultBookings);
-
-    setTimeout(debugTimeIssue, 100);
   }, [slots, currentWeekStart, timeSlots]);
 
   const parseUTCTime_v1 = (timeValue: string | Date): Date => {
@@ -623,6 +579,9 @@ const parseMethod2 = new Date(normalized);
         alert("Room mapping not loaded yet.");
         return;
       }
+
+      const name = bands.find(b => b.id === bandId)?.name || "";
+
       await axios.post("/api/requests", {
         user_id: session?.user?.id,
         status: "pending",
@@ -631,10 +590,13 @@ const parseMethod2 = new Date(normalized);
         band_id: bandId,
         room_id: roomId,
       });
-      setModalOpen(false);
+      setRequestedBandName(name);
+      setModalType("requested");
+
       setBandId("");
       setBookingStartTime("");
       setBookingEndTime("");
+      
       fetchSlots();
     } catch (error) {
       console.error("Error creating slot request:", error);
@@ -1039,6 +1001,23 @@ const parseMethod2 = new Date(normalized);
                   }}
                 >
                   Login
+                </Button>
+              </ModalFooter>
+            </>
+            ) : modalType === "requested" ? (
+            <>
+              <ModalHeader>Request Submitted</ModalHeader>
+              <ModalBody>
+                <p>Your slot request on <strong>{selectedSlot}</strong>
+                {requestedBandName && (
+                  <> for the profile <strong>{requestedBandName}</strong></>
+                  )} has been submitted.
+                </p>
+                <p>Please wait for approval from the admin.</p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="success" onPress={() => setModalOpen(false)}>
+                  OK
                 </Button>
               </ModalFooter>
             </>
