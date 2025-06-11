@@ -452,112 +452,105 @@ const RegisterPage = () => {
           </div>
 
           <div className="flex flex-col lg:flex-row justify-center w-full max-w-[1800px] mx-auto gap-8 px-4">
-          {/* ── LEFT TABLE: show users fetched from DB ────────────────────────── */}
-          <div className="flex-1 min-w-[300px] md:min-w-[500px] lg:min-w-[650px]">
-            <Table aria-label="DB Users Table" className="w-full">
-              <TableHeader
-                columns={[
-                  { name: "NAME", uid: "name" },
-                  { name: "USERNAME", uid: "username" },
-                  { name: "EMAIL", uid: "email" },
-                  { name: "PROFILE", uid: "bands" },
-                  { name: "ACTIONS", uid: "actions" },
-                ]}
-              >
-                {(column) => (
-                  <TableColumn
-                    key={column.uid}
-                    align={column.uid === "actions" ? "end" : "start"}
-                  >
-                    {column.name}
-                  </TableColumn>
-                )}
-              </TableHeader>
-              <TableBody items={dbUsers}>
-                {(item) => (
-                  <TableRow key={item.id}>
-                    {(columnKey) => (
-                      <TableCell
-                        className={`py-4 text-base ${
-                          columnKey === "actions" ? "text-right" : ""
-                        }`}
-                      >
-                        {renderDbCell(
-                          item,
-                          columnKey as keyof DbUser | "actions"
-                        )}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {/* LEFT TABLE: DB Users */}
+<div className="flex-1 min-w-[350px] md:min-w-[550px] lg:min-w-[700px] overflow-y-auto max-h-[500px]">
+  <Table aria-label="DB Users Table" className="w-full">
+    <TableHeader
+      columns={[
+        { name: "NAME", uid: "name" },
+        { name: "USERNAME", uid: "username" },
+        { name: "EMAIL", uid: "email" },
+        { name: "PROFILE", uid: "bands" },
+        { name: "ACTIONS", uid: "actions" },
+      ]}
+    >
+      {(column) => (
+        <TableColumn
+          key={column.uid}
+          align={column.uid === "actions" ? "end" : "start"}
+        >
+          {column.name}
+        </TableColumn>
+      )}
+    </TableHeader>
+    <TableBody items={dbUsers}>
+      {(item) => (
+        <TableRow key={item.id}>
+          {(columnKey) => (
+            <TableCell
+              className={`py-4 text-base ${
+                columnKey === "actions" ? "text-right" : ""
+              }`}
+            >
+              {renderDbCell(item, columnKey as keyof DbUser | "actions")}
+            </TableCell>
+          )}
+        </TableRow>
+      )}
+    </TableBody>
+  </Table>
+</div>
 
-          {/* ── RIGHT TABLE: show all bands (name, colour, actions) ─────────────── */}
-          <div className="flex-1 min-w-[300px] md:min-w-[500px] lg:min-w-[650px]">
-            <Table aria-label="Bands Table" className="w-full">
-              <TableHeader
-                columns={[
-                  { name: "PROFILE NAME", uid: "name" },
-                  { name: "COLOUR", uid: "colour" },
-                  { name: "ACTIONS", uid: "actions" },
-                ]}
-              >
-                {(column) => (
-                  <TableColumn
-                    key={column.uid}
-                    align={column.uid === "actions" ? "end" : "start"}
-                  >
-                    {column.name}
-                  </TableColumn>
-                )}
-              </TableHeader>
-              <TableBody items={bands}>
-                {(item: Band & { colour: string }) => (
-                  <TableRow key={(item as any).id}>
-                    {/* BAND NAME */}
-                    <TableCell className="py-4 text-base text-left">
-                      {(item as Band).name}
-                    </TableCell>
+{/* RIGHT TABLE: Bands */}
+<div className="flex-1 min-w-[350px] md:min-w-[550px] lg:min-w-[700px] overflow-y-auto max-h-[500px]">
+  <Table aria-label="Bands Table" className="w-full">
+    <TableHeader
+      columns={[
+        { name: "PROFILE NAME", uid: "name" },
+        { name: "COLOUR", uid: "colour" },
+        { name: "ACTIONS", uid: "actions" },
+      ]}
+    >
+      {(column) => (
+        <TableColumn
+          key={column.uid}
+          align={column.uid === "actions" ? "end" : "start"}
+        >
+          {column.name}
+        </TableColumn>
+      )}
+    </TableHeader>
+    <TableBody items={bands}>
+      {(item: Band & { colour: string }) => (
+        <TableRow key={(item as any).id}>
+          <TableCell className="py-4 text-base text-left">
+            {(item as Band).name}
+          </TableCell>
+          <TableCell className="py-4 text-base text-left">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-6 h-6 rounded-sm border"
+                style={{ backgroundColor: (item as any).colour }}
+              />
+              <span>{(item as any).colour}</span>
+            </div>
+          </TableCell>
+          <TableCell className="py-4 text-base text-right">
+            <div className="flex justify-end items-center gap-2">
+              <Tooltip content="Edit Profile">
+                <span
+                  className="cursor-pointer text-default-400 active:opacity-50"
+                  onClick={() => openEditBandModal(item as any)}
+                >
+                  <EditIcon />
+                </span>
+              </Tooltip>
+              <Tooltip color="danger" content="Delete Profile">
+                <span
+                  className="cursor-pointer text-danger active:opacity-50"
+                  onClick={() => handleDeleteBand((item as any).id)}
+                >
+                  <DeleteIcon />
+                </span>
+              </Tooltip>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </TableBody>
+  </Table>
+</div>
 
-                    {/* COLOUR */}
-                    <TableCell className="py-4 text-base text-left">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded-sm border"
-                          style={{ backgroundColor: (item as any).colour }}
-                        />
-                        <span>{(item as any).colour}</span>
-                      </div>
-                    </TableCell>
-
-                    {/* ACTIONS */}
-                    <TableCell className="py-4 text-base text-right">
-                      <div className="flex justify-end items-center gap-2">
-                        <Tooltip content="Edit Profile">
-                          <span
-                            className="cursor-pointer text-default-400 active:opacity-50"
-                            onClick={() => openEditBandModal(item as any)}
-                          >
-                            <EditIcon />
-                          </span>
-                        </Tooltip>
-                        <Tooltip color="danger" content="Delete Profile">
-                          <span
-                            className="cursor-pointer text-danger active:opacity-50"
-                            onClick={() => handleDeleteBand((item as any).id)}
-                          >
-                            <DeleteIcon />
-                          </span>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
         </div>
       </div>
       </div>
