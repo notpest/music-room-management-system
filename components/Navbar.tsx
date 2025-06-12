@@ -149,13 +149,15 @@ const NavbarComponent = () => {
               Equipment Booking
             </Link>
           </NavbarMenuItem> */}
+          {session && (
+            <NavbarMenuItem>
+              <Link href="/SlotRequests">
+                Slot Requests
+              </Link>
+            </NavbarMenuItem>
+          )}
           {session && session.user?.role === "admin" && (
             <>
-              <NavbarMenuItem>
-                <Link href="/SlotRequests" className={!session ? "opacity-50" : ""}>
-                  Slot Requests
-                </Link>
-              </NavbarMenuItem>
               {/* <NavbarMenuItem>
                 <Link href="/EntryLog" className={!session ? "opacity-50" : ""}>
                   Entry Log

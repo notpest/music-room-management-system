@@ -33,6 +33,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (req.query.room_id) {
           where.room_id = req.query.room_id;
         }
+        if (req.query.user_id) {
+          where.user_id = req.query.user_id;
+        }
         const requests = await Request.findAll({
           where,
           order: [["request_date", "DESC"]],

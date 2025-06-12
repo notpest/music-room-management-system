@@ -60,17 +60,6 @@ export type RequestType = {
   band_name?: string;
 };
 
-const columns = [
-  { key: "user_name", name: "USER NAME" },
-  { key: "band_name", name: "PROFILE NAME" },
-  { key: "status", name: "STATUS" },
-  { key: "slot_start", name: "SLOT START TIME" },
-  { key: "slot_end", name: "SLOT END TIME" },
-  { key: "request_date", name: "REQUEST DATE" },
-  { key: "response_date", name: "RESPONSE DATE" },
-  { key: "actions", name: "ACTIONS" },
-];
-
 const statusColorMap: { [key in RequestType["status"]]: "default" | "primary" | "secondary" | "success" | "warning" | "danger" } = {
   approved: "success",
   denied: "danger",
@@ -92,7 +81,30 @@ const combineDateAndTime = (originalISO: string, newTime: string): string => {
   return originalDate.toISOString();
 };
 
-export default function SlotsRequestTable() {
+interface SlotsRequestsTableProps {
+   isAdmin: boolean;
+   userId: string;
+ }
+
+export default function SlotsRequestTable({
+   isAdmin,
+   userId,
+ }: SlotsRequestsTableProps) {
+
+  
+const baseCols = [
+  { key: "user_name", name: "USER NAME" },
+  { key: "band_name", name: "PROFILE NAME" },
+  { key: "status", name: "STATUS" },
+  { key: "slot_start", name: "SLOT START TIME" },
+  { key: "slot_end", name: "SLOT END TIME" },
+  { key: "request_date", name: "REQUEST DATE" },
+  { key: "response_date", name: "RESPONSE DATE" },
+];
+
+const columns = isAdmin
+  ? [...baseCols, { key: "actions", name: "ACTIONS" }]
+  : baseCols;
 
 
   interface TimeSlot {
@@ -137,10 +149,25 @@ export default function SlotsRequestTable() {
   const [itemsPerPage, setItemsPerPage] = useState(8); // Set to 8 for 8 items per page
 
   // Filtered requests based on search, status, and date
+  const q = searchQuery.toLowerCase();
   const filteredRequests = requests.filter((req) => {
-    const matchesSearch = (req.user_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+    (req.user_name   || "").toLowerCase().includes(q) ||
+    (req.band_name   || "").toLowerCase().includes(q) ||
+    req.status.toLowerCase().includes(q) ||
+    new Date(req.slot_start)
+      .toLocaleString().toLowerCase().includes(q) ||
+    new Date(req.slot_end)
+      .toLocaleString().toLowerCase().includes(q) ||
+    new Date(req.request_date)
+      .toLocaleString().toLowerCase().includes(q) ||
+    (req.response_date
+      ? new Date(req.response_date)
+          .toLocaleString().toLowerCase().includes(q)
+      : false);
+
     const matchesStatus = statusFilter === "all" || req.status === statusFilter;
-    const matchesDate = dateFilter === "" || req.request_date.startsWith(dateFilter);
+    const matchesDate   = dateFilter === "" || req.request_date.startsWith(dateFilter);
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -159,12 +186,12 @@ export default function SlotsRequestTable() {
     }
   }, [dateFilter]);
 
-  // Fetch requests from API with room_id filtering
+  // Fetch requests, including user_id if not admin
   const fetchRequests = async () => {
     try {
-      const res = await axios.get("/api/requests", {
-        params: { room_id: selectedRoom },
-      });
+      const params: any = { room_id: selectedRoom };
+      if (!isAdmin) params.user_id = userId;
+      const res = await axios.get("/api/requests", { params });
       setRequests(res.data);
     } catch (error) {
       console.error("Error fetching requests:", error);
@@ -173,7 +200,7 @@ export default function SlotsRequestTable() {
 
   useEffect(() => {
     fetchRequests();
-  }, [selectedRoom]);
+  }, [selectedRoom, isAdmin, userId]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -352,7 +379,7 @@ export default function SlotsRequestTable() {
       <Input
         isClearable
         variant="underlined"
-        placeholder="Search by user ID..."
+        placeholder="Search.."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         className="w-full"
@@ -366,8 +393,6 @@ export default function SlotsRequestTable() {
     </div>
   </div>
 </div>
-
-
   
       <Table aria-label="Requests Table">
         <TableHeader>

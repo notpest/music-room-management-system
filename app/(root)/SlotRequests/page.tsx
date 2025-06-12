@@ -22,12 +22,12 @@ const SlotRequestsPage = () => {
     if (status === "loading") return;
 
     // 2) If not signed in or not admin, kick them back to home
-    if (!session || session.user.role !== "admin") {
+    if (!session) {
       router.replace("/");
     }
   }, [session, status, router]);
   
-  if (status === "loading" || !session || session.user.role !== "admin") {
+  if (status === "loading" || !session) {
     return null; //—or a <Spinner /> if you have one
   }
   
@@ -41,7 +41,7 @@ const SlotRequestsPage = () => {
     <Navbar aria-label="Main Navigation" />
     <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
       <div className="w-full mb-4">
-        <SlotsRequestsTable  />
+        <SlotsRequestsTable isAdmin={session.user.role === "admin"} userId={session.user.id!} />
       </div>
     </main>
     </motion.div>
