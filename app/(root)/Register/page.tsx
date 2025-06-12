@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import {
@@ -122,6 +123,7 @@ interface Band {
 }
 
 const RegisterPage = () => {
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   // States for new-user / new-band modals (unchanged)
@@ -150,6 +152,13 @@ const RegisterPage = () => {
   const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editBandIds, setEditBandIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (status !== "loading" && (!session || session.user.role !== "admin")) {
+      router.replace("/");
+    }
+  }, [status, session, router]);
+
   // ------------------------------------------------------------------------
   // Fetch all bands once on mount (for both new‐band dropdown and edit‐user dropdown)
   useEffect(() => {
@@ -180,7 +189,7 @@ const RegisterPage = () => {
   useEffect(() => {
     fetchDbBands();
   }, []);
-
+  
   // ───────────────────────────────────────────────────────────────────────
   // (2) Delete a band by ID, then re‐fetch
   const handleDeleteBand = async (id: string) => {
@@ -424,6 +433,10 @@ const RegisterPage = () => {
     },
     []
   );
+
+  if (status === "loading" || !session || session.user.role !== "admin") {
+    return null;  // or a spinner if you prefer
+  }
 
   return (
     <motion.div

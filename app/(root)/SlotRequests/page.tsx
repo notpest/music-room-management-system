@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import SlotsRequestsTable from "../../../components/ui/SlotsRequestTable";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Import Navbar dynamically with no SSR
 const Navbar = dynamic(() => import("@/components/Navbar"), {
@@ -14,6 +16,21 @@ const Navbar = dynamic(() => import("@/components/Navbar"), {
 });
 
 const SlotRequestsPage = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === "loading") return;
+
+    // 2) If not signed in or not admin, kick them back to home
+    if (!session || session.user.role !== "admin") {
+      router.replace("/");
+    }
+  }, [session, status, router]);
+  
+  if (status === "loading" || !session || session.user.role !== "admin") {
+    return null; //—or a <Spinner /> if you have one
+  }
+  
   return (
     <motion.div 
       className="bg-black-100"

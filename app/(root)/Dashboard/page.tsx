@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import axios from 'axios';
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DashboardTable from "../../../components/ui/DashboardTable";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
@@ -19,12 +21,24 @@ interface SlotConfig {
 }
 
 export default function AdminDashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [configs, setConfigs] = useState<SlotConfig[]>([]);
   const [newStart, setNewStart] = useState("");
   const [newEnd, setNewEnd] = useState("");
   const [newEnabled, setNewEnabled] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7; // Adjust based on table height
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    // 2) If not signed in or not admin, kick them back to home
+    if (!session || session.user.role !== "admin") {
+      router.replace("/");
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     fetchConfigs();
@@ -38,6 +52,10 @@ export default function AdminDashboard() {
       console.error(error);
     }
   };
+
+  if (status === "loading" || !session || session.user.role !== "admin") {
+    return null; //—or a <Spinner /> if you have one
+  }
 
   const addConfig = async (start: string, end: string) => {
     if (!start || !end) {
