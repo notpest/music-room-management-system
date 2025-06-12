@@ -38,7 +38,7 @@ const SlotRequestsPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Navbar aria-label="Main Navigation" />
+    <Navbar aria-label="Main Navigation" />
     <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
       <div className="w-full mb-4">
         <SlotsRequestsTable  />

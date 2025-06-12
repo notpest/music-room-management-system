@@ -153,7 +153,7 @@ const NavbarComponent = () => {
             <>
               <NavbarMenuItem>
                 <Link href="/SlotRequests" className={!session ? "opacity-50" : ""}>
-                  Approval Page
+                  Slot Requests
                 </Link>
               </NavbarMenuItem>
               {/* <NavbarMenuItem>
