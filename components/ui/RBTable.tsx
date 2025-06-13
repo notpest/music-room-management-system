@@ -145,6 +145,8 @@ const RBTable = () => {
   const isAdmin = session?.user?.role === "admin";
   const [userBands, setUserBands] = useState<Array<{ id: string; name: string }>>([]);
   const [requestedBandName, setRequestedBandName] = useState<string>("");
+  const [reason, setReason] = useState("");
+
   // Fetch room mapping from API
   const fetchRooms = async () => {
     try {
@@ -512,6 +514,7 @@ const RBTable = () => {
       setBookingEndTime(defaultEnd);
       setDefaultStartTime(defaultStart);
       setDefaultEndTime(defaultEnd);
+      setReason(""); 
       setModalOpen(true);
     }
   };
@@ -589,6 +592,7 @@ const RBTable = () => {
         slot_end: localSlotEnd.toISOString(),
         band_id: bandId,
         room_id: roomId,
+        reason
       });
       setRequestedBandName(name);
       setModalType("requested");
@@ -596,7 +600,8 @@ const RBTable = () => {
       setBandId("");
       setBookingStartTime("");
       setBookingEndTime("");
-      
+      setReason("");
+
       fetchSlots();
     } catch (error) {
       console.error("Error creating slot request:", error);
@@ -959,6 +964,12 @@ const RBTable = () => {
                     </SelectItem>
                   </>
                 </Select>
+                <Input
+                  label="Reason for Booking"
+                  placeholder="Enter reason for booking this slot"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
               </ModalBody>
               <ModalFooter>
                 <Button

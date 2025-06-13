@@ -25,6 +25,9 @@ import {
   DropdownItem,
   Pagination,
   ButtonGroup,
+  Popover, 
+  PopoverTrigger, 
+  PopoverContent
 } from "@nextui-org/react";
 import axios from "axios";
 import { EditIcon } from "./EditIcon";
@@ -58,6 +61,7 @@ export type RequestType = {
   response_date: string | null;
   user_name?: string;
   band_name?: string;
+  reason?: string;
 };
 
 const statusColorMap: { [key in RequestType["status"]]: "default" | "primary" | "secondary" | "success" | "warning" | "danger" } = {
@@ -98,6 +102,7 @@ const baseCols = [
   { key: "status", name: "STATUS" },
   { key: "slot_start", name: "SLOT START TIME" },
   { key: "slot_end", name: "SLOT END TIME" },
+  { key: "reason", name: "REASON" },
   { key: "request_date", name: "REQUEST DATE" },
   { key: "response_date", name: "RESPONSE DATE" },
 ];
@@ -142,6 +147,7 @@ const columns = isAdmin
     status: "",
     slot_start: "",
     slot_end: "",
+    reason: "",
   });
 
   // Pagination state
@@ -228,6 +234,7 @@ const columns = isAdmin
       status: req.status,
       slot_start: formattedStart,
       slot_end: formattedEnd,
+      reason: req.reason || "",
     });
     setDefaultStartTime(formattedStart);
     setDefaultEndTime(formattedEnd);
@@ -253,6 +260,7 @@ const columns = isAdmin
       status: editForm.status,
       slot_start: updatedSlotStart,
       slot_end: updatedSlotEnd,
+      reason: editForm.reason,
     };
   
     try {
@@ -286,6 +294,24 @@ const columns = isAdmin
         return <span>{new Date(req.slot_start).toLocaleString()}</span>;
       case "slot_end":
         return <span>{new Date(req.slot_end).toLocaleString()}</span>;
+      case "reason":
+        return (
+          <Popover placement="top" showArrow offset={10}>
+            <PopoverTrigger>
+              <div className="max-w-[150px] truncate cursor-pointer">
+                {req.reason || "N/A"}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="max-w-[300px] bg-[#1a2a47] text-white p-4">
+              <div className="px-1 py-2">
+                <div className="text-small font-bold">Reason</div>
+                <div className="text-tiny whitespace-pre-wrap">
+                  {req.reason || "No reason provided"}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
       case "request_date":
         return <span>{new Date(req.request_date).toLocaleString()}</span>;
       case "response_date":
@@ -491,6 +517,12 @@ const columns = isAdmin
                 </SelectItem>
               </>
             </Select>
+            <Input
+              label="Reason"
+              value={editForm.reason || ""}
+              onChange={(e) => setEditForm({...editForm, reason: e.target.value})}
+              placeholder="Enter reason for booking"
+            />
           </ModalBody>
           <ModalFooter>
             <Button color="success" onPress={submitEditForm}>

@@ -17,9 +17,10 @@ interface RequestAttributes {
   slot_id?: number | null; // New field to track the created slot's id
   room_id: string; // change from number to string (UUID)
   band_id: string | null; // new field for band id (admin can override, otherwise user session band id)
+  reason: string | null;
 }
 
-interface RequestCreationAttributes extends Optional<RequestAttributes, "id" | "request_date" | "response_date" | "slot_id"> {}
+interface RequestCreationAttributes extends Optional<RequestAttributes, "id" | "request_date" | "response_date" | "slot_id" | "reason"> {}
 
 class Request extends Model<RequestAttributes, RequestCreationAttributes> implements RequestAttributes {
   public id!: string;
@@ -32,6 +33,7 @@ class Request extends Model<RequestAttributes, RequestCreationAttributes> implem
   public slot_id!: number | null;
   public room_id!: string;
   public band_id!: string | null;
+  public reason!: string | null;
 }
 
 Request.init(
@@ -94,6 +96,11 @@ Request.init(
         key: "id",
       },
     },
+    reason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+    }
   },
   {
     sequelize,

@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case "POST":
       try {
-        const { user_id, slot_start, slot_end, room_id, band_id } = req.body;
+        const { user_id, slot_start, slot_end, room_id, band_id, reason } = req.body;
         const userRecord = await User.findOne({ where: { id: user_id } });
 
         const userBandId = userRecord ? await getFirstBandId(userRecord.id) : null;
@@ -80,6 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           slot_end,
           room_id,  // include room_id from the request body
           band_id: bandIdToUse,
+          reason
         });
         res.status(201).json(newRequest);
       } catch (error) {
@@ -136,6 +137,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } else if (prevStatus === "approved" && updateData.status !== "approved" && prevSlotId) {
           await Slot.destroy({ where: { id: prevSlotId } });
           await requestToUpdate.update({ slot_id: null });
+        }
+
+        if (updateData.reason !== undefined) {
+          requestToUpdate.reason = updateData.reason;
         }
 
         res.status(200).json({ message: "Request updated successfully", request: requestToUpdate });
