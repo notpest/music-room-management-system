@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Select, SelectItem } from "@nextui-org/react";
+import RegistrationModal from "../components/ui/RegistrationModal";
 import {
   Navbar,
   NavbarBrand,
@@ -18,6 +20,7 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
+  useDisclosure as useSignupDisclosure,
   Input,
   Dropdown,
   DropdownTrigger,
@@ -32,7 +35,8 @@ import { signIn, signOut, useSession } from "next-auth/react";
 
 const NavbarComponent = () => {
   const { data: session, status } = useSession();
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
+  const { isOpen: signupOpen, onOpen: openSignup, onOpenChange: setSignupOpen } = useSignupDisclosure();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,6 +44,42 @@ const NavbarComponent = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
+
+  interface Band {
+    id: string;
+    name: string;
+    colour: string;
+  }
+
+  const [regName, setRegName] = useState("");
+  const [regUsername, setRegUsername] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regBands, setRegBands] = useState<Band[]>([]);
+  const [selectedBandIds, setSelectedBandIds] = useState<Set<string>>(new Set());
+  const [isUserModalOpen, setUserModalOpen] = useState(false);
+  const [loadingBands, setLoadingBands] = useState(true);
+  const [regError, setRegError] = useState<string | null>(null);
+  const [bands, setBands] = useState<{ id: string; name: string }[]>([]);
+  const [isRegModalOpen, setRegModalOpen] = useState(false);
+
+   useEffect(() => {
+    ;(async () => {
+      try {
+        setLoadingBands(true);
+        const res = await fetch("/api/bands");
+        const data = await res.json();
+        console.log("fetched bands:", data);
+        console.log("bands array length:", data?.length);
+        console.log("first band:", data?.[0]);
+        setRegBands(data);
+      } catch (e) {
+        console.error("unable to load bands", e);
+      } finally {
+        setLoadingBands(false);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const handler = () => onOpen(); // onOpen is from useDisclosure()
@@ -182,6 +222,11 @@ const NavbarComponent = () => {
         
       </Navbar>
 
+      <RegistrationModal 
+        isOpen={isRegModalOpen} 
+        onOpenChange={setRegModalOpen} 
+      />
+
       {/* Login Modal */}
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur">
         <ModalContent>
@@ -205,13 +250,22 @@ const NavbarComponent = () => {
               }}
             />
           </ModalBody>
-          <ModalFooter>
-            <Button color="danger" variant="light" onPress={onOpenChange}>
-              Close
-            </Button>
+          <ModalFooter className="flex justify-between">
+            <button
+              type="button"
+              className="text-primary-500 hover:underline cursor-pointer bg-transparent border-none p-0"
+              onClick={() => {
+                onOpenChange();
+                setRegModalOpen(true);
+              }}
+            >
+              Sign up
+            </button>
+           <div className="flex gap-2">
             <Button color="primary" onPress={handleLogin}>
               Sign In
             </Button>
+          </div>
           </ModalFooter>
         </ModalContent>
       </Modal>

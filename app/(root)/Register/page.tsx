@@ -190,6 +190,12 @@ const RegisterPage = () => {
     fetchDbBands();
   }, []);
   
+  useEffect(() => {
+    const handler = () => setUserModalOpen(true);
+    window.addEventListener("openRegisterModal", handler);
+    return () => window.removeEventListener("openRegisterModal", handler);
+  }, []);
+
   // ───────────────────────────────────────────────────────────────────────
   // (2) Delete a band by ID, then re‐fetch
   const handleDeleteBand = async (id: string) => {
