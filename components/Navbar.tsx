@@ -62,6 +62,7 @@ const NavbarComponent = () => {
   const [regError, setRegError] = useState<string | null>(null);
   const [bands, setBands] = useState<{ id: string; name: string }[]>([]);
   const [isRegModalOpen, setRegModalOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
    useEffect(() => {
     ;(async () => {
@@ -104,16 +105,28 @@ const NavbarComponent = () => {
   }, [lastScrollY]);
 
   const handleLogin = async () => {
-    const result = await signIn("credentials", {
-      identifier: username,
-      password,
-      redirect: false,
-      callbackUrl: "/",
-    });
-    if (result?.error) {
-      alert("Invalid credentials");
-    } else {
-      onOpenChange(); // Close the modal on success
+    if (isLoggingIn) return; // Prevent multiple submissions
+    
+    setIsLoggingIn(true); // Start loading
+    
+    try {
+      const result = await signIn("credentials", {
+        identifier: username,
+        password,
+        redirect: false,
+        callbackUrl: "/",
+      });
+      
+      if (result?.error) {
+        alert("Invalid credentials");
+      } else {
+        onOpenChange(); // Close the modal on success
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An unexpected error occurred");
+    } finally {
+      setIsLoggingIn(false); // End loading
     }
   };
 
@@ -237,12 +250,14 @@ const NavbarComponent = () => {
               label="Email or Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              isDisabled={isLoggingIn} 
             />
             <Input
               type="password"
               label="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              isDisabled={isLoggingIn} 
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleLogin();
@@ -253,17 +268,22 @@ const NavbarComponent = () => {
           <ModalFooter className="flex justify-between">
             <button
               type="button"
-              className="text-primary-500 hover:underline cursor-pointer bg-transparent border-none p-0"
+              className={`text-primary-500 hover:underline cursor-pointer bg-transparent border-none p-0 ${isLoggingIn ? "opacity-50 pointer-events-none" : ""}`}
               onClick={() => {
                 onOpenChange();
                 setRegModalOpen(true);
               }}
+              disabled={isLoggingIn} 
             >
               Sign up
             </button>
            <div className="flex gap-2">
-            <Button color="primary" onPress={handleLogin}>
-              Sign In
+            <Button color="primary" 
+              onPress={handleLogin}
+              isDisabled={isLoggingIn} 
+              isLoading={isLoggingIn}
+            >
+              {isLoggingIn ? "Signing in..." : "Sign In"}
             </Button>
           </div>
           </ModalFooter>
