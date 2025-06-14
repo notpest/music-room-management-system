@@ -107,10 +107,7 @@ const baseCols = [
   { key: "response_date", name: "RESPONSE DATE" },
 ];
 
-const columns = isAdmin
-  ? [...baseCols, { key: "actions", name: "ACTIONS" }]
-  : baseCols;
-
+const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
 
   interface TimeSlot {
     key: string;
@@ -323,7 +320,7 @@ const columns = isAdmin
       case "actions":
         return (
           <div style={{ display: "flex", gap: "8px" }}>
-            {req.status === "pending" && (
+            {isAdmin && req.status === "pending" && (
               <>
                 <Tooltip content="Approve">
                   <button onClick={() => handleApprove(req.id)}>
@@ -337,11 +334,13 @@ const columns = isAdmin
                 </Tooltip>
               </>
             )}
-            <Tooltip content="Edit">
-              <button onClick={() => handleEdit(req)}>
-                <EditIcon />
-              </button>
-            </Tooltip>
+            {isAdmin && (
+              <Tooltip content="Edit">
+                <button onClick={() => handleEdit(req)}>
+                  <EditIcon />
+                </button>
+              </Tooltip>
+            )}
             <Tooltip content="Delete">
               <button onClick={() => handleDelete(req.id)}>
                 <DeleteIcon />
