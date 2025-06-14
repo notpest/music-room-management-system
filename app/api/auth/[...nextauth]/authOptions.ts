@@ -12,36 +12,38 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        identifier: { label: "Username or Email", type: "text" },
-        password:   { label: "Password",            type: "password" }
+        email: { label: "Email", type: "text" },
+        password:   { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials) throw new Error("No credentials");
-        const user = await User.findOne({ 
-          where: {
-            [Op.or]: [
-              { username: credentials.identifier },
-              { email:    credentials.identifier },
-            ]
-          }
-        });
-        
-        if (!user) throw new Error("User not found");
-        const isValid = await compare(credentials.password, user.hashed_password);
-        if (!isValid) return null;
-         const userBands = await UserBand.findAll({
-          where: { user_id: user.id },
-          attributes: ["band_id"],
-          limit: 1 // Get just the first band
-        });
+        if (!credentials) return null;
+        try {
+          const user = await User.findOne({ 
+            where: { email: credentials.email }
+          });
+          
+          if (!user) return null;
+          
+          const isValid = await compare(credentials.password, user.hashed_password);
+          if (!isValid) return null;
+          
+          const userBands = await UserBand.findAll({
+            where: { user_id: user.id },
+            attributes: ["band_id"],
+            limit: 1
+          });
 
-        return {
-          id: user.id,
-          name: user.name,
-          username: user.username,
-          role: user.role,
-          band_id: userBands[0]?.band_id || null // Use first band or null
-        };
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            band_id: userBands[0]?.band_id || null
+          };
+        } catch (error) {
+          console.error("Authorization error:", error);
+          return null;
+        }
       }
     })
   ],
@@ -51,7 +53,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.username = user.username;
+        token.email = user.email; 
         token.name = user.name;
         token.role = user.role;
         token.band_id = user.band_id;
@@ -61,7 +63,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       session.user = {
         id: token.id as string,
-        username: token.username as string,
+        email: token.email as string,
         name: token.name as string,
         role: token.role as string,
         band_id: token.band_id as string | null,

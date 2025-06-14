@@ -4,7 +4,6 @@ import sequelize from "../database";
 
 class User extends Model {
   public id!: string;
-  public username!: string;
   public name!: string;
   public hashed_password!: string;
   public email!: string;
@@ -17,11 +16,6 @@ User.init(
       type: DataTypes.UUID,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
-    },
-    username: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
     },
     name: {
       type: DataTypes.STRING,

@@ -110,7 +110,6 @@ const EditIcon = (props: React.SVGProps<SVGSVGElement>) => (
 interface DbUser {
   id: string;
   name: string;
-  username: string;
   email: string;
   role: string;
   bands: Array<{ id: string; name: string }>;
@@ -128,7 +127,6 @@ const RegisterPage = () => {
 
   // States for new-user / new-band modals (unchanged)
   const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [bandId, setBandId] = useState("");
@@ -149,7 +147,6 @@ const RegisterPage = () => {
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editBandIds, setEditBandIds] = useState<string[]>([]);
 
@@ -280,7 +277,6 @@ const RegisterPage = () => {
 
      const payload = {
       name,
-      username,
       password,
       email,
       role,
@@ -303,7 +299,6 @@ const RegisterPage = () => {
       fetchDbUsers(); // <— refresh user list
       // Optionally clear form fields here
       setName("");
-      setUsername("");
       setPassword("");
       setEmail("");
       setBandId("");
@@ -358,7 +353,6 @@ const RegisterPage = () => {
   const openEditModal = (u: DbUser) => {
     setEditId(u.id);
     setEditName(u.name);
-    setEditUsername(u.username);
     setEditEmail(u.email);
     setEditBandIds(u.bands.map((b) => b.id));
     setEditModalOpen(true);
@@ -374,7 +368,6 @@ const RegisterPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editName,
-          username: editUsername,
           email: editEmail,
           bandIds: editBandIds,
         }),
@@ -397,9 +390,6 @@ const RegisterPage = () => {
       switch (columnKey) {
         case "name":
           return <>{user.name}</>;
-
-        case "username":
-          return <>{user.username}</>;
 
         case "email":
           return <>{user.email}</>;
@@ -477,7 +467,6 @@ const RegisterPage = () => {
     <TableHeader
       columns={[
         { name: "NAME", uid: "name" },
-        { name: "USERNAME", uid: "username" },
         { name: "EMAIL", uid: "email" },
         { name: "PROFILE", uid: "bands" },
         { name: "ACTIONS", uid: "actions" },
@@ -585,14 +574,6 @@ const RegisterPage = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full"
-              />
-              <Input
-                label="Username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full"
               />
@@ -736,14 +717,6 @@ const RegisterPage = () => {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                required
-                className="w-full"
-              />
-              <Input
-                label="Username"
-                type="text"
-                value={editUsername}
-                onChange={(e) => setEditUsername(e.target.value)}
                 required
                 className="w-full"
               />

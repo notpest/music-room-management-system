@@ -6,10 +6,10 @@ import UserBand from "@/models/UserBand";
 
 export async function POST(request: Request) {
   try {
-    const { name, username, password, bandIds, email, role } = await request.json();
+    const { name, password, bandIds, email, role } = await request.json();
 
     // Validate required fields
-    if (!name || !username || !password || !email) {
+    if (!name || !password || !email) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists by username (or email if you prefer)
-    const existingUser = await User.findOne({ where: { username } });
+    const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
         { message: "User already exists" },
@@ -32,7 +32,6 @@ export async function POST(request: Request) {
     // Insert new user
     const newUser = await User.create({
       name,
-      username,
       hashed_password,
       email,
       role: role || "user",

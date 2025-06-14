@@ -223,7 +223,6 @@ const RBTable = () => {
           const allUsers = res.data as Array<{
             id: string;
             name: string;
-            username: string;
             email: string;
             role: string;
             bands: Array<{ id: string; name: string }>;

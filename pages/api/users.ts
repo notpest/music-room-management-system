@@ -27,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return {
             id: ujson.id,
             name: ujson.name,
-            username: ujson.username,
             email: ujson.email,
             role: ujson.role,
             // Extract an array of { id, name } from Bands
@@ -71,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       try {
         // 1) Update basic fields on User (except password)
-        const { name, username, email, role, bandIds } = req.body as any;
+        const { name, email, role, bandIds } = req.body as any;
         const userToUpdate = await User.findByPk(id);
         if (!userToUpdate) {
           return res.status(404).json({ message: "User not found" });
@@ -80,7 +79,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Allow updating only name, username, email, role
         const updateData: any = {};
         if (name !== undefined) updateData.name = name;
-        if (username !== undefined) updateData.username = username;
         if (email !== undefined) updateData.email = email;
         if (role !== undefined) updateData.role = role;
         await userToUpdate.update(updateData);

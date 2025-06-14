@@ -18,7 +18,6 @@ export default function RegistrationModal({
   onOpenChange: (open: boolean) => void;
 }) {
   const [regName, setRegName] = useState("");
-  const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regBands, setRegBands] = useState<Band[]>([]);
@@ -50,7 +49,6 @@ export default function RegistrationModal({
     try {
       const payload = {
         name: regName,
-        username: regUsername,
         password: regPassword,
         email: regEmail,
         role: "user",
@@ -70,7 +68,6 @@ export default function RegistrationModal({
         // Success: close modal and reset form
         onOpenChange(false); // Close the modal
         setRegName("");
-        setRegUsername("");
         setRegPassword("");
         setRegEmail("");
         setSelectedBandIds(new Set());
@@ -93,9 +90,8 @@ export default function RegistrationModal({
             <ModalBody>
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <Input label="Name" value={regName} onChange={e => setRegName(e.target.value)} required />
-                <Input label="Username" value={regUsername} onChange={e => setRegUsername(e.target.value)} required />
-                <Input label="Password" type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} required />
                 <Input label="Email" type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} required />
+                <Input label="Password" type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} required />
                 <Select
                   label="Select Profiles"
                   placeholder={loadingBands ? "Loading profiles…" : "Choose your Profile"}
@@ -113,7 +109,7 @@ export default function RegistrationModal({
                 </Select>
                 
                 {/* Contact text added here */}
-                <div className="text-xs text-gray-500 mt-1 flex items-center">
+                <div className="text-xs text-gray-500 mt-1 flex justify-items-center">
                   <span>Don't see your profile listed? Kindly contact Roshan Sir</span>
                 </div>
 

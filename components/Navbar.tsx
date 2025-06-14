@@ -37,7 +37,7 @@ const NavbarComponent = () => {
   const { data: session, status } = useSession();
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
   const { isOpen: signupOpen, onOpen: openSignup, onOpenChange: setSignupOpen } = useSignupDisclosure();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
@@ -52,7 +52,6 @@ const NavbarComponent = () => {
   }
 
   const [regName, setRegName] = useState("");
-  const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regBands, setRegBands] = useState<Band[]>([]);
@@ -111,7 +110,7 @@ const NavbarComponent = () => {
     
     try {
       const result = await signIn("credentials", {
-        identifier: username,
+        email,
         password,
         redirect: false,
         callbackUrl: "/",
@@ -247,9 +246,9 @@ const NavbarComponent = () => {
           <ModalBody>
             <Input
               type="text"
-              label="Email or Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              label="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               isDisabled={isLoggingIn} 
             />
             <Input
