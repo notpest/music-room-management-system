@@ -112,6 +112,11 @@ export default function RegistrationModal({
                   ))}
                 </Select>
                 
+                {/* Contact text added here */}
+                <div className="text-xs text-gray-500 mt-1 flex items-center">
+                  <span>Don't see your profile listed? Kindly contact Roshan Sir</span>
+                </div>
+
                 {/* Display error message if any */}
                 {regError && (
                   <div className="text-red-500 p-2 rounded bg-red-100">
