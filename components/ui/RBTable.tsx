@@ -146,6 +146,8 @@ const RBTable = () => {
   const [userBands, setUserBands] = useState<Array<{ id: string; name: string }>>([]);
   const [requestedBandName, setRequestedBandName] = useState<string>("");
   const [reason, setReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // Fetch room mapping from API
   const fetchRooms = async () => {
@@ -549,12 +551,21 @@ const RBTable = () => {
   };
 
   const handleBookingConfirm = async () => {
+    if (isSubmitting) return;
+
     const validStart = timeSlots.some((ts) => ts.key === bookingStartTime);
     const validEnd = timeSlots.some((ts) => ts.key === bookingEndTime || bookingEndTime === "19:00");
+    
     if (!validStart || !validEnd) {
       alert("One or both time slots are invalid.");
       return;
     }
+    if (!bandId) {
+      alert("Please select a Profile.");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const startSlot = timeSlots.find((ts) => ts.key === bookingStartTime);
     const endSlot = timeSlots.find((ts) => ts.key === bookingEndTime || bookingEndTime === "19:00");
@@ -606,6 +617,8 @@ const RBTable = () => {
     } catch (error) {
       console.error("Error creating slot request:", error);
       alert("Error creating slot request.");
+    } finally {
+      setIsSubmitting(false); // End loading
     }
   };
 
@@ -897,6 +910,7 @@ const RBTable = () => {
                       const selected = Array.from(keys)[0] as string;
                       setBandId(selected);
                     }}
+                    isDisabled={isSubmitting}
                   >
                     {bands.map((b) => (
                       <SelectItem key={b.id} value={b.id}>
@@ -913,6 +927,7 @@ const RBTable = () => {
                       const chosen = Array.from(keys)[0] as string;
                       setBandId(chosen);
                     }}
+                    isDisabled={isSubmitting}
                   >
                     {userBands.map((ub) => (
                       <SelectItem key={ub.id} value={ub.id}>
@@ -933,6 +948,7 @@ const RBTable = () => {
                       alert("Invalid time slot selected");
                     }
                   }}
+                  isDisabled={isSubmitting}
                 >
                   {timeSlots.map((slot) => (
                     <SelectItem key={slot.key} value={slot.key}>
@@ -952,6 +968,7 @@ const RBTable = () => {
                       alert("Invalid time slot selected");
                     }
                   }}
+                  isDisabled={isSubmitting} 
                 >
                   <>
                     {timeSlots.map((slot) => (
@@ -969,6 +986,7 @@ const RBTable = () => {
                   placeholder="Enter reason for booking this slot"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
+                  isDisabled={isSubmitting}
                 />
               </ModalBody>
               <ModalFooter>
@@ -991,8 +1009,10 @@ const RBTable = () => {
                     }
                     handleBookingConfirm();
                   }}
+                  isDisabled={isSubmitting} // Disable during submission
+                  isLoading={isSubmitting}
                 >
-                  Confirm
+                  {isSubmitting ? "Processing..." : "Confirm"}
                 </Button>
               </ModalFooter>
             </>
