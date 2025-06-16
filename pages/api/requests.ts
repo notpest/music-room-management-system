@@ -5,6 +5,7 @@ import Slot from "../../models/Slot";
 import User from "../../models/User";
 import Band from "../../models/Band";
 import UserBand from "../../models/UserBand"; // Add this import
+import { Op } from "sequelize";
 
 // Helper function to get first band ID for a user
 async function getFirstBandId(userId: string): Promise<string | null> {
@@ -103,6 +104,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const prevStatus = requestToUpdate.status;
         const prevSlotId = requestToUpdate.slot_id;
         const updateData: { [key: string]: any } = { ...req.body };
+
+        if (updateData.status === "approved" || prevStatus === "approved") {
+          const adjustedSlotStart = updateData.slot_start || requestToUpdate.slot_start;
+          const adjustedSlotEnd = updateData.slot_end || requestToUpdate.slot_end;
+          
+          // Check for overlapping slots in the same room
+          const overlappingSlot = await Slot.findOne({
+            where: {
+              room_id: requestToUpdate.room_id,
+              [Op.or]: [
+                // Overlapping start time
+                { slot_start: { [Op.lt]: adjustedSlotEnd }, slot_end: { [Op.gt]: adjustedSlotStart } },
+                // Inside existing slot
+                { slot_start: { [Op.gte]: adjustedSlotStart }, slot_end: { [Op.lte]: adjustedSlotEnd } }
+              ]
+            }
+          });
+
+          // NEW: Conflict check logic
+          if (overlappingSlot) {
+            // Allow updating the same slot if it's the current request's slot
+            if (!prevSlotId || overlappingSlot.id !== prevSlotId) {
+              const band = await Band.findByPk(overlappingSlot.band_id);
+              return res.status(409).json({ 
+                message: "Time slot conflict",
+                band_name: band ? band.name : "another profile"
+              });
+            }
+          }
+        }
+
         if (updateData.user_id === undefined || updateData.user_id === "") {
           delete updateData.user_id;
         }

@@ -27,7 +27,8 @@ import {
   ButtonGroup,
   Popover, 
   PopoverTrigger, 
-  PopoverContent
+  PopoverContent,
+  useDisclosure
 } from "@nextui-org/react";
 import axios from "axios";
 import { EditIcon } from "./EditIcon";
@@ -147,6 +148,11 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
     reason: "",
   });
 
+  const [conflictMessage, setConflictMessage] = useState("");
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [conflictBandName, setConflictBandName] = useState("");
+
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8); // Set to 8 for 8 items per page
@@ -209,8 +215,12 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
     try {
       await axios.put(`/api/requests?id=${id}`, { status: "approved" });
       fetchRequests();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error approving request:", error);
+      if (error.response?.status === 409) {
+        setConflictBandName(error.response.data.band_name);
+        setIsConflictModalOpen(true);
+      }
     }
   };
 
@@ -534,6 +544,21 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
         </ModalContent>
       </Modal>
   
+      {/* Conflict Error Modal */}
+      <Modal isOpen={isConflictModalOpen} onClose={() => setIsConflictModalOpen(false)}>
+        <ModalContent>
+          <ModalHeader className="text-danger">Time Slot Conflict</ModalHeader>
+          <ModalBody>
+            <p className="text-white">This slot has already been approved for {conflictBandName}.</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" onPress={() => setIsConflictModalOpen(false)}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       <Modal isOpen={isFilterModalOpen} onOpenChange={setFilterModalOpen}>
         <ModalContent>
           <ModalHeader>Filter Requests</ModalHeader>
