@@ -2,9 +2,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+import { EditIcon } from "@/components/ui/EditIcon";
 import {
   Table,
   TableHeader,
@@ -85,31 +85,11 @@ const DeleteIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const EditIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg aria-hidden="true" fill="none" focusable="false" height="1em" role="presentation" viewBox="0 0 20 20" width="1em" {...props}>
-    <path
-      d="M11.05 3.00002L4.20835 10.2417C3.95002 10.5167 3.70002 11.0584 3.65002 11.4334L3.34169 14.1334C3.23335 15.1084 3.93335 15.775 4.90002 15.6084L7.58335 15.15C7.95835 15.0834 8.48335 14.8084 8.74168 14.525L15.5834 7.28335C16.7667 6.03335 17.3 4.60835 15.4583 2.86668C13.625 1.14168 12.2334 1.75002 11.05 3.00002Z"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeMiterlimit={10}
-      strokeWidth={1.5}
-    />
-    <path
-      d="M9.90833 4.20831C10.2667 6.50831 12.1333 8.26665 14.45 8.49998"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeMiterlimit={10}
-      strokeWidth={1.5}
-    />
-    <path d="M2.5 18.3333H17.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeMiterlimit={10} strokeWidth={1.5} />
-  </svg>
-);
 
 interface DbUser {
   id: string;
   name: string;
+  username: string;
   email: string;
   role: string;
   bands: Array<{ id: string; name: string }>;
@@ -122,11 +102,11 @@ interface Band {
 }
 
 const RegisterPage = () => {
-  const { data: session, status } = useSession();
   const router = useRouter();
 
   // States for new-user / new-band modals (unchanged)
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [bandId, setBandId] = useState("");
@@ -147,15 +127,9 @@ const RegisterPage = () => {
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editBandIds, setEditBandIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (status !== "loading" && (!session || session.user.role !== "admin")) {
-      router.replace("/");
-    }
-  }, [status, session, router]);
-
   // ------------------------------------------------------------------------
   // Fetch all bands once on mount (for both new‐band dropdown and edit‐user dropdown)
   useEffect(() => {
@@ -185,12 +159,6 @@ const RegisterPage = () => {
   // Immediately after useEffect(() => fetch("/api/bands")…), you can call:
   useEffect(() => {
     fetchDbBands();
-  }, []);
-  
-  useEffect(() => {
-    const handler = () => setUserModalOpen(true);
-    window.addEventListener("openRegisterModal", handler);
-    return () => window.removeEventListener("openRegisterModal", handler);
   }, []);
 
   // ───────────────────────────────────────────────────────────────────────
@@ -277,6 +245,7 @@ const RegisterPage = () => {
 
      const payload = {
       name,
+      username,
       password,
       email,
       role,
@@ -299,6 +268,7 @@ const RegisterPage = () => {
       fetchDbUsers(); // <— refresh user list
       // Optionally clear form fields here
       setName("");
+      setUsername("");
       setPassword("");
       setEmail("");
       setBandId("");
@@ -353,6 +323,7 @@ const RegisterPage = () => {
   const openEditModal = (u: DbUser) => {
     setEditId(u.id);
     setEditName(u.name);
+    setEditUsername(u.username);
     setEditEmail(u.email);
     setEditBandIds(u.bands.map((b) => b.id));
     setEditModalOpen(true);
@@ -368,6 +339,7 @@ const RegisterPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editName,
+          username: editUsername,
           email: editEmail,
           bandIds: editBandIds,
         }),
@@ -390,6 +362,9 @@ const RegisterPage = () => {
       switch (columnKey) {
         case "name":
           return <>{user.name}</>;
+
+        case "username":
+          return <>{user.username}</>;
 
         case "email":
           return <>{user.email}</>;
@@ -430,10 +405,6 @@ const RegisterPage = () => {
     []
   );
 
-  if (status === "loading" || !session || session.user.role !== "admin") {
-    return null;  // or a spinner if you prefer
-  }
-
   return (
     <motion.div
       className="bg-black-100 min-h-screen"
@@ -467,6 +438,7 @@ const RegisterPage = () => {
     <TableHeader
       columns={[
         { name: "NAME", uid: "name" },
+        { name: "USERNAME", uid: "username" },
         { name: "EMAIL", uid: "email" },
         { name: "PROFILE", uid: "bands" },
         { name: "ACTIONS", uid: "actions" },
@@ -574,6 +546,14 @@ const RegisterPage = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full"
+              />
+              <Input
+                label="Username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full"
               />
@@ -717,6 +697,14 @@ const RegisterPage = () => {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
+                required
+                className="w-full"
+              />
+              <Input
+                label="Username"
+                type="text"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
                 required
                 className="w-full"
               />
