@@ -73,13 +73,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const userBandId = userRecord ? await getFirstBandId(userRecord.id) : null;
         const bandIdToUse = band_id || userBandId;
+        
+        const existingPendingRequest = await Request.findOne({
+          where: {
+            band_id: bandIdToUse,
+            room_id: room_id,
+            status: "pending",
+            [Op.or]: [
+              { 
+                slot_start: { 
+                  [Op.lt]: slot_end 
+                },
+                slot_end: { 
+                  [Op.gt]: slot_start 
+                }
+              },
+              {
+                slot_start: { 
+                  [Op.gte]: slot_start 
+                },
+                slot_end: { 
+                  [Op.lte]: slot_end 
+                }
+              }
+            ]
+          }
+        });
 
+        if (existingPendingRequest) {
+          const band = await Band.findByPk(bandIdToUse);
+          const bandName = band ? band.name : "this profile";
+          return res.status(409).json({ 
+            message: `There's already a pending request for ${bandName} in this time slot`
+          });
+        }
+        
         const newRequest = await Request.create({
           user_id,
           status: "pending",
           slot_start,
           slot_end,
-          room_id,  // include room_id from the request body
+          room_id,
           band_id: bandIdToUse,
           reason
         });

@@ -148,6 +148,8 @@ const RBTable = () => {
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState("");
 
   // Fetch room mapping from API
   const fetchRooms = async () => {
@@ -613,11 +615,18 @@ const RBTable = () => {
       setReason("");
 
       fetchSlots();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating slot request:", error);
-      alert("Error creating slot request.");
+
+      // Handle conflict error
+      if (error.response?.status === 409) {
+        setConflictMessage(error.response.data.message);
+        setIsConflictModalOpen(true);
+      } else {
+        alert("Error creating slot request.");
+      }
     } finally {
-      setIsSubmitting(false); // End loading
+      setIsSubmitting(false);
     }
   };
 
@@ -881,6 +890,22 @@ const RBTable = () => {
           ))}
         </TableBody>
       </Table>
+
+      {/* Conflict Error Modal */}
+      <Modal isOpen={isConflictModalOpen} onClose={() => setIsConflictModalOpen(false)}>
+        <ModalContent>
+          <ModalHeader className="text-danger">Duplicate Request</ModalHeader>
+          <ModalBody>
+            <p className="text-white">{conflictMessage}</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" onPress={() => setIsConflictModalOpen(false)}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       {/* Booking / Already‑Booked Modal */}
       <Modal isOpen={isModalOpen} onOpenChange={setModalOpen}>
         <ModalContent>
