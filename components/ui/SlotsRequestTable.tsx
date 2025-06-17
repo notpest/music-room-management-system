@@ -179,6 +179,9 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
   const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
   const [conflictBandName, setConflictBandName] = useState("");
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<RequestType | null>(null);
+
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -284,6 +287,36 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
     }
   };
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const handleDeleteClick = (req: RequestType) => {
+    setRequestToDelete(req);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (requestToDelete) {
+      try {
+        await axios.delete(`/api/requests?id=${requestToDelete.id}`);
+        fetchRequests();
+      } catch (error) {
+        console.error("Error deleting request:", error);
+      } finally {
+        setIsDeleteModalOpen(false);
+        setRequestToDelete(null);
+      }
+    }
+  };
+
   const submitEditForm = async () => {
     if (!selectedRequest) return;
   
@@ -379,7 +412,7 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
               </Tooltip>
             )}
             <Tooltip content="Delete">
-              <button onClick={() => handleDelete(req.id)}>
+              <button onClick={() => handleDeleteClick(req)}>
                 <DeleteIcon />
               </button>
             </Tooltip>
@@ -571,6 +604,46 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
         </ModalContent>
       </Modal>
   
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <ModalContent>
+          <ModalHeader>Confirm Delete</ModalHeader>
+          <ModalBody>
+            <p className="text-white mb-4">
+              Are you sure you want to delete this request?
+            </p>
+            
+            {requestToDelete && (
+              <div className="space-y-2">
+                <div>
+                  <strong>Profile:</strong> {requestToDelete.band_name || "N/A"}
+                </div>
+                <div>
+                  <strong>Start:</strong> {formatDateTime(requestToDelete.slot_start)}
+                </div>
+                <div>
+                  <strong>End:</strong> {formatDateTime(requestToDelete.slot_end)}
+                </div>
+                {requestToDelete.reason && (
+                  <div>
+                    <strong>Reason:</strong> {requestToDelete.reason}
+                  </div>
+                )}
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button 
+              color="danger" 
+              onPress={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       {/* Conflict Error Modal */}
       <Modal isOpen={isConflictModalOpen} onClose={() => setIsConflictModalOpen(false)}>
         <ModalContent>
