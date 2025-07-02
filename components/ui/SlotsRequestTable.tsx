@@ -185,7 +185,7 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(8); // Set to 8 for 8 items per page
+  const [itemsPerPage, setItemsPerPage] = useState(7); // Set to 7 for 7 items per page
 
   // Filtered requests based on search, status, and date
   const q = searchQuery.toLowerCase();
