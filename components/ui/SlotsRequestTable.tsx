@@ -345,7 +345,23 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
       case "user_name":
         return <span>{req.user_name || "N/A"}</span>;
       case "band_name":
-        return <span>{req.band_name || "N/A"}</span>;
+        return (
+          <Popover placement="top" showArrow offset={10}>
+            <PopoverTrigger>
+              <div className="max-w-[150px] truncate cursor-pointer">
+                {req.band_name || "N/A"}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="max-w-[300px] bg-[#1a2a47] text-white p-4">
+              <div className="px-1 py-2">
+                <div className="text-small font-bold">Profile Name</div>
+                <div className="text-tiny whitespace-pre-wrap">
+                  {req.band_name || "No band name provided"}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
       case "status":
         return (
           <Chip
