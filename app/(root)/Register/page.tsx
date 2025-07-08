@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { EditIcon } from "@/components/ui/EditIcon";
 import {
@@ -103,6 +104,7 @@ interface Band {
 
 const RegisterPage = () => {
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   // States for new-user / new-band modals (unchanged)
   const [name, setName] = useState("");
@@ -132,6 +134,16 @@ const RegisterPage = () => {
   const [editBandIds, setEditBandIds] = useState<string[]>([]);
   // ------------------------------------------------------------------------
   // Fetch all bands once on mount (for both new‐band dropdown and edit‐user dropdown)
+
+  useEffect(() => {
+      if (status === "loading") return;
+  
+      // 2) If not signed in or not admin, kick them back to home
+      if (!session || session.user.role !== "admin") {
+        router.replace("/");
+      }
+    }, [session, status, router]);
+
   useEffect(() => {
     fetch("/api/bands")
       .then((res) => res.json())
