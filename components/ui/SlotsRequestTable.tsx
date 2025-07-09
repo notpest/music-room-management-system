@@ -90,6 +90,7 @@ export type RequestType = {
   user_name?: string;
   band_name?: string;
   reason?: string;
+  room_id: string;
 };
 
 const statusColorMap: { [key in RequestType["status"]]: "default" | "primary" | "secondary" | "success" | "warning" | "danger" } = {
@@ -156,6 +157,7 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
   // State for selected room id – default is room 365.
   // Replace these with your actual room UUIDs.
   const [selectedRoom, setSelectedRoom] = useState<string>("25b48b88-7e94-422b-b3b4-97c78aa6966a");
+  const [rooms, setRooms] = useState<{ id: string; number: string }[]>([]);
   const [roomAlignment, setRoomAlignment] = useState<string>("365");
   const [defaultStartTime, setDefaultStartTime] = useState<string>("");
   const [defaultEndTime, setDefaultEndTime] = useState<string>("");
@@ -173,6 +175,7 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
     slot_start: "",
     slot_end: "",
     reason: "",
+    room_id: "",
   });
 
   const [conflictMessage, setConflictMessage] = useState("");
@@ -236,10 +239,24 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
       console.error("Error fetching requests:", error);
     }
   };
-
+  
   useEffect(() => {
     fetchRequests();
   }, [selectedRoom, isAdmin, userId]);
+
+  const fetchRooms = async () => {
+    try {
+      const res = await axios.get("/api/rooms");
+      // assuming each room has { id, number }
+      setRooms(res.data);
+    } catch (err) {
+      console.error("Error loading rooms:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
 
   const handleApprove = async (id: string) => {
     try {
@@ -267,11 +284,15 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
     setSelectedRequest(req);
     const formattedStart = formatTime(req.slot_start);
     const formattedEnd = formatTime(req.slot_end);
+
+    const roomNumber = rooms.find(r => r.id === req.room_id)?.number || "Select Room";
+
     setEditForm({
       status: req.status,
       slot_start: formattedStart,
       slot_end: formattedEnd,
       reason: req.reason || "",
+      room_id: req.room_id,
     });
     setDefaultStartTime(formattedStart);
     setDefaultEndTime(formattedEnd);
@@ -328,6 +349,7 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
       slot_start: updatedSlotStart,
       slot_end: updatedSlotEnd,
       reason: editForm.reason,
+      room_id: editForm.room_id,
     };
   
     try {
@@ -574,6 +596,20 @@ const columns = [...baseCols, { key: "actions", name: "ACTIONS" }];
               <SelectItem key="denied" value="denied">
                 Denied
               </SelectItem>
+            </Select>
+            <Select
+              label="Room"
+              selectedKeys={new Set([editForm.room_id])}
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys)[0] as string;
+                setEditForm({ ...editForm, room_id: selected });
+              }}
+            >
+              {rooms.map((r) => (
+                <SelectItem key={r.id} value={r.id} textValue={`Room ${r.number}`} >
+                  Room {r.number}
+                </SelectItem>
+              ))}
             </Select>
             <Select
               label="Slot Start Time"
