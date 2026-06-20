@@ -1,55 +1,44 @@
-import React from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  useDisclosure,
-} from "@nextui-org/react";
+"use client";
+
+import React, { useState } from "react";
+import Modal from "./Modal"; // The new generic modal
 
 const RBModal: React.FC = () => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <Button onPress={onOpen}>Open Modal</Button>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <ModalContent>
-          {(onClose: () => void) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
-              <ModalBody>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam pulvinar risus non
-                  risus hendrerit venenatis. Pellentesque sit amet hendrerit risus, sed porttitor
-                  quam.
-                </p>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam pulvinar risus non
-                  risus hendrerit venenatis. Pellentesque sit amet hendrerit risus, sed porttitor
-                  quam.
-                </p>
-                <p>
-                  Magna exercitation reprehenderit magna aute tempor cupidatat consequat elit dolor
-                  adipisicing. Mollit dolor eiusmod sunt ex incididunt cillum quis. Velit duis sit
-                  officia eiusmod Lorem aliqua enim laboris do dolor eiusmod. Et mollit incididunt
-                  nisi consectetur esse laborum eiusmod pariatur proident Lorem eiusmod et. Culpa
-                  deserunt nostrud ad veniam.
-                </p>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
-                <Button color="primary" onPress={onClose}>
-                  Action
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 transition-colors"
+      >
+        Open Modal
+      </button>
+      
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Booking Details">
+        <div className="space-y-4 text-gray-300">
+          <p>
+            This is where the room booking details or a form would go.
+          </p>
+          <p>
+            You can add any content here, like booking forms, information, or confirmation messages. 
+            The modal is built with Tailwind CSS and Framer Motion for a clean look and smooth animations.
+          </p>
+          <div className="flex justify-end space-x-4 pt-4">
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="px-6 py-2 bg-gray-700 text-white font-semibold rounded-md hover:bg-gray-600 transition-colors"
+            >
+              Close
+            </button>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 transition-colors"
+            >
+              Confirm Booking
+            </button>
+          </div>
+        </div>
       </Modal>
     </>
   );

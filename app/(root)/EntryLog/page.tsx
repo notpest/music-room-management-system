@@ -3,39 +3,23 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import EntryLogTable from "@/components/ui/EntryLogTable";
-import {
-  Button,
-  Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Select,
-  SelectItem,
-  Tooltip,
-} from "@nextui-org/react";
 import { FaFilter } from "react-icons/fa";
 import CIcon from '@coreui/icons-react';
 import { cilReload } from '@coreui/icons';
-import { Calendar } from "@heroui/react";
-import { parseDate, today } from "@internationalized/date";
-import type { CalendarDate } from "@internationalized/date";
 import axios from "axios";
 import { motion } from "framer-motion";
+import Modal from "@/components/ui/Modal";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format } from "date-fns";
 
 // Import Navbar dynamically with no SSR
 const Navbar = dynamic(() => import("@/components/Navbar"), {
   ssr: false,
   loading: () => (
-    <div className="h-[64px] w-full bg-background/60 backdrop-blur-lg" />
+    <div className="h-64px w-full bg-background/60 backdrop-blur-lg" />
   ),
 });
-
-const isValidDate = (dateString: string) => {
-  const date = Date.parse(dateString);
-  return !isNaN(date);
-};
 
 const EntryLogPage = () => {
   const [scanning, setScanning] = useState(false);
@@ -44,10 +28,9 @@ const EntryLogPage = () => {
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [filterCategory, setFilterCategory] = useState("all"); // Options: "all", "student", "equipment"
-  const [filterDate, setFilterDate] = useState("");
-  const [isCalendarOpen, setCalendarOpen] = useState(false);
+  const [isFilterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
 
   const handleScan = async () => {
     setScanning(true);
@@ -55,7 +38,6 @@ const EntryLogPage = () => {
     try {
       const res = await axios.post("/api/entrylogs");
       setMessage(res.data.message);
-      // Increase refresh count to trigger table reload.
       setRefreshCount((prev) => prev + 1);
     } catch (error) {
       console.error(error);
@@ -65,14 +47,9 @@ const EntryLogPage = () => {
     }
   };
 
-  // Automatically initiate the scan when the page loads
   useEffect(() => {
     handleScan();
   }, []);
-
-  function getLocalTimeZone(): string {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
 
   return (
     <motion.div 
@@ -81,97 +58,56 @@ const EntryLogPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Navbar aria-label="Main Navigation" />
+      <Navbar/>
       <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
-        <div className="w-full h-full">
-          <h1> </h1>
-          {/* Refresh button, search bar, and filter button */}
-          <div className="flex items-center my-10 space-x-4" style={{ width: "90%" }}>
-            <Button
-              onPress={handleScan}
+        <div className="w-full h-full p-4">
+          <div className="flex items-center my-10 space-x-4 w-full">
+            <button
+              onClick={handleScan}
               disabled={scanning}
-              className={`text-xl ${scanning ? "animate-spin" : ""}`}
-              isIconOnly
-              variant="light"
+              className={`p-2 rounded-full transition-transform ${scanning ? "animate-spin" : ""}`}
             >
-           <CIcon icon={cilReload} style={{ width: "16px", height: "16px" }} />            </Button>
-            <Input
-              isClearable
-              variant="underlined"
+              <CIcon icon={cilReload} style={{ width: "24px", height: "24px" }} />
+            </button>
+            <input
+              type="text"
               placeholder="Search by Equipment ID or Name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ flex: 1 }}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 text-white"
             />
-            <Tooltip content="Filter">
-              <FaFilter
-                className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                onClick={() => setFilterModalOpen(true)}
-              />
-            </Tooltip>
+            <button onClick={() => setFilterModalOpen(true)} className="p-2">
+              <FaFilter className="text-lg text-gray-400" />
+            </button>
           </div>
 
-          {/* Filter Modal */}
-          <Modal isOpen={filterModalOpen} onOpenChange={setFilterModalOpen}>
-            <ModalContent>
-              <ModalHeader>Filter Entry Logs</ModalHeader>
-              <ModalBody>
-                <Select
-                  label="Category"
-                  selectedKeys={new Set([filterCategory])}
-                  onSelectionChange={(keys) => {
-                    const selected = Array.from(keys)[0] as string;
-                    setFilterCategory(selected);
-                  }}
-                >
-                  <SelectItem key="all" value="all">
-                    All
-                  </SelectItem>
-                  <SelectItem key="student" value="student">
-                    Student
-                  </SelectItem>
-                  <SelectItem key="equipment" value="equipment">
-                    Equipment
-                  </SelectItem>
-                </Select>
-                <div style={{ marginBottom: "1rem" }}>
-                  <label style={{ marginRight: "1rem" }}>Scanned Date:</label>
-                  <div
-                    style={{
-                      padding: "0.5rem",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => setCalendarOpen(true)}
-                  >
-                    {filterDate ? new Date(filterDate).toLocaleDateString("en-GB") : "dd-mm-yyyy"}
-                  </div>
-                  {isCalendarOpen && (
-                    <Calendar
-                      aria-label="Date Picker"
-                      defaultValue={filterDate ? parseDate(filterDate) : (today(getLocalTimeZone()) as any)}
-                      onChange={(e) => {
-                        setFilterDate((e as any).toString());
-                        setCalendarOpen(false);
-                      }}
-                    />
-                  )}
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button onPress={() => setFilterModalOpen(false)}>
-                  Apply Filters
-                </Button>
-              </ModalFooter>
-            </ModalContent>
+          <Modal isOpen={isFilterModalOpen} onClose={() => setFilterModalOpen(false)} title="Filter Entry Logs">
+            <div className="space-y-4">
+              <select 
+                value={filterCategory} 
+                onChange={e => setFilterCategory(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md"
+              >
+                <option value="all">All</option>
+                <option value="student">Student</option>
+                <option value="equipment">Equipment</option>
+              </select>
+              <DayPicker
+                mode="single"
+                selected={filterDate}
+                onSelect={setFilterDate}
+              />
+            </div>
+            <div className="flex justify-end pt-4">
+                <button onClick={() => setFilterModalOpen(false)} className="px-4 py-2 bg-purple-600 rounded-md">Apply</button>
+            </div>
           </Modal>
 
           <EntryLogTable
             refreshCount={refreshCount}
             searchQuery={searchQuery}
             filterCategory={filterCategory}
-            filterDate={filterDate}
+            filterDate={filterDate ? format(filterDate, "yyyy-MM-dd") : ""}
           />
         </div>
       </main>

@@ -107,6 +107,7 @@ Request.init(
     modelName: "Request",
     tableName: "request",
     timestamps: false,
+    indexes: [{ fields: ["room_id", "slot_start", "slot_end"] }]
   }
 );
 

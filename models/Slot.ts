@@ -57,9 +57,8 @@ Slot.init(
     modelName: 'Slot',
     tableName: 'slot',
     timestamps: false,
+    indexes: [{ fields: ['room_id', 'slot_start', 'slot_end'] }]
   }
 );
 
-Slot.belongsTo(Band, { foreignKey: 'band_id' });
-Slot.belongsTo(Room, { foreignKey: 'room_id' });
 export default Slot;

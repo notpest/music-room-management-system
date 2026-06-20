@@ -1,18 +1,6 @@
 "use client";
 
 import React, { useState, ChangeEvent } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-  TableColumn,
-  Button,
-  Pagination,
-  Input,
-  Chip,
-} from "@nextui-org/react";
 
 interface SlotConfig {
   id: number;
@@ -43,135 +31,132 @@ const DashboardTable: React.FC<DashboardTableProps> = ({
   const [newStart, setNewStart] = useState("");
   const [newEnd, setNewEnd] = useState("");
 
-  // Color mapping for the "enabled" column
-  const enabledColorMap: { [key: string]: "success" | "danger" | "default" | "primary" | "secondary" | "warning" | undefined } = {
-    true: "success",
-    false: "danger",
-  };
-
-  // Calculate the current configurations to display based on pagination
+  const totalPages = Math.ceil(configs.length / itemsPerPage);
   const currentConfigs = configs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Function to go to the previous page
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      handlePageChange(currentPage - 1);
+  const renderPaginationButtons = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-4 py-2 mx-1 rounded-md transition-colors ${
+            currentPage === i
+              ? "bg-purple-600 text-white"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+          }`}
+        >
+          {i}
+        </button>
+      );
     }
+    return pages;
   };
-
-  // Function to go to the next page
-  const goToNextPage = () => {
-    if (currentPage < Math.ceil(configs.length / itemsPerPage)) {
-      handlePageChange(currentPage + 1);
+  
+  const handleAddClick = () => {
+    if (newStart && newEnd) {
+      addConfig(newStart, newEnd);
+      setNewStart("");
+      setNewEnd("");
+    } else {
+      alert("Please enter both start and end times.");
     }
   };
 
   return (
-    <div className="bg-black-100 shadow-md rounded-lg p-6 w-full">
-      <h2 className="text-xl font-semibold mb-4">Slot Management</h2>
+    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 w-full text-white">
+      <h2 className="text-2xl font-semibold mb-6 text-center">Slot Management</h2>
 
-      {/* Input Fields for Adding Slots */}
-      <div className="mb-4 flex gap-2">
-        <Input
-          placeholder="Start Time (HH:mm)"
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <input
+          type="time"
           value={newStart}
           onChange={(e: ChangeEvent<HTMLInputElement>) => setNewStart(e.target.value)}
-          className="flex-1"
+          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 text-white"
         />
-        <Input
-          placeholder="End Time (HH:mm)"
+        <input
+          type="time"
           value={newEnd}
           onChange={(e: ChangeEvent<HTMLInputElement>) => setNewEnd(e.target.value)}
-          className="flex-1"
+          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 text-white"
         />
-        <Button
-          onPress={() => {
-            if (newStart && newEnd) {
-              addConfig(newStart, newEnd);
-              setNewStart("");
-              setNewEnd("");
-            } else {
-              alert("Please enter both start and end times.");
-            }
-          }}
-          className="bg-blue-500 text-white"
+        <button
+          onClick={handleAddClick}
+          className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 transition-colors"
         >
           Add Slot
-        </Button>
+        </button>
       </div>
 
-      {/* Table for Slot Configurations */}
-      <Table aria-label="Slot Configurations">
-        <TableHeader className="font-sans font-semibold text-sm">
-          <TableColumn>ID</TableColumn>
-          <TableColumn>Start Time</TableColumn>
-          <TableColumn>End Time</TableColumn>
-          <TableColumn>Enabled</TableColumn>
-          <TableColumn>Actions</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {currentConfigs.map((config) => (
-            <TableRow key={config.id}>
-              <TableCell>{config.id}</TableCell>
-              <TableCell>{config.start_time}</TableCell>
-              <TableCell>{config.end_time}</TableCell>
-              <TableCell>
-                <Chip
-                  className="capitalize"
-                  color={enabledColorMap[config.enabled.toString()]}
-                  size="sm"
-                  variant="flat"
-                >
-                  {config.enabled ? "Yes" : "No"}
-                </Chip>
-              </TableCell>
-              <TableCell>
-                <Button
-                  onPress={() => toggleEnabled(config.id, config.enabled)}
-                  color={config.enabled ? "danger" : "success"} // Toggle button color
-                  className="text-white"
-                >
-                  {config.enabled ? "Disable" : "Enable"}
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Pagination Controls */}
-      <div className="flex justify-center items-center mt-4 gap-2">
-        {/* Previous Page Button */}
-        <Button
-          isIconOnly
-          variant="light"
-          onPress={goToPreviousPage}
-          disabled={currentPage === 1}
-        >
-          {"<"}
-        </Button>
-
-        {/* Pagination Component */}
-        <Pagination
-          total={Math.ceil(configs.length / itemsPerPage)}
-          page={currentPage}
-          initialPage={1}
-          onChange={handlePageChange}
-        />
-
-        {/* Next Page Button */}
-        <Button
-          isIconOnly
-          variant="light"
-          onPress={goToNextPage}
-          disabled={currentPage === Math.ceil(configs.length / itemsPerPage)}
-        >
-          {">"}
-        </Button>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="border-b border-gray-700">
+            <tr>
+              <th className="p-4 text-sm font-semibold text-gray-300">ID</th>
+              <th className="p-4 text-sm font-semibold text-gray-300">Start Time</th>
+              <th className="p-4 text-sm font-semibold text-gray-300">End Time</th>
+              <th className="p-4 text-sm font-semibold text-gray-300">Status</th>
+              <th className="p-4 text-sm font-semibold text-gray-300 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentConfigs.map((config) => (
+              <tr key={config.id} className="border-b border-gray-800 hover:bg-gray-800/60 transition-colors">
+                <td className="p-4">{config.id}</td>
+                <td className="p-4 font-mono">{config.start_time}</td>
+                <td className="p-4 font-mono">{config.end_time}</td>
+                <td className="p-4">
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                      config.enabled
+                        ? "bg-green-500/20 text-green-300"
+                        : "bg-red-500/20 text-red-300"
+                    }`}
+                  >
+                    {config.enabled ? "Enabled" : "Disabled"}
+                  </span>
+                </td>
+                <td className="p-4 text-center">
+                  <button
+                    onClick={() => toggleEnabled(config.id, config.enabled)}
+                    className={`px-4 py-1 text-sm font-semibold rounded-md transition-colors ${
+                      config.enabled
+                        ? "bg-red-600 hover:bg-red-700 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
+                    }`}
+                  >
+                    {config.enabled ? "Disable" : "Enable"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-6">
+           <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 mx-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {"<"}
+          </button>
+          {renderPaginationButtons()}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 mx-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {">"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

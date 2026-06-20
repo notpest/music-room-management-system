@@ -1,294 +1,224 @@
-// navbar.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Select, SelectItem } from "@nextui-org/react";
-import RegistrationModal from "../components/ui/RegistrationModal";
-import {
-  Navbar,
-  NavbarBrand,
-  NavbarMenuToggle,
-  NavbarMenuItem,
-  NavbarMenu,
-  NavbarContent,
-  NavbarItem,
-  Link,
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  useDisclosure as useSignupDisclosure,
-  Input,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Avatar,
-} from "@heroui/react";
 import Image from "next/image";
-import SWOLogo from "../public/SWO_Logo.png";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
+import SWOLogo from "../../public/SWO_Logo.png";
+import Modal from "./ui/Modal";
+import RegistrationModal from "./ui/RegistrationModal";
 
 const NavbarComponent = () => {
-  const { data: session, status } = useSession();
-  const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
-  const { isOpen: signupOpen, onOpen: openSignup, onOpenChange: setSignupOpen } = useSignupDisclosure();
+  const { data: session } = useSession();
+  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [isRegModalOpen, setRegModalOpen] = useState(false);
+  const [isMenuOpen, setMenuOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
   const router = useRouter();
   const pathname = usePathname();
 
-  interface Band {
-    id: string;
-    name: string;
-    colour: string;
-  }
-
-  const [regName, setRegName] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regBands, setRegBands] = useState<Band[]>([]);
-  const [selectedBandIds, setSelectedBandIds] = useState<Set<string>>(new Set());
-  const [isUserModalOpen, setUserModalOpen] = useState(false);
-  const [loadingBands, setLoadingBands] = useState(true);
-  const [regError, setRegError] = useState<string | null>(null);
-  const [bands, setBands] = useState<{ id: string; name: string }[]>([]);
-  const [isRegModalOpen, setRegModalOpen] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-   useEffect(() => {
-    ;(async () => {
-      try {
-        setLoadingBands(true);
-        const res = await fetch("/api/bands");
-        const data = await res.json();
-        console.log("fetched bands:", data);
-        console.log("bands array length:", data?.length);
-        console.log("first band:", data?.[0]);
-        setRegBands(data);
-      } catch (e) {
-        console.error("unable to load bands", e);
-      } finally {
-        setLoadingBands(false);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    const handler = () => onOpen(); // onOpen is from useDisclosure()
-    window.addEventListener("openLoginModal", handler);
-    return () => window.removeEventListener("openLoginModal", handler);
-  }, [onOpen]);
-
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY < lastScrollY) {
+      if (window.scrollY < lastScrollY || window.scrollY < 50) {
         setShowNavbar(true);
       } else {
         setShowNavbar(false);
       }
       setLastScrollY(window.scrollY);
     };
-
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
   const handleLogin = async () => {
-    if (isLoggingIn) return; // Prevent multiple submissions
-    
-    setIsLoggingIn(true); // Start loading
-    
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-        callbackUrl: "/",
-      });
-      
-      if (result?.error) {
-        alert("Invalid credentials");
-      } else {
-        onOpenChange(); // Close the modal on success
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("An unexpected error occurred");
-    } finally {
-      setIsLoggingIn(false); // End loading
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+    if (result?.error) {
+      alert("Invalid credentials");
+    } else {
+      setLoginModalOpen(false);
     }
+    setIsLoggingIn(false);
   };
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: "/" });
-  };
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/RoomBooking", label: "Room Booking", auth: true },
+    { href: "/SlotRequests", label: "Slot Requests", auth: true },
+    { href: "/Dashboard", label: "Dashboard", admin: true },
+    { href: "/Register", label: "Register", admin: true },
+  ];
 
   return (
-    <div className={`transition-transform duration-300 ${showNavbar ? "translate-y-0" : "-translate-y-full"}`}>
-      <Navbar isBordered className="w-full bg-black-100 backdrop-blur-lg">
-          {/* Menu toggle on the left */}
-          <NavbarContent justify="start" style={{ marginLeft: "1rem" }}>
-            <NavbarMenuToggle
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            />
-          </NavbarContent>
-
-          {/* Brand logo and name in the center */}
-          <NavbarContent justify="center">
-            <NavbarBrand>
-              <Link href="/">
-                <Image src={SWOLogo} alt="SWO Logo" width={50} height={50} priority />
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-40 w-full bg-black bg-opacity-50 backdrop-blur-lg transition-transform duration-300 ${
+          showNavbar || isMenuOpen ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Left side: Logo */}
+            <div className="flex-shrink-0">
+              <Link href="/" className="flex items-center gap-2">
+                <Image src={SWOLogo} alt="SWO Logo" width={40} height={40} priority />
+                <span className="text-white font-bold text-xl hidden sm:block">SWO</span>
               </Link>
-            </NavbarBrand>
-          </NavbarContent>
+            </div>
 
-          {/* Dropdown for user actions on the right */}
-          <NavbarContent justify="end" style={{ marginRight: "1rem" }}>
-            {session ? (
-              <Dropdown placement="bottom-end">
-                <DropdownTrigger>
-                  <Avatar
-                    isBordered
-                    as="button"
-                    className="transition-transform"
-                    color="secondary"
-                    name={session.user?.name || ""}
-                    size="sm"
-                    src="/"
-                  />
-                </DropdownTrigger>
-                <DropdownMenu aria-label="Profile Actions" variant="flat">
-                  <DropdownItem key="profile" className="h-14 gap-2">
-                    <p className="font-semibold">Signed in as</p>
-                  <p className="font-semibold">{session.user?.name}</p>
-                </DropdownItem>
-                <DropdownItem key="logout" color="danger" onClick={handleLogout}>
-                  Log Out
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          ) : (
-            <NavbarItem>
-              <Button onPress={onOpen} color="primary">
-                Login
-              </Button>
-            </NavbarItem>
-          )}
-        </NavbarContent>
+            {/* Center: Desktop Menu */}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                {navLinks.map(({ href, label, auth, admin }) => {
+                  const isActive = pathname === href;
+                  if ((auth && !session) || (admin && session?.user?.role !== 'admin')) {
+                    return null;
+                  }
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-purple-600 text-white"
+                          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                      }`}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
 
-        {/* Mobile menu */}
-        <NavbarMenu>
-          <NavbarMenuItem>
-            <Link href="/">Home</Link>
-          </NavbarMenuItem>
-          <NavbarMenuItem>
-            <Link href="/RoomBooking" className={!session ? "opacity-50" : ""}>
-              Room Booking
-            </Link>
-          </NavbarMenuItem>
-          {/* <NavbarMenuItem>
-            <Link href="/EquipmentBooking" className={!session ? "opacity-50" : ""}>
-              Equipment Booking
-            </Link>
-          </NavbarMenuItem> */}
-          {session && (
-            <NavbarMenuItem>
-              <Link href="/SlotRequests">
-                Slot Requests
-              </Link>
-            </NavbarMenuItem>
-          )}
-          {session && session.user?.role === "admin" && (
-            <>
-              {/* <NavbarMenuItem>
-                <Link href="/EntryLog" className={!session ? "opacity-50" : ""}>
-                  Entry Log
-                </Link>
-              </NavbarMenuItem> */}
-              <NavbarMenuItem>
-                <Link href="/Dashboard" className={!session ? "opacity-50" : ""}>
-                  Dashboard
-                </Link>
-              </NavbarMenuItem>
-              <NavbarMenuItem>
-                <Link href="/Register " className={!session ? "opacity-50" : ""}>
-                  Register
-                </Link>
-              </NavbarMenuItem>
-            </>
-          )}
-            <div className="absolute bottom-4 text-center text-sm text-gray-500 mb-10 w-[93%] sm:w-[93%] md:w-[95%]">
-    If you have any queries, kindly contact roshan.yohann@christuniversity.in
-  </div>
-        </NavbarMenu>
-        
-      </Navbar>
+            {/* Right side: Auth buttons & Mobile menu toggle */}
+            <div className="flex items-center">
+              <div className="hidden md:block">
+                {session ? (
+                   <div className="relative">
+                     <button onClick={() => signOut({ callbackUrl: "/" })} className="px-4 py-2 text-sm bg-red-600 rounded-md hover:bg-red-700">
+                       Logout
+                     </button>
+                   </div>
+                ) : (
+                  <button
+                    onClick={() => setLoginModalOpen(true)}
+                    className="px-4 py-2 text-sm bg-purple-600 rounded-md hover:bg-purple-700"
+                  >
+                    Login
+                  </button>
+                )}
+              </div>
+              <div className="md:hidden">
+                <button
+                  onClick={() => setMenuOpen(!isMenuOpen)}
+                  className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700"
+                >
+                  <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                    {isMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    )}
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <RegistrationModal 
-        isOpen={isRegModalOpen} 
-        onOpenChange={setRegModalOpen} 
-      />
-
-      {/* Login Modal */}
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur">
-        <ModalContent>
-          <ModalHeader>Sign In</ModalHeader>
-          <ModalBody>
-            <Input
-              type="text"
-              label="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              isDisabled={isLoggingIn} 
-            />
-            <Input
-              type="password"
-              label="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              isDisabled={isLoggingIn} 
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleLogin();
-                }
-              }}
-            />
-          </ModalBody>
-          <ModalFooter className="flex justify-between">
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {navLinks.map(({ href, label, auth, admin }) => {
+                  if ((auth && !session) || (admin && session?.user?.role !== 'admin')) {
+                    return null;
+                  }
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+               <div className="pt-4 border-t border-gray-700">
+                {session ? (
+                     <button onClick={() => {signOut({ callbackUrl: "/" }); setMenuOpen(false);}} className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700 hover:text-white">
+                       Logout
+                     </button>
+                ) : (
+                  <button
+                    onClick={() => {setLoginModalOpen(true); setMenuOpen(false);}}
+                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    Login
+                  </button>
+                )}
+               </div>
+            </div>
+          </div>
+        )}
+      </nav>
+      
+      {/* Modals */}
+      <Modal isOpen={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} title="Sign In">
+        <div className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoggingIn}
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoggingIn}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+          />
+          <div className="flex justify-between items-center">
             <button
-              type="button"
-              className={`text-primary-500 hover:underline cursor-pointer bg-transparent border-none p-0 ${isLoggingIn ? "opacity-50 pointer-events-none" : ""}`}
               onClick={() => {
-                onOpenChange();
+                setLoginModalOpen(false);
                 setRegModalOpen(true);
               }}
-              disabled={isLoggingIn} 
+              className="text-sm text-purple-400 hover:underline"
             >
-              Sign up
+              Don't have an account? Sign up
             </button>
-           <div className="flex gap-2">
-            <Button color="primary" 
-              onPress={handleLogin}
-              isDisabled={isLoggingIn} 
-              isLoading={isLoggingIn}
+            <button
+              onClick={handleLogin}
+              disabled={isLoggingIn}
+              className="px-6 py-2 bg-purple-600 rounded-md disabled:bg-gray-600"
             >
               {isLoggingIn ? "Signing in..." : "Sign In"}
-            </Button>
+            </button>
           </div>
-          </ModalFooter>
-        </ModalContent>
+        </div>
       </Modal>
-    </div>
+
+      <RegistrationModal isOpen={isRegModalOpen} onClose={() => setRegModalOpen(false)} />
+    </>
   );
 };
 

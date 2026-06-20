@@ -1,38 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, ChangeEvent } from "react";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Tooltip,
-  ButtonGroup,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@nextui-org/react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
-import { Session } from "next-auth";
-import { signIn } from "next-auth/react";
-import { FaCalendarAlt, FaInfoCircle, FaChevronDown } from "react-icons/fa";
-import { Calendar } from "@heroui/react";
-import { today, getLocalTimeZone, parseDate, CalendarDate } from "@internationalized/date";
+import { FaCalendarAlt, FaChevronDown, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format } from "date-fns";
+import Modal from "./Modal";
 
-// Interfaces
+// Interfaces (keep them as they are)
 interface Slot {
   id: number;
   slot_start: Date;
@@ -41,1133 +18,285 @@ interface Slot {
   band_id?: string;
   band_name?: string;
 }
+interface Bookings { [key: string]: string; }
+interface Day { key: string; display: string; }
+interface TimeSlot { key: string; display: string; end: string; }
+interface SlotConfig { id: string; start_time: string; end_time: string; enabled: boolean; }
+export type RequestType = { id: string; user_id: string; status: "approved" | "denied" | "pending"; slot_start: string; slot_end: string; request_date: string; response_date: string | null; user_name?: string; band_name?: string; };
 
-interface Bookings {
-  [key: string]: string;
-}
-
-interface Day {
-  key: string;
-  display: string;
-}
-
-interface TimeSlot {
-  key: string;
-  display: string;
-  end: string;
-}
-
-interface SlotConfig {
-  id: string;
-  start_time: string; // e.g., "07:30:00" or "07:30"
-  end_time: string;   // e.g., "09:00:00" or "09:00"
-  enabled: boolean;
-}
-
-export type RequestType = {
-  id: string;
-  user_id: string;
-  status: "approved" | "denied" | "pending";
-  slot_start: string;
-  slot_end: string;
-  request_date: string;
-  response_date: string | null;
-  user_name?: string;
-  band_name?: string;
-};
-
-// Utility functions to generate consistent keys
-const formatDayKey = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const formatTimeKey = (date: Date): string => {
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-};
-
-// Helper: Given any date, return the Monday of that week
+// Utility functions
+const formatDayKey = (date: Date): string => format(date, "yyyy-MM-dd");
 const getMonday = (d: Date): Date => {
   const date = new Date(d);
   const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday (0)
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(date.setDate(diff));
 };
 
 const RBTable = () => {
-  const [requests, setRequests] = useState<RequestType[]>([]);
-  // API slots and booking mapping
+  const { data: session } = useSession();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [bookings, setBookings] = useState<Bookings>({});
-  // Days and times for the current week view
   const [days, setDays] = useState<Day[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  // Week navigation: currentWeekStart is the Monday of the week to display.
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getMonday(new Date()));
-
-  // Modal and booking states
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  
-  // Inside RBTable component, add:
   const [roomMapping, setRoomMapping] = useState<{ [key: number]: string }>({});
   const [selectedRoomNumber, setSelectedRoomNumber] = useState<number>(365);
-
   const [isModalOpen, setModalOpen] = useState(false);
-  // "book" = booking modal; "alreadyBooked" = error modal
-  const [modalType, setModalType] = useState<"book" | "alreadyBooked" | "login" | "requested" | null>(null);
-  const [selectedDayKey, setSelectedDayKey] = useState<string>("");
-  const [selectedTimeKey, setSelectedTimeKey] = useState<string>("");
-  const [bandId, setBandId] = useState<string>("");
-  const [bookingStartTime, setBookingStartTime] = useState<string>("");
-  const [bookingEndTime, setBookingEndTime] = useState<string>("");
-  const { data: session } = useSession();
-  // New states to hold default values for placeholders
-  const [defaultStartTime, setDefaultStartTime] = useState<string>("");
-  const [defaultEndTime, setDefaultEndTime] = useState<string>("");
-
-  // Week Picker Modal states
-  const [weekPickerOpen, setWeekPickerOpen] = useState(false);
-  const [tempWeekDate, setTempWeekDate] = useState<CalendarDate | null>(null);
-  const [selectedDate, setSelectedDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-  const [cachedRange, setCachedRange] = useState<{ 
-    start: string; 
-    end: string;
-    roomNumber: string;
-  } | null>(null);
-  const [cachedSlots, setCachedSlots] = useState<Slot[]>([]);
+  const [modalContent, setModalContent] = useState<React.ReactNode | null>(null);
+  const [modalTitle, setModalTitle] = useState("");
   const [bands, setBands] = useState<Array<{ id: string; name: string; colour: string }>>([]);
   const [bandColors, setBandColors] = useState<{ [key: string]: string }>({});
-  const [userBandName, setUserBandName] = useState<string>("");
   const isAdmin = session?.user?.role === "admin";
-  const [userBands, setUserBands] = useState<Array<{ id: string; name: string }>>([]);
-  const [requestedBandName, setRequestedBandName] = useState<string>("");
-  const [reason, setReason] = useState("");
+
+  // New simplified state
+  const [selectedCell, setSelectedCell] = useState<{ day: string, time: string} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
-  const [conflictMessage, setConflictMessage] = useState("");
-
-  // Fetch room mapping from API
-  const fetchRooms = async () => {
-    try {
-      const res = await axios.get("/api/rooms");
-      // Assume res.data is an array of room objects with properties: id, number, name.
-      const mapping: { [key: number]: string } = {};
-      res.data.forEach((room: { id: string; number: number; name: string }) => {
-        mapping[room.number] = room.id;
-      });
-      setRoomMapping(mapping);
-    } catch (error) {
-      console.error("Error fetching rooms:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchRooms();
-  }, []);
-
-  const fetchRequests = async () => {
-    try {
-      const roomId = roomMapping[selectedRoomNumber];
-      if (!roomId) return; // wait until mapping is loaded
-      const res = await axios.get("/api/requests", {
-        params: { room_id: roomId },
-      });
-      setRequests(res.data);
-    } catch (error) {
-      console.error("Error fetching requests:", error);
-    }
-  };
+  const [reason, setReason] = useState("");
+  const [selectedBandId, setSelectedBandId] = useState<string>("");
   
   useEffect(() => {
-    fetchSlots();
-    fetchRequests();
-  }, [selectedRoomNumber, roomMapping, currentWeekStart]);
+    // Fetch initial data
+    const fetchInitialData = async () => {
+      try {
+        const [roomsRes, bandsRes, slotConfigsRes] = await Promise.all([
+          axios.get("/api/rooms"),
+          axios.get("/api/bands"),
+          axios.get("/api/slotconfig"),
+        ]);
 
-  // On mount or when session updates, prefill bandId from session.user.band_id
-  useEffect(() => {
-    if (session && session.user) {
-      if (session.user.role !== "admin") {
-        setBandId((session.user as any).band_id || "");
-      }
-    }
-  }, [session]);
+        const mapping: { [key: number]: string } = {};
+        roomsRes.data.forEach((room: { id: string; number: number }) => {
+          mapping[room.number] = room.id;
+        });
+        setRoomMapping(mapping);
 
-  useEffect(() => {
-    axios
-      .get("/api/bands")
-      .then((res) => {
-        const allBands = res.data as Array<{ id: string; name: string; colour: string }>;
+        const allBands = bandsRes.data as Array<{ id: string; name: string; colour: string }>;
         setBands(allBands);
-
-         // Build lookup map: band_id → colour
-         const coloursMap: { [key: string]: string } = {};
-         allBands.forEach((b) => {
-          coloursMap[b.id] = b.colour; // e.g. "#ff009f"
-        });
+        const coloursMap: { [key: string]: string } = {};
+        allBands.forEach((b) => { coloursMap[b.id] = b.colour; });
         setBandColors(coloursMap);
-      })
-      .catch((err) => {
-        console.error("Error fetching bands:", err);
-      });
-  }, [isAdmin]);
+        
+        if (session?.user && !isAdmin) {
+            setSelectedBandId((session.user as any).band_id || "");
+        }
 
-  useEffect(() => {
-    if (!session) return;
-    if (session.user.role !== "admin") {
-      axios
-        .get("/api/users")
-        .then((res) => {
-          const allUsers = res.data as Array<{
-            id: string;
-            name: string;
-            email: string;
-            role: string;
-            bands: Array<{ id: string; name: string }>;
-          }>;
-
-          const me = allUsers.find((u) => u.id === (session.user as any).id);
-          if (me) {
-            setUserBands(me.bands);
-            // prefill bandId with first band if available
-            if (me.bands.length > 0) {
-              setBandId(me.bands[0].id);
-            }
-          }
-        })
-        .catch((err) => {
-          console.error("Error fetching user’s bands:", err);
+        const configs: SlotConfig[] = slotConfigsRes.data
+          .filter((config: SlotConfig) => config.enabled)
+          .sort((a: SlotConfig, b: SlotConfig) => a.start_time.localeCompare(b.start_time));
+        
+        const formattedConfigs: TimeSlot[] = configs.map((config) => {
+          const startDate = new Date(`1970-01-01T${config.start_time}`);
+          const endDate = new Date(`1970-01-01T${config.end_time}`);
+          return {
+            key: config.start_time.substring(0, 5),
+            display: startDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hourCycle: "h12" }),
+            end: endDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hourCycle: "h12" }),
+          };
         });
-    }
-  }, [session]);
+        setTimeSlots(formattedConfigs);
 
-  // Update the current week start based on the selected date
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+    fetchInitialData();
+  }, [session, isAdmin]);
+
   useEffect(() => {
-    if (selectedDate) {
-      const date = new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day);
-      setCurrentWeekStart(getMonday(date));
-    }
-  }, [selectedDate]);
+    // Fetch slots when week or room changes
+    const fetchSlots = async () => {
+      if (Object.keys(roomMapping).length === 0) return;
 
-  // Fetch slots from API
-  const fetchSlots = async () => {
-    // Calculate range: from one week before currentWeekStart to one week after the current week.
-    const rangeStart = new Date(currentWeekStart);
-    rangeStart.setDate(rangeStart.getDate() - 7);
-    const rangeEnd = new Date(currentWeekStart);
-    rangeEnd.setDate(rangeEnd.getDate() + 14); // current week (7 days) + next week (7 days) = 14 days ahead
-  
-    const rangeStartISO = rangeStart.toISOString();
-    const rangeEndISO = rangeEnd.toISOString();
-    
-    const cacheKey = `${selectedRoomNumber}-${rangeStartISO}-${rangeEndISO}`;
+      const rangeStart = new Date(currentWeekStart);
+      const rangeEnd = new Date(rangeStart);
+      rangeEnd.setDate(rangeEnd.getDate() + 7);
 
-    // If we have cached data that covers this range, use it.
-    if (
-      cachedRange &&
-      cachedRange.start <= rangeStartISO &&
-      cachedRange.end >= rangeEndISO &&
-      cachedRange.roomNumber === selectedRoomNumber.toString()
-    ) {
-      setSlots(cachedSlots);
-      return;
-    }
-  
-    try {
-      const response = await axios.get("/api/slots", {
-        params: {
-          start: rangeStartISO,
-          end: rangeEndISO,
-          roomNumber: selectedRoomNumber.toString(),
-        },
-      });
-      setSlots(response.data);
-      // Update cache
-      setCachedSlots(response.data);
-      setCachedRange({ 
-        start: rangeStartISO, 
-        end: rangeEndISO,
-        roomNumber: selectedRoomNumber.toString()  
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  // Initial API fetch on mount
-  useEffect(() => {
+      try {
+        const response = await axios.get("/api/slots", {
+          params: {
+            start: rangeStart.toISOString(),
+            end: rangeEnd.toISOString(),
+            roomNumber: selectedRoomNumber,
+          },
+        });
+        setSlots(response.data);
+      } catch (error) {
+        console.error("Error fetching slots:", error);
+      }
+    };
     fetchSlots();
-  }, [currentWeekStart, selectedRoomNumber]);
+  }, [currentWeekStart, selectedRoomNumber, roomMapping]);
 
-  // Modified fetchSlotConfigs with debugging
-  const fetchSlotConfigs = async () => {
-    try {
-      const response = await axios.get("/api/slotconfig");
-      console.log("Raw slot configs from server:", response.data);
-      
-      // Filter for enabled configurations and sort them by start_time
-      const configs: SlotConfig[] = response.data
-        .filter((config: SlotConfig) => config.enabled)
-        .sort((a: SlotConfig, b: SlotConfig) => a.start_time.localeCompare(b.start_time));
-      
-      console.log("Filtered configs:", configs);
-      
-      // Convert each SlotConfig into a TimeSlot object:
-      const formattedConfigs: TimeSlot[] = configs.map((config) => {
-        const key = config.start_time.substring(0, 5); // e.g., "07:30"
-        
-        // Debug the date creation
-        const dateString = `1970-01-01T${config.start_time}`;
-        console.log(`Creating date from: ${dateString}`);
-        
-        const startDate = new Date(dateString);
-        const endDate = new Date(`1970-01-01T${config.end_time}`);
-        
-        console.log(`Start date object:`, startDate);
-        console.log(`End date object:`, endDate);
-        
-        const startDisplay = startDate.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hourCycle: "h12",
-        });
-        const endDisplay = endDate.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hourCycle: "h12",
-        });
-        
-        console.log(`Formatted: ${config.start_time} -> ${startDisplay}`);
-        console.log(`Formatted: ${config.end_time} -> ${endDisplay}`);
-        
-        return { key, display: startDisplay, end: endDisplay };
-      });
-      
-      console.log("Final formatted configs:", formattedConfigs);
-      setTimeSlots(formattedConfigs);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  
   useEffect(() => {
-    fetchSlotConfigs();
-  }, []);
-
-  // Generate week days (Monday to Sunday) based on currentWeekStart
-  const generateWeekDays = (weekStart: Date): Day[] => {
-    const daysArray: Day[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + i);
-      const weekday = d.toLocaleDateString("en-US", { weekday: "long" });
-      const dateFormatted = d.toLocaleDateString("en-GB"); // produces dd/mm/yyyy
-      daysArray.push({
+    // Rebuild UI when data changes
+    const weekDays = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(currentWeekStart);
+      d.setDate(d.getDate() + i);
+      return {
         key: formatDayKey(d),
-        display: `${weekday} - ${dateFormatted}`,
-      });
-    }
-    return daysArray;
-  };  
-  
-  // Helper function to parse an ISO timestamp into a Date in the user’s local timezone.
-  const parseUTCTime = (timeValue: string | Date): Date => {
-    if (typeof timeValue === "string") {
-      // Preserve UTC time by appending 'Z'
-      const timeWithoutZ = timeValue;
-      return new Date(timeWithoutZ);
-    }
-    return timeValue;
-  };
-
-  // When slots or the selected week change, rebuild the days, times and booking mapping.
-  // Modified useEffect for slots with debugging
-  useEffect(() => {
-    if (timeSlots.length === 0) return;
-
-    console.log("=== PROCESSING SLOTS ===");
-    const weekDays = generateWeekDays(currentWeekStart);
-    const defaultTimeSlots = timeSlots;
-    const defaultBookings: Bookings = {};
-
-    // Override with API slots (if any fall within the week)
-    slots.forEach((slot, index) => {
-      console.log(`Processing slot ${index}:`, slot);
-
-      const slotStart = parseUTCTime(slot.slot_start);
-      const slotEnd = parseUTCTime(slot.slot_end);
-
-      console.log(`Slot ${index} - Original times:`, slot.slot_start, slot.slot_end);
-      console.log(`Slot ${index} - Parsed times:`, slotStart, slotEnd);
-      console.log(`Slot ${index} - Formatted day key:`, formatDayKey(slotStart));
-      console.log(`Slot ${index} - Formatted time key:`, formatTimeKey(slotStart));
-
-      // Rest of your existing logic...
-      weekDays.forEach((day) => {
-        if (day.key === formatDayKey(slotStart)) {
-          console.log(`Slot ${index} matches day ${day.key}`);
-          defaultTimeSlots.forEach((time) => {
-            const [dYear, dMonth, dDay] = day.key.split("-").map(Number);
-            const [tHour, tMinute] = time.key.split(":").map(Number);
-            const cellDateTime = new Date(dYear, dMonth - 1, dDay, tHour, tMinute);
-            
-            if (cellDateTime >= slotStart && cellDateTime < slotEnd) {
-              const bookingKey = `${day.key}-${time.key}`;
-              console.log(`Marking ${bookingKey} as booked`);
-              defaultBookings[bookingKey] = slot.status;
-            }
-          });
-        }
-      });
+        display: `${format(d, "EEEE")} - ${format(d, "dd/MM/yyyy")}`,
+      };
     });
-
-    // Fill in defaults for each cell if not overridden
-    weekDays.forEach((day) => {
-      defaultTimeSlots.forEach((time) => {
-        const key = `${day.key}-${time.key}`;
-        if (!defaultBookings[key]) {
-          defaultBookings[key] = "available";
-        }
-      });
-    });
-
     setDays(weekDays);
-    setBookings(defaultBookings);
+
+    const newBookings: Bookings = {};
+    weekDays.forEach(day => {
+        timeSlots.forEach(time => {
+            const key = `${day.key}-${time.key}`;
+            newBookings[key] = "available";
+        });
+    });
+
+    slots.forEach(slot => {
+        const slotStart = new Date(slot.slot_start);
+        const dayKey = formatDayKey(slotStart);
+        const timeKey = format(slotStart, "HH:mm");
+        const bookingKey = `${dayKey}-${timeKey}`;
+        if(newBookings[bookingKey]) {
+            newBookings[bookingKey] = slot.status;
+        }
+    });
+    setBookings(newBookings);
   }, [slots, currentWeekStart, timeSlots]);
 
-  const parseUTCTime_v1 = (timeValue: string | Date): Date => {
-    if (typeof timeValue === "string") {
-      return new Date(timeValue.endsWith('Z') ? timeValue : timeValue + 'Z');
-    }
-    return timeValue;
-  };
 
-  const parseUTCTime_v2 = (timeValue: string | Date): Date => {
-    if (typeof timeValue === "string") {
-      return new Date(timeValue);
-    }
-    return timeValue;
-  };
-
-  const parseUTCTime_v3 = (timeValue: string | Date): Date => {
-    if (typeof timeValue === "string") {
-      // Remove 'Z' if present and treat as local time
-      return new Date(timeValue.replace('Z', ''));
-    }
-    return timeValue;
-  };
-
-  // Get cell styling based on booking status
-  const getCellStyle = (
-    booking: string | undefined,
-    band_id?: string,
-    band_name?: string
-  ): React.CSSProperties => {
-    if (booking?.toLowerCase() === "available") {
-      return {
-        backgroundColor: "rgba(0, 255, 0, 0.1)",
-        color: "rgba(0, 255, 0, 0.8)",
-        backdropFilter: "blur(8px)",
-      };
-    }
-    if (booking?.toLowerCase() === "booked" && band_id && band_name) {
-      return {
-        backgroundColor: bandColors[band_id] || "rgba(0, 0, 0, 0.4)",
-        backdropFilter: "blur(8px)",
-        color: "black",
-      };
-    }
-    return {};
-  };
-
-  // When a cell is clicked, open either a booking modal or an error modal.
-  const handleCellClick = (dayKey: string, timeKey: string, display: string) => {
+  const handleCellClick = (dayKey: string, timeKey: string) => {
     if (!session) {
-      setModalType("login");
-      setModalOpen(true);
-      return;
+        setModalTitle("Login Required");
+        setModalContent(<p>You must be logged in to book a slot.</p>);
+        setModalOpen(true);
+        return;
     }
-    const booking = bookings[`${dayKey}-${timeKey}`];
-    if (booking?.toLowerCase() === "booked") {
-      setModalType("alreadyBooked");
-      setSelectedSlot(display);
-      setModalOpen(true);
-    } else {
-      setModalType("book");
-      setSelectedSlot(display);
-      setSelectedDayKey(dayKey);
-      setSelectedTimeKey(timeKey);
-      // Set default start and end times based on the selected slot.
-      const startIndex = timeSlots.findIndex((ts) => ts.key === timeKey);
-      const defaultStart = timeKey;
-      const defaultEnd = timeSlots[startIndex + 1]
-      ? timeSlots[startIndex + 1].key
-      : (() => {
-        // Calculate 90 minutes later in "HH:MM" (24‑hr) format.
-        const [h, m] = timeKey.split(":").map(Number);
-        const d = new Date();
-        d.setHours(h, m, 0, 0);
-        d.setMinutes(d.getMinutes() + 90);
-        return d.toTimeString().slice(0, 5);
-      })();
-      setBookingStartTime(defaultStart);
-      setBookingEndTime(defaultEnd);
-      setDefaultStartTime(defaultStart);
-      setDefaultEndTime(defaultEnd);
-      setReason(""); 
-      setModalOpen(true);
-    }
-  };
-  const [roomAlignment, setRoomAlignment] = React.useState<string | null>("365");
-  const handleRoomAlignment = (
-    event: any,
-    newAlignment: string | null
-  ) => {
-    if (newAlignment !== null) {
-      setRoomAlignment(newAlignment);
-      setSelectedRoomNumber(parseInt(newAlignment, 10)); // Update the selected room number
-      setCachedSlots([]);
-      setCachedRange(null);
-    }
-  };
 
-  // Helper: Parse a 12‑hour time string (e.g. "07:30 AM") into an object { hour, minute }
-  const parseTime12 = (timeStr: string): { hour: number; minute: number } | null => {
-    const regex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
-    const match = timeStr.match(regex);
-    if (!match) return null;
-    let hour = parseInt(match[1], 10);
-    const minute = parseInt(match[2], 10);
-    const meridiem = match[3].toUpperCase();
-    if (meridiem === "PM" && hour < 12) {
-      hour += 12;
+    const bookingStatus = bookings[`${dayKey}-${timeKey}`];
+    if (bookingStatus === 'booked') {
+        setModalTitle("Slot Unavailable");
+        setModalContent(<p>This slot is already booked.</p>);
+        setModalOpen(true);
+        return;
     }
-    if (meridiem === "AM" && hour === 12) {
-      hour = 0;
-    }
-    return { hour, minute };
+
+    setSelectedCell({ day: dayKey, time: timeKey });
+    setModalTitle("Request Slot");
+    setModalOpen(true);
   };
 
   const handleBookingConfirm = async () => {
-    if (isSubmitting) return;
-
-    const validStart = timeSlots.some((ts) => ts.key === bookingStartTime);
-    const validEnd = timeSlots.some((ts) => ts.key === bookingEndTime || bookingEndTime === "19:00");
-    
-    if (!validStart || !validEnd) {
-      alert("One or both time slots are invalid.");
-      return;
-    }
-    if (!bandId) {
-      alert("Please select a Profile.");
-      return;
-    }
+    if (!selectedCell || !selectedBandId || isSubmitting) return;
 
     setIsSubmitting(true);
-
-    const startSlot = timeSlots.find((ts) => ts.key === bookingStartTime);
-    const endSlot = timeSlots.find((ts) => ts.key === bookingEndTime || bookingEndTime === "19:00");
-    if (!startSlot || !endSlot) {
-      alert("Invalid time slot selection.");
-      return;
-    }
-
-    const startParsed = parseTime12(startSlot.display);
-    const endParsed = parseTime12(endSlot.display);
-    if (!startParsed || !endParsed) {
-      alert("Invalid time format. Please use HH:MM AM/PM format.");
-      return;
-    }
-
-    const [year, month, day] = selectedDayKey.split("-").map(Number);
-    const [startHour, startMinute] = bookingStartTime.split(":").map(Number);
-    const [endHour, endMinute] = bookingEndTime.split(":").map(Number);
-    const localSlotStart = new Date(year, month - 1, day, startHour, startMinute);
-    const localSlotEnd = new Date(year, month - 1, day, endHour, endMinute);
+    const { day, time } = selectedCell;
+    const slotStart = new Date(`${day}T${time}`);
+    const slotEnd = new Date(slotStart.getTime() + 90 * 60 * 1000); // Assuming 90-min slots
 
     try {
-      const roomId = roomMapping[selectedRoomNumber];
-      if (!roomId) {
-        alert("Room mapping not loaded yet.");
-        return;
-      }
-
-      const name = bands.find(b => b.id === bandId)?.name || "";
-
-      await axios.post("/api/requests", {
-        user_id: session?.user?.id,
-        status: "pending",
-        slot_start: localSlotStart.toISOString(),
-        slot_end: localSlotEnd.toISOString(),
-        band_id: bandId,
-        room_id: roomId,
-        reason
-      });
-      setRequestedBandName(name);
-      setModalType("requested");
-
-      setBandId("");
-      setBookingStartTime("");
-      setBookingEndTime("");
-      setReason("");
-
-      fetchSlots();
-    } catch (error: any) {
-      console.error("Error creating slot request:", error);
-
-      // Handle conflict error
-      if (error.response?.status === 409) {
-        setConflictMessage(error.response.data.message);
-        setIsConflictModalOpen(true);
-      } else {
-        alert("Error creating slot request.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Week navigation functions
-  const handlePrevWeek = () => {
-    setCurrentWeekStart(new Date(currentWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentWeekStart(new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000));
-  };
-
-  const handleWeekSelect = () => {
-    if (tempWeekDate) {
-      const chosenDate = new Date(tempWeekDate.year, tempWeekDate.month - 1, tempWeekDate.day);
-      setCurrentWeekStart(getMonday(chosenDate));
-      setWeekPickerOpen(false);
-    }
-  };
-
-  const mergedCells = React.useMemo(() => {
-    if (days.length === 0 || timeSlots.length === 0) return {};
-    const rawData: { [dayKey: string]: Array<{ booking: string; band_id?: string; band_name?: string }> } = {};
-    days.forEach((day) => {
-      rawData[day.key] = timeSlots.map((time) => {
-        const bookingKey = `${day.key}-${time.key}`;
-        const bookingStatus = bookings[bookingKey];
-        const [dYear, dMonth, dDay] = day.key.split("-").map(Number);
-        const [tHour, tMinute] = time.key.split(":").map(Number);
-        const cellDateTime = new Date(dYear, dMonth - 1, dDay, tHour, tMinute);
-        const apiSlot = slots.find((s) => {
-          const slotStart = parseUTCTime(s.slot_start);
-          const slotEnd = parseUTCTime(s.slot_end);
-          return cellDateTime >= slotStart && cellDateTime < slotEnd;
+        await axios.post("/api/requests", {
+            user_id: session?.user?.id,
+            status: "pending",
+            slot_start: slotStart.toISOString(),
+            slot_end: slotEnd.toISOString(),
+            band_id: selectedBandId,
+            room_id: roomMapping[selectedRoomNumber],
+            reason,
         });
-        return {
-          booking: bookingStatus,
-          band_id: apiSlot?.band_id,
-          band_name: apiSlot?.band_name,
-        };
-      });
-    });
-
-    const mergeInfo: {
-      [dayKey: string]: Array<{ show: boolean; rowSpan: number; data: { booking: string; band_id?: string; band_name?: string } }>;
-    } = {};
-    Object.keys(rawData).forEach((dayKey) => {
-      mergeInfo[dayKey] = [];
-      const cells = rawData[dayKey];
-      for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i];
-        if (cell.booking?.toLowerCase() !== "booked" || !cell.band_id) {
-          mergeInfo[dayKey][i] = { show: true, rowSpan: 1, data: cell };
-        } else {
-          if (
-            i > 0 &&
-            rawData[dayKey][i - 1].booking?.toLowerCase() === "booked" &&
-            rawData[dayKey][i - 1].band_id === cell.band_id
-          ) {
-            mergeInfo[dayKey][i] = { show: false, rowSpan: 0, data: cell };
-          } else {
-            let span = 1;
-            for (let j = i + 1; j < cells.length; j++) {
-              const nextCell = cells[j];
-              if (nextCell.booking?.toLowerCase() === "booked" && nextCell.band_id === cell.band_id) {
-                span++;
-              } else {
-                break;
-              }
-            }
-            mergeInfo[dayKey][i] = { show: true, rowSpan: span, data: cell };
-            for (let j = i + 1; j < i + span; j++) {
-              mergeInfo[dayKey][j] = { show: false, rowSpan: 0, data: cells[j] };
-            }
-          }
-        }
-      }
-    });
-    return mergeInfo;
-  }, [days, timeSlots, bookings, slots]);
-
-  const toggleRoom = () => {
-    setSelectedRoomNumber((prev) => (prev === 365 ? 366 : 365));
-    fetchSlots();
-    fetchRequests();
+        setModalTitle("Request Submitted");
+        setModalContent(<p>Your request has been submitted for approval.</p>);
+    } catch (error: any) {
+        setModalTitle("Error");
+        setModalContent(<p>{error.response?.data?.message || "An unexpected error occurred."}</p>);
+    } finally {
+        setIsSubmitting(false);
+        // No need to close modal here, it shows the status.
+    }
   };
 
-  // Room details for the tooltip
-  const roomDetails: { [key: number]: string } = {
-    365: "Room 365: Description and details here.",
-    366: "Room 366: Description and details here.",
-  };
-
-  const [isCalendarOpen, setCalendarOpen] = useState(false);
-  const [inputValue, setInputValue] = useState<string>("");
-
-
-  function setTempDate(e: CalendarDate): void {
-    throw new Error("Function not implemented.");
-  }
-
-  function setDateFilter(isoDate: string) {
-    const date = new Date(isoDate);
-    setSelectedDate(parseDate(date.toISOString().split("T")[0]));
-  }
-
+  // Render logic
   return (
-    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", height:"89vh" }}>
-      {/* Room Toggle Button */}
-      <div className="flex items-center w-full my-4 px-4 justify-start">
-  <Dropdown placement="bottom-start" className="bg-[#0d1a33]">
-    <DropdownTrigger>
-      <Button className="flex items-center gap-2 bg-[#18181b]">
-        {selectedRoomNumber.toString() === "365" ? "Room 365" : "Room 366"}
-        <FaChevronDown />
-      </Button>
-    </DropdownTrigger>
-    <DropdownMenu
-      disallowEmptySelection
-      aria-label="Room Selection"
-      className="max-w-[200px] min-w-[100px]"
-      selectedKeys={new Set([selectedRoomNumber])}
-      selectionMode="single"
-      onSelectionChange={(keys) => {
-        const newRoom = Array.from(keys)[0] as string;
-        handleRoomAlignment(null, newRoom);
-      }}
-    >
-      <DropdownItem key="365">Room 365</DropdownItem>
-      <DropdownItem key="366">Room 366</DropdownItem>
-    </DropdownMenu>
-  </Dropdown>
-    </div>
-
-
-
-      <Table className="border rounded-lg shadow-md text-center bg-[#0d1a33] text-white font-sans font-semibold text-sm mb-14">
-      <TableHeader>
-      {[
-        <TableColumn key="time" className="w-[100px] bg-[#1a2a47] font-semibold">
-        <div className="flex items-center justify-between font-sans font-semibold text-sm">
-            <span>Time</span>
-            <div className="flex items-center space-x-2">
-              <Button isIconOnly size="sm" className="bg-[#1a2a47] font-semibold" onPress={() => setWeekPickerOpen(true)}>
-                <FaCalendarAlt />
-              </Button>
-              <Button isIconOnly className="bg-[#1a2a47] font-semibold" size="sm" onPress={handlePrevWeek}>
-                ←
-              </Button>
-            </div>
-          </div>
-        </TableColumn>,
-      ].concat(
-        days.map((day) => (
-        <TableColumn key={day.key} className="w-[200px] bg-[#1a2a47]  ">
-            <div className="flex items-center justify-between">
-              <span>{day.display}</span>
-              {day.key === days[days.length - 1].key && (
-                <Button isIconOnly size="sm" className="bg-[#1a2a47] font-semibold" onPress={handleNextWeek}>
-                  →
-                </Button>
-              )}
-            </div>
-          </TableColumn>
-        ))
-      )}
-    </TableHeader>
-        <TableBody>
-          {timeSlots.map((time, rowIndex) => (
-            <TableRow key={time.key} style={{ height: "50px" }}>
-              {[
-                <TableCell
-                  key={`time-${time.key}`}
-                  style={{
-                    position: "relative",
-                    padding: 0,
-                  }}
-                >
-                  {(rowIndex === 0 || time.display !== timeSlots[rowIndex - 1].end) && (
-                    <span
-              className="flex items-center font-sans font-semibold text-sm text-[#a1a1aa]"
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        textAlign: "center",
-                        transform: rowIndex === 0 ? "none" : "translateY(-50%)",
-                        padding: "0 4px",
-                      }}
-                    >
-                      {time.display}
-                    </span>
-                  )}
-                  <span
-            className="flex items-center font-sans font-semibold text-sm text-[#a1a1aa]"
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      textAlign: "center",
-                      transform: rowIndex === timeSlots.length - 1 ? "none" : "translateY(50%)",
-                      padding: "0 4px",
-                    }}
-                  >
-                    {time.end}
-                  </span>
-                </TableCell>,
-              ].concat(
-                days.map((day) => {
-                  const mergeData = mergedCells[day.key] && mergedCells[day.key][rowIndex];
-                  if (!mergeData || !mergeData.show) {
-                    return (
-                      <TableCell
-                        key={`${day.key}-${time.key}`}
-                        style={{ display: "none" }}
-                      >
-                        ""
-                      </TableCell>
-                    );
-                  }
-                  return (
-                    <TableCell
-                      key={`${day.key}-${time.key}`}
-                      rowSpan={mergeData.rowSpan}
-                      style={{
-                        ...getCellStyle(
-                          mergeData.data.booking,
-                          mergeData.data.band_id,
-                          mergeData.data.band_name
-                        ),
-                        verticalAlign: "middle",
-                        textAlign: "center",
-                        border: "0.3px solid rgba(0, 0, 0, 0.2)",
-                      }}
-                      onClick={() =>
-                        handleCellClick(
-                          day.key,
-                          time.key,
-                          `${day.display} at ${time.display}`
-                        )
-                      }
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.filter = "brightness(0.8)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.filter = "")
-                      }
-                    >
-                      {mergeData.data.booking?.toLowerCase() === "booked"
-                        ? mergeData.data.band_name
-                        : mergeData.data.booking?.toLowerCase() === "available"
-                        ? "Available"
-                        : mergeData.data.booking || "Available"}
-                    </TableCell>
-                  );
-                })
-              )}
-            </TableRow>                      
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Conflict Error Modal */}
-      <Modal isOpen={isConflictModalOpen} onClose={() => setIsConflictModalOpen(false)}>
-        <ModalContent>
-          <ModalHeader className="text-danger">Duplicate Request</ModalHeader>
-          <ModalBody>
-            <p className="text-white">{conflictMessage}</p>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="danger" onPress={() => setIsConflictModalOpen(false)}>
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Booking / Already‑Booked Modal */}
-      <Modal isOpen={isModalOpen} onOpenChange={setModalOpen}>
-        <ModalContent>
-          {modalType === "alreadyBooked" ? (
-            <>
-              <ModalHeader>Slot Already Booked</ModalHeader>
-              <ModalBody>
-                <p>{`The slot on ${selectedSlot} is already booked.`}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="primary" onPress={() => setModalOpen(false)}>
-                  Close
-                </Button>
-              </ModalFooter>
-            </>
-          ) : modalType === "book" ? (
-            <>
-              <ModalHeader>Request Slot</ModalHeader>
-              <ModalBody>
-                {isAdmin ? (
-                  <Select
-                    label="Select your Profile"
-                    placeholder="Choose a Profile"
-                    selectedKeys={new Set([bandId])}
-                    onSelectionChange={(keys) => {
-                      const selected = Array.from(keys)[0] as string;
-                      setBandId(selected);
-                    }}
-                    isDisabled={isSubmitting}
-                  >
-                    {bands.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                ) : (
-                  <Select
-                    label="Select your Profile"
-                    placeholder={userBands.length ? "Choose your Profile" : "Loading…"}
-                    selectedKeys={bandId ? new Set([bandId]) : new Set()}
-                    onSelectionChange={(keys) => {
-                      const chosen = Array.from(keys)[0] as string;
-                      setBandId(chosen);
-                    }}
-                    isDisabled={isSubmitting}
-                  >
-                    {userBands.map((ub) => (
-                      <SelectItem key={ub.id} value={ub.id}>
-                        {ub.name}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                )}
-                <Select
-                  label="Slot Start Time"
-                  placeholder={defaultStartTime}
-                  selectedKeys={new Set([bookingStartTime])}
-                  onSelectionChange={(keys) => {
-                    const selected = Array.from(keys)[0] as string;
-                    if (timeSlots.some((ts) => ts.key === selected)) {
-                      setBookingStartTime(selected);
-                    } else {
-                      alert("Invalid time slot selected");
-                    }
-                  }}
-                  isDisabled={isSubmitting}
-                >
-                  {timeSlots.map((slot) => (
-                    <SelectItem key={slot.key} value={slot.key}>
-                      {slot.display}
-                    </SelectItem>
-                  ))}
-                </Select>
-                <Select
-                  label="Slot End Time"
-                  placeholder={defaultEndTime}
-                  selectedKeys={new Set([bookingEndTime])}
-                  onSelectionChange={(keys) => {
-                    const selected = Array.from(keys)[0] as string;
-                    if (timeSlots.some((ts) => ts.key === selected) || selected == "19:00") {
-                      setBookingEndTime(selected);
-                    } else {
-                      alert("Invalid time slot selected");
-                    }
-                  }}
-                  isDisabled={isSubmitting} 
-                >
-                  <>
-                    {timeSlots.map((slot) => (
-                      <SelectItem key={slot.key} value={slot.key}>
-                        {slot.display}
-                      </SelectItem>
-                    ))}
-                    <SelectItem key="19:00" value="19:00">
-                      07:00 PM
-                    </SelectItem>
-                  </>
-                </Select>
-                <Input
-                  label="Reason for Booking"
-                  placeholder="Enter reason for booking this slot"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  isDisabled={isSubmitting}
-                />
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  color="success"
-                  onPress={() => {
-                    const validStart = timeSlots.some(
-                      (ts) => ts.key === bookingStartTime
-                    );
-                    const validEnd = timeSlots.some(
-                      (ts) => ts.key === bookingEndTime || bookingEndTime === "19:00"
-                    );
-                    if (!validStart || !validEnd) {
-                      alert("One or both time slots are invalid.");
-                      return;
-                    }
-                    if (!bandId) {
-                      alert("Please select a Profile.");
-                      return;
-                    }
-                    handleBookingConfirm();
-                  }}
-                  isDisabled={isSubmitting} // Disable during submission
-                  isLoading={isSubmitting}
-                >
-                  {isSubmitting ? "Processing..." : "Confirm"}
-                </Button>
-              </ModalFooter>
-            </>
-          ) : modalType === "login" ? (
-            <>
-              <ModalHeader>Login Required</ModalHeader>
-              <ModalBody>
-                <p>You must be signed in before booking a slot.</p>
-              </ModalBody>
-              <ModalFooter className="flex justify-end space-x-2">
-                {/* same primary login button as your Navbar */}
-                <Button
-                  color="primary"
-                  onPress={() => {
-                    setModalOpen(false);
-                    window.dispatchEvent(new Event("openLoginModal"));
-                  }}
-                >
-                  Login
-                </Button>
-              </ModalFooter>
-            </>
-            ) : modalType === "requested" ? (
-            <>
-              <ModalHeader>Request Submitted</ModalHeader>
-              <ModalBody>
-                <p>Your slot request on <strong>{selectedSlot}</strong>
-                {requestedBandName && (
-                  <> for the profile <strong>{requestedBandName}</strong></>
-                  )} has been submitted.
-                </p>
-                <p>Please wait for approval from the admin.</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="success" onPress={() => setModalOpen(false)}>
-                  OK
-                </Button>
-              </ModalFooter>
-            </>
-          ) : null}
-        </ModalContent>
-      </Modal>
-
-      {/* Week Picker Modal */}
-      <Modal isOpen={weekPickerOpen} onOpenChange={setWeekPickerOpen}>
-        <ModalContent>
-          <ModalHeader>Select Week</ModalHeader>
-          <ModalBody>
-            <div className="flex flex-col items-center gap-4">
-              <label className="text-lg font-semibold">Request Date:</label>
+    <div className="bg-gray-900/50 p-4 rounded-lg text-white w-full h-full flex flex-col">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Room Selector */}
+        <select value={selectedRoomNumber} onChange={e => setSelectedRoomNumber(Number(e.target.value))} className="bg-gray-800 border border-gray-700 rounded-md px-4 py-2">
+            {Object.keys(roomMapping).map(num => <option key={num} value={num}>Room {num}</option>)}
+        </select>
+        {/* Week Navigation */}
         <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="dd/mm/yyyy"
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value); // Allow free typing
-            }}
-            onBlur={() => {
-              // Validate the input when the field loses focus
-              const regex = /^\d{2}\/\d{2}\/\d{4}$/;
-              if (regex.test(inputValue)) {
-                const [day, month, year] = inputValue.split("/");
-                const isoDate = new Date(`${year}-${month}-${day}`).toISOString();
-                setDateFilter(isoDate);
-              } else {
-                // If the input is invalid, reset to the last valid date or empty
-                setInputValue(selectedDate ? new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day).toLocaleDateString("en-GB") : "");
-              }
-            }}
-            onKeyPress={(e) => {
-              // Validate the input when the user presses Enter
-              if (e.key === "Enter") {
-                const regex = /^\d{2}\/\d{2}\/\d{4}$/;
-                if (regex.test(inputValue)) {
-                  const [day, month, year] = inputValue.split("/");
-                  const isoDate = new Date(`${year}-${month}-${day}`).toISOString();
-                  setDateFilter(isoDate);
-                } else {
-                  setInputValue(selectedDate ? new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day).toLocaleDateString("en-GB") : "");
-                }
-              }
-            }}
-          />
-          <Button
-            isIconOnly
-            onPress={() => setCalendarOpen(true)}
-            className="bg-transparent"
-          >
-            <FaCalendarAlt className="text-lg text-default-400" />
-          </Button>
-            </div>
-              {isCalendarOpen && (
-                <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
-                  <Calendar
-                    aria-label="Date Picker"
-                    defaultValue={selectedDate ? selectedDate : (today(getLocalTimeZone()) as any)}
-                    onChange={(e) => {
-                      const selectedDateStr = (e as any).toString();
-                      setDateFilter(selectedDateStr);
-                      setInputValue(new Date(selectedDateStr).toLocaleDateString("en-GB")); // Update input value
-                      setCalendarOpen(false);
-                    }}
-                  />
+            <button onClick={() => setCurrentWeekStart(getMonday(new Date()))} className="px-4 py-2 bg-gray-800 rounded-md hover:bg-gray-700">Today</button>
+            <button onClick={() => setModalOpen(true)}><FaCalendarAlt /></button>
+            <button onClick={() => setCurrentWeekStart(d => new Date(d.setDate(d.getDate() - 7)))}><FaChevronLeft /></button>
+            <button onClick={() => setCurrentWeekStart(d => new Date(d.setDate(d.getDate() + 7)))}><FaChevronRight /></button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-auto flex-grow">
+        <table className="w-full text-center border-collapse">
+            <thead>
+                <tr className="bg-gray-800">
+                    <th className="p-2 border border-gray-700">Time</th>
+                    {days.map(day => <th key={day.key} className="p-2 border border-gray-700">{day.display}</th>)}
+                </tr>
+            </thead>
+            <tbody>
+                {timeSlots.map(time => (
+                    <tr key={time.key}>
+                        <td className="p-2 border border-gray-700 font-mono">{time.display}</td>
+                        {days.map(day => {
+                            const bookingStatus = bookings[`${day.key}-${time.key}`];
+                            const apiSlot = slots.find(s => {
+                                const slotStart = new Date(s.slot_start);
+                                return formatDayKey(slotStart) === day.key && format(slotStart, "HH:mm") === time.key;
+                            });
+
+                            let cellStyle = "cursor-pointer hover:bg-purple-900/50";
+                            let cellContent = "Available";
+                            if (bookingStatus === 'booked' && apiSlot) {
+                                cellStyle = `bg-[${bandColors[apiSlot.band_id!] || '#4A5568'}] text-white font-bold`;
+                                cellContent = apiSlot.band_name || "Booked";
+                            }
+                            
+                            return (
+                                <td key={`${day.key}-${time.key}`} onClick={() => handleCellClick(day.key, time.key)} className={`p-2 border border-gray-700 transition-colors ${cellStyle}`}>
+                                    {cellContent}
+                                </td>
+                            );
+                        })}
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+      </div>
+
+      {/* Modal */}
+        <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={modalTitle}>
+            { selectedCell && modalTitle === "Request Slot" ? (
+                <div className="space-y-4">
+                    {isAdmin && (
+                        <select value={selectedBandId} onChange={e => setSelectedBandId(e.target.value)} className="w-full bg-gray-800 border-gray-700 rounded-md px-4 py-2">
+                            <option value="" disabled>Select a Profile</option>
+                            {bands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        </select>
+                    )}
+                    <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason for booking (optional)" className="w-full bg-gray-800 border-gray-700 rounded-md px-4 py-2 h-24"/>
+                    <div className="flex justify-end">
+                        <button onClick={handleBookingConfirm} disabled={isSubmitting || !selectedBandId} className="px-6 py-2 bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-gray-600">
+                            {isSubmitting ? "Submitting..." : "Submit Request"}
+                        </button>
+                    </div>
                 </div>
-              )}
-          </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              color="danger"
-              onPress={() => {
-                setInputValue(selectedDate ? new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day).toLocaleDateString("en-GB") : ""); // Reset input value
-                setWeekPickerOpen(false); // Close modal
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="success"
-              onPress={() => {
-              if (inputValue) {
-                setSelectedDate(parseDate(new Date(inputValue.split("/").reverse().join("-")).toISOString().split("T")[0])); // Confirm selection
-                    }
-                    setWeekPickerOpen(false); // Close modal
-                  }}
-            >
-              Select
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+            ) : modalTitle === "Select Week" ? (
+                <DayPicker
+                    mode="single"
+                    selected={currentWeekStart}
+                    onSelect={(date) => {
+                        if(date) setCurrentWeekStart(getMonday(date));
+                        setModalOpen(false);
+                    }}
+                />
+            ) : (
+                modalContent
+            )}
       </Modal>
     </div>
   );

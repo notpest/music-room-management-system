@@ -1,40 +1,13 @@
-import React, { SVGProps, useState, useEffect } from "react";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Tooltip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Chip,
-} from "@nextui-org/react";
-import { Calendar } from "@heroui/react";
-import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
-import { FaCalendarAlt, FaInfoCircle, FaGuitar, FaKeyboard, FaMicrophone } from "react-icons/fa";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { FaCalendarAlt, FaInfoCircle, FaGuitar, FaKeyboard, FaMicrophone } from "react-icons/fa";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format } from "date-fns";
+import Modal from "./Modal";
 
-// Define SVG icon props
-export type IconSvgProps = SVGProps<SVGSVGElement> & {
-  size?: number;
-};
-
-// Table columns
-const columns = [
-  { key: "name", name: "INSTRUMENT NAME" },
-  { key: "category", name: "CATEGORY" },
-  { key: "availability", name: "AVAILABILITY" },
-  { key: "returnDate", name: "RETURN DATE" },
-  { key: "actions", name: "ACTIONS" },
-];
-
-// Equipment type
 type EquipmentType = {
   id: number;
   name: string;
@@ -43,241 +16,146 @@ type EquipmentType = {
   returnDate: string;
 };
 
-// Equipment data
 const equipmentIcons: { [key: string]: JSX.Element } = {
-  guitar: <FaGuitar />,
-  keyboard: <FaKeyboard />,
-  mic: <FaMicrophone />,
+  guitar: <FaGuitar className="text-purple-400" />,
+  keyboard: <FaKeyboard className="text-purple-400" />,
+  mic: <FaMicrophone className="text-purple-400" />,
 };
 
-// Status color mapping
-const statusColorMap: { [key: string]: "default" | "primary" | "secondary" | "success" | "warning" | "danger" } = {
-  Available: "success",
-  Booked: "danger",
+const statusColorMap: { [key: string]: string } = {
+  Available: "bg-green-500/20 text-green-300",
+  Booked: "bg-red-500/20 text-red-300",
 };
 
-// Equipment table component
 const TableEquip = () => {
-  const [equipment, setEquipment] = useState<EquipmentType[]>([
-    {
-      id: 1,
-      name: "Guitar",
-      category: "guitar",
-      availability: "Available",
-      returnDate: "N/A",
-    },
-    {
-      id: 2,
-      name: "Keyboard",
-      category: "keyboard",
-      availability: "Booked",
-      returnDate: "2024-03-10",
-    },
-    {
-      id: 3,
-      name: "Microphone",
-      category: "mic",
-      availability: "Available",
-      returnDate: "N/A",
-    },
-  ]);
+  const [equipment, setEquipment] = useState<EquipmentType[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | null>(null);
-  const [isStartDateModalOpen, setStartDateModalOpen] = useState(false);
-  const [isEndDateModalOpen, setEndDateModalOpen] = useState(false);
-  const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [isBookingConfirmModalOpen, setBookingConfirmModalOpen] = useState(false);
-  const [startDate, setStartDate] = useState(today(getLocalTimeZone()));
-  const [endDate, setEndDate] = useState(today(getLocalTimeZone()));
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState<React.ReactNode>(null);
+  const [modalTitle, setModalTitle] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
 
-  // Fetch equipment from API
-  const fetchEquipment = async () => {
-    try {
-      const response = await axios.get("/api/equipment");
-      setEquipment(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // Initial API fetch on mount
   useEffect(() => {
+    const fetchEquipment = async () => {
+      try {
+        // This is a placeholder. Replace with your actual API endpoint.
+        // const response = await axios.get("/api/equipment");
+        // setEquipment(response.data);
+        setEquipment([ // Mock data
+            { id: 1, name: "Guitar", category: "guitar", availability: "Available", returnDate: "N/A" },
+            { id: 2, name: "Keyboard", category: "keyboard", availability: "Booked", returnDate: "2026-07-15" },
+            { id: 3, name: "Microphone", category: "mic", availability: "Available", returnDate: "N/A" },
+        ]);
+      } catch (error) {
+        console.error(error);
+      }
+    };
     fetchEquipment();
   }, []);
 
-  const handleDatePick = (item: EquipmentType) => {
+  const openBookingModal = (item: EquipmentType) => {
     setSelectedEquipment(item);
-    setStartDateModalOpen(true);
+    setModalTitle(`Book ${item.name}`);
+    setModalContent(
+        <DateRangePicker 
+            onStartDateChange={setStartDate} 
+            onEndDateChange={setEndDate} 
+            disabledDays={item.availability === 'Booked' ? { before: new Date(item.returnDate) } : { before: new Date() }}
+        />
+    );
+    setModalOpen(true);
   };
-
-  const handleDetails = (item: EquipmentType) => {
+  
+  const openDetailsModal = (item: EquipmentType) => {
     setSelectedEquipment(item);
-    setDetailsModalOpen(true);
-  };
+    setModalTitle(`Details for ${item.name}`);
+    setModalContent(
+        <div className="text-gray-300 space-y-2">
+            <p><strong>Name:</strong> {item.name}</p>
+            <p><strong>Category:</strong> {item.category}</p>
+            <p><strong>Availability:</strong> <span className={`px-2 py-1 text-xs rounded-full ${statusColorMap[item.availability]}`}>{item.availability}</span></p>
+            <p><strong>Return Date:</strong> {item.returnDate}</p>
+        </div>
+    );
+    setModalOpen(true);
+  }
 
-  const handleStartDateConfirm = () => {
-    setStartDateModalOpen(false);
-    setEndDateModalOpen(true);
-  };
-
-  const handleEndDateConfirm = () => {
-    setEndDateModalOpen(false);
-    setBookingConfirmModalOpen(true);
-  };
-
-  const renderCell = (item: EquipmentType, columnKey: string) => {
-    switch (columnKey) {
-      case "name":
-        return item.name;
-      case "category":
-        return equipmentIcons[item.category.toLowerCase()] || item.category;
-      case "availability":
-        return (
-          <Chip className="capitalize" color={statusColorMap[item.availability]} size="sm" variant="flat">
-            {item.availability}
-          </Chip>
-        );
-      case "returnDate":
-        return item.returnDate;
-      case "actions":
-        return (
-          <div className="flex gap-2">
-            <Tooltip content="Pick Date">
-              <FaCalendarAlt
-                className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                onClick={() => handleDatePick(item)}
-              />
-            </Tooltip>
-            <Tooltip content="Details">
-              <FaInfoCircle
-                className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                onClick={() => handleDetails(item)}
-              />
-            </Tooltip>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  const handleBookingConfirm = () => {
+      if(selectedEquipment && startDate && endDate) {
+          setModalTitle("Confirm Booking");
+          setModalContent(
+              <div>
+                  <p>Book {selectedEquipment.name} from {format(startDate, "PPP")} to {format(endDate, "PPP")}?</p>
+                  <div className="flex justify-end gap-4 mt-4">
+                    <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-700">Cancel</button>
+                    <button onClick={() => { /* Booking logic here */ setModalOpen(false);}} className="px-4 py-2 rounded-md bg-purple-600">Confirm</button>
+                  </div>
+              </div>
+          );
+          setModalOpen(true);
+      }
+  }
 
   return (
-    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      <Table
-        aria-label="Equipment Booking Table"
-      >
-        <TableHeader>
-          {columns.map((column) => (
-            <TableColumn key={column.key} className="bg-[#1a2a47] font-semibold">
-              {column.name}
-            </TableColumn>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {equipment.map((item) => (
-            <TableRow key={item.id} style={{ height: "50px" }}>
-              {columns.map((column) => (
-                <TableCell key={column.key}>
-                  {renderCell(item, column.key)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {selectedEquipment && (
-        <Modal isOpen={isStartDateModalOpen} onOpenChange={setStartDateModalOpen}>
-          <ModalContent>
-            <ModalHeader>Pick Start Date for {selectedEquipment.name}</ModalHeader>
-            <ModalBody>
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-              <Calendar
-                aria-label="Start Date Picker"
-                defaultValue={startDate as any}
-                minValue={
-                  (selectedEquipment.availability === "Booked"
-                    ? parseDate(selectedEquipment.returnDate).add({ days: 1 })
-                    : today(getLocalTimeZone())) as any
-                }
-                onChange={(e: any) => setStartDate(e)}
-              />
+    <div className="bg-gray-900/50 p-4 rounded-lg text-white w-full">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="border-b border-gray-700">
+            <tr>
+              <th className="p-4">Instrument</th>
+              <th className="p-4">Category</th>
+              <th className="p-4">Availability</th>
+              <th className="p-4">Return Date</th>
+              <th className="p-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {equipment.map((item) => (
+              <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-800/60">
+                <td className="p-4">{item.name}</td>
+                <td className="p-4 text-xl">{equipmentIcons[item.category.toLowerCase()] || item.category}</td>
+                <td className="p-4"><span className={`px-2 py-1 text-xs rounded-full ${statusColorMap[item.availability]}`}>{item.availability}</span></td>
+                <td className="p-4">{item.returnDate}</td>
+                <td className="p-4">
+                  <div className="flex gap-4">
+                    <button onClick={() => openBookingModal(item)} disabled={item.availability === 'Booked'} className="disabled:opacity-50"><FaCalendarAlt /></button>
+                    <button onClick={() => openDetailsModal(item)}><FaInfoCircle /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={modalTitle}>
+          {modalContent}
+          {modalTitle.startsWith("Book") && (
+              <div className="flex justify-end pt-4">
+                  <button onClick={handleBookingConfirm} className="px-6 py-2 bg-purple-600 rounded-md">Book</button>
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="primary" onPress={handleStartDateConfirm}>
-                Next
-              </Button>
-              <Button color="secondary" onPress={() => setStartDateModalOpen(false)}>
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
-
-      {selectedEquipment && (
-        <Modal isOpen={isEndDateModalOpen} onOpenChange={setEndDateModalOpen}>
-          <ModalContent>
-            <ModalHeader>Pick End Date for {selectedEquipment.name}</ModalHeader>
-            <ModalBody>
-              <Calendar
-                aria-label="End Date Picker"
-                defaultValue={endDate as any}
-                minValue={startDate as any}
-                onChange={(e: any) => setEndDate(e)}
-              />
-            </ModalBody>
-            <ModalFooter>
-              <Button color="primary" onPress={handleEndDateConfirm}>
-                Book
-              </Button>
-              <Button color="secondary" onPress={() => setEndDateModalOpen(false)}>
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
-
-      {selectedEquipment && (
-        <Modal isOpen={isDetailsModalOpen} onOpenChange={setDetailsModalOpen}>
-          <ModalContent>
-            <ModalHeader>Details for {selectedEquipment.name}</ModalHeader>
-            <ModalBody>
-              <p><strong>Name:</strong> {selectedEquipment.name}</p>
-              <p><strong>Category:</strong> {selectedEquipment.category}</p>
-              <p><strong>Availability:</strong> {selectedEquipment.availability}</p>
-              <p><strong>Return Date:</strong> {selectedEquipment.returnDate}</p>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="primary" onPress={() => setDetailsModalOpen(false)}>
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
-
-      {selectedEquipment && (
-        <Modal isOpen={isBookingConfirmModalOpen} onOpenChange={setBookingConfirmModalOpen}>
-          <ModalContent>
-            <ModalHeader>Confirm Booking</ModalHeader>
-            <ModalBody>
-              <p>Are you sure you want to book the {selectedEquipment.name} from {startDate.toString()} to {endDate.toString()}?</p>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="success" onPress={() => setBookingConfirmModalOpen(false)}>
-                Confirm
-              </Button>
-              <Button color="danger" onPress={() => setBookingConfirmModalOpen(false)}>
-                Cancel
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
+          )}
+      </Modal>
     </div>
   );
 };
+
+const DateRangePicker = ({ onStartDateChange, onEndDateChange, disabledDays }: any) => {
+    const [range, setRange] = useState<{from: Date|undefined, to: Date|undefined}>({from: undefined, to: undefined});
+
+    useEffect(() => {
+        onStartDateChange(range.from);
+        onEndDateChange(range.to);
+    }, [range, onStartDateChange, onEndDateChange]);
+
+    return (
+        <DayPicker
+            mode="range"
+            selected={range}
+            onSelect={setRange as any}
+            disabled={disabledDays}
+        />
+    )
+}
 
 export default TableEquip;

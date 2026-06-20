@@ -1,0 +1,5 @@
+model_list:
+  - model_name: claude-3-5-sonnet-20241022  # The model Claude Code will request
+    litellm_params:
+      model: mistral/codestral-latest       # The actual Codestral model
+      api_key: os.environ/MISTRAL_API_KEY   # Securely reads from your environment

@@ -29,7 +29,4 @@ EntryLog.init(
   }
 );
 
-// Associate EntryLog with Equipment (via equipment_id)
-EntryLog.belongsTo(Equipment, { foreignKey: "equipment_id", targetKey: "id" });
-
 export default EntryLog;

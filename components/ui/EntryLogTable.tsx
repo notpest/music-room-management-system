@@ -1,16 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Pagination,
-  Button,
-} from "@nextui-org/react";
 import { FaGuitar, FaKeyboard, FaMicrophone, FaUser } from "react-icons/fa";
 import { MdOutlinePiano } from "react-icons/md";
 import axios from "axios";
@@ -26,19 +16,12 @@ export type EntryLogType = {
   student_name?: string;
 };
 
-const columns = [
-  { key: "sl_no", name: "Sl. No" },
-  { key: "name", name: "Name" },
-  { key: "category", name: "Category" },
-  { key: "scanned_at", name: "Scanned At" },
-];
-
 const equipmentIcons: { [key: string]: JSX.Element } = {
-  guitar: <FaGuitar />,
-  instrument: <MdOutlinePiano />,
-  mic: <FaMicrophone />,
-  student: <FaUser />,
-  teacher: <FaUser />,
+  guitar: <FaGuitar className="text-purple-400" />,
+  instrument: <MdOutlinePiano className="text-purple-400" />,
+  mic: <FaMicrophone className="text-purple-400" />,
+  student: <FaUser className="text-purple-400" />,
+  teacher: <FaUser className="text-purple-400" />,
 };
 
 interface EntryLogTableProps {
@@ -51,22 +34,20 @@ interface EntryLogTableProps {
 export default function EntryLogTable({ refreshCount, searchQuery, filterCategory, filterDate }: EntryLogTableProps) {
   const [logs, setLogs] = useState<EntryLogType[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Number of items per page
-
-  const fetchLogs = async () => {
-    try {
-      const res = await axios.get("/api/entrylogs");
-      setLogs(res.data);
-    } catch (error) {
-      console.error("Error fetching entry logs:", error);
-    }
-  };
+  const itemsPerPage = 10;
 
   useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await axios.get("/api/entrylogs");
+        setLogs(res.data);
+      } catch (error) {
+        console.error("Error fetching entry logs:", error);
+      }
+    };
     fetchLogs();
   }, [refreshCount]);
 
-  // Filter logs based on search, category, and date
   const filteredLogs = logs.filter((log) => {
     const equipmentName = log.Equipment?.equipment_name || "";
     const studentName = log.student_name || "";
@@ -83,91 +64,84 @@ export default function EntryLogTable({ refreshCount, searchQuery, filterCategor
     return matchesSearch && matchesCategory && matchesDate;
   });
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
   const currentLogs = filteredLogs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Go to previous page
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+  const renderPaginationButtons = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={`px-4 py-2 mx-1 rounded-md transition-colors ${
+            currentPage === i
+              ? "bg-purple-600 text-white"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+          }`}
+        >
+          {i}
+        </button>
+      );
     }
-  };
-
-  // Go to next page
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+    return pages;
   };
 
   return (
-    <div className="flex flex-col items-center" style={{ backgroundColor: "#000319", minHeight: "100vh" }}>
-      <Table aria-label="Entry Log Table">
-        <TableHeader>
-          {columns.map((col) => (
-            <TableColumn key={col.key} className="bg-[#1a2a47] font-sans font-semibold text-sm">
-              {col.name}
-            </TableColumn>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {currentLogs.map((log, index) => (
-            <TableRow key={log.id} style={{ height: "50px" }}>
-              <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-              <TableCell>
-                {log.Equipment && log.Equipment.equipment_name
-                  ? log.Equipment.equipment_name
-                  : log.student_name
-                  ? log.student_name
-                  : log.equipment_id}
-              </TableCell>
-              <TableCell>
-                {log.Equipment && log.Equipment.category
-                  ? equipmentIcons[log.Equipment.category.toLowerCase()] || log.Equipment.category
-                  : log.student_name
-                  ? equipmentIcons["student"]
-                  : "Unknown"}
-              </TableCell>
-              <TableCell>{new Date(log.scanned_at).toLocaleString()}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Pagination Controls */}
-      <div className="flex justify-center items-center mt-4 gap-2">
-        {/* Previous Page Button */}
-        <Button
-          isIconOnly
-          variant="light"
-          onPress={goToPreviousPage}
-          disabled={currentPage === 1}
-        >
-          {"<"}
-        </Button>
-
-        {/* Pagination Component */}
-        <Pagination
-          total={totalPages}
-          page={currentPage}
-          initialPage={1}
-          onChange={setCurrentPage}
-        />
-
-        {/* Next Page Button */}
-        <Button
-          isIconOnly
-          variant="light"
-          onPress={goToNextPage}
-          disabled={currentPage === totalPages}
-        >
-          {">"}
-        </Button>
+    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 sm:p-6 text-white w-full">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="border-b border-gray-700">
+            <tr>
+              <th className="p-4 text-sm font-semibold text-gray-300">Sl. No</th>
+              <th className="p-4 text-sm font-semibold text-gray-300">Name</th>
+              <th className="p-4 text-sm font-semibold text-gray-300">Category</th>
+              <th className="p-4 text-sm font-semibold text-gray-300">Scanned At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentLogs.map((log, index) => (
+              <tr key={log.id} className="border-b border-gray-800 hover:bg-gray-800/60 transition-colors">
+                <td className="p-4">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                <td className="p-4">
+                  {log.Equipment?.equipment_name || log.student_name || log.equipment_id}
+                </td>
+                <td className="p-4 text-xl">
+                  {log.Equipment?.category 
+                    ? equipmentIcons[log.Equipment.category.toLowerCase()] || log.Equipment.category
+                    : log.student_name 
+                    ? equipmentIcons["student"] 
+                    : "—"}
+                </td>
+                <td className="p-4">{new Date(log.scanned_at).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 mx-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {"<"}
+          </button>
+          {renderPaginationButtons()}
+          <button
+            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 mx-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {">"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
