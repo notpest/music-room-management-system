@@ -88,3 +88,31 @@
   }
 }
 
+/* Responsive base */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scroll-edge fade indicator for tables */
+.scroll-hint::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to left, rgba(0, 3, 25, 0.85), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.scroll-hint.is-scrolled::after {
+  opacity: 1;
+}
+

@@ -59,26 +59,28 @@ const EntryLogPage = () => {
       transition={{ duration: 0.5 }}
     >
       <Navbar/>
-      <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
+      <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto px-4 sm:px-10">
         <div className="w-full h-full p-4">
-          <div className="flex items-center my-10 space-x-4 w-full">
-            <button
-              onClick={handleScan}
-              disabled={scanning}
-              className={`p-2 rounded-full transition-transform ${scanning ? "animate-spin" : ""}`}
-            >
-              <CIcon icon={cilReload} style={{ width: "24px", height: "24px" }} />
-            </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center my-6 sm:my-10 gap-2 w-full">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleScan}
+                disabled={scanning}
+                className={`p-2 rounded-full transition-transform shrink-0 ${scanning ? "animate-spin" : ""}`}
+              >
+                <CIcon icon={cilReload} style={{ width: "24px", height: "24px" }} />
+              </button>
+              <button onClick={() => setFilterModalOpen(true)} className="p-2 shrink-0">
+                <FaFilter className="text-lg text-gray-400" />
+              </button>
+            </div>
             <input
               type="text"
               placeholder="Search by Equipment ID or Name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 text-white"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 transition-all text-white font-mono placeholder-gray-500"
             />
-            <button onClick={() => setFilterModalOpen(true)} className="p-2">
-              <FaFilter className="text-lg text-gray-400" />
-            </button>
           </div>
 
           <Modal isOpen={isFilterModalOpen} onClose={() => setFilterModalOpen(false)} title="Filter Entry Logs">

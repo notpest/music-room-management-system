@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaGuitar, FaKeyboard, FaMicrophone, FaUser } from "react-icons/fa";
 import { MdOutlinePiano } from "react-icons/md";
+import { motion } from "framer-motion";
 import axios from "axios";
 
 export type EntryLogType = {
@@ -34,7 +35,16 @@ interface EntryLogTableProps {
 export default function EntryLogTable({ refreshCount, searchQuery, filterCategory, filterDate }: EntryLogTableProps) {
   const [logs, setLogs] = useState<EntryLogType[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [isTableScrolled, setIsTableScrolled] = useState(false);
   const itemsPerPage = 10;
+
+  const handleTableScroll = useCallback(() => {
+    const el = tableScrollRef.current;
+    if (el) {
+      setIsTableScrolled(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -70,75 +80,89 @@ export default function EntryLogTable({ refreshCount, searchQuery, filterCategor
     currentPage * itemsPerPage
   );
 
-  const renderPaginationButtons = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => setCurrentPage(i)}
-          className={`px-4 py-2 mx-1 rounded-md transition-colors ${
-            currentPage === i
-              ? "bg-purple-600 text-white"
-              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-          }`}
-        >
-          {i}
-        </button>
-      );
-    }
-    return pages;
-  };
-
   return (
-    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 sm:p-6 text-white w-full">
-      <div className="overflow-x-auto">
+    <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 rounded-3xl text-white w-full shadow-2xl">
+      <div className="relative">
+        <div
+          ref={tableScrollRef}
+          onScroll={handleTableScroll}
+          className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]"
+        >
         <table className="w-full text-left">
-          <thead className="border-b border-gray-700">
+          <thead className="bg-white/5">
             <tr>
-              <th className="p-4 text-sm font-semibold text-gray-300">Sl. No</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Name</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Category</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Scanned At</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Sl. No</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Name</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Category</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Scanned At</th>
             </tr>
           </thead>
           <tbody>
             {currentLogs.map((log, index) => (
-              <tr key={log.id} className="border-b border-gray-800 hover:bg-gray-800/60 transition-colors">
-                <td className="p-4">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                <td className="p-4">
+              <motion.tr
+                key={log.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: index * 0.02 }}
+                className="border-b border-white/10 hover:bg-white/[0.03] transition-colors"
+              >
+                <td className="p-2 sm:p-3 font-mono text-sm text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                <td className="p-2 sm:p-3 font-mono text-sm text-gray-300">
                   {log.Equipment?.equipment_name || log.student_name || log.equipment_id}
                 </td>
-                <td className="p-4 text-xl">
+                <td className="p-2 sm:p-3 text-lg">
                   {log.Equipment?.category 
                     ? equipmentIcons[log.Equipment.category.toLowerCase()] || log.Equipment.category
                     : log.student_name 
                     ? equipmentIcons["student"] 
                     : "—"}
                 </td>
-                <td className="p-4">{new Date(log.scanned_at).toLocaleString()}</td>
-              </tr>
+                <td className="p-2 sm:p-3 font-mono text-sm text-gray-400">{new Date(log.scanned_at).toLocaleString()}</td>
+              </motion.tr>
             ))}
           </tbody>
         </table>
+        </div>
+        {isTableScrolled && (
+          <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-black-100/80 via-black-100/40 to-transparent pointer-events-none rounded-r-2xl" />
+        )}
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-center items-center mt-6">
+        <div className="flex justify-center items-center mt-6 gap-2">
           <button
             onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 mx-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-xs transition-all"
           >
-            {"<"}
+            &lt;
           </button>
-          {renderPaginationButtons()}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+            .map((p, i, arr) => {
+              const showEllipsis = i > 0 && p - arr[i - 1] > 1;
+              return (
+                <React.Fragment key={p}>
+                  {showEllipsis && <span className="text-xs text-gray-500 px-1">…</span>}
+                  <button
+                    onClick={() => setCurrentPage(p)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      currentPage === p
+                        ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25"
+                        : "bg-white/5 text-gray-400 hover:bg-white/10"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                </React.Fragment>
+              );
+            })}
           <button
             onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 mx-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-xs transition-all"
           >
-            {">"}
+            &gt;
           </button>
         </div>
       )}

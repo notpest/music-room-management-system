@@ -2,10 +2,9 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
-import { Op } from "sequelize";     
-import User from "@/models/User";
-import LoginHistory from "@/models/LoginHistory";
-import UserBand from "@/models/UserBand"; 
+import { db } from "@/db";
+import { user, loginHistory, userBand } from "@/db/schema";
+import { eq, and, isNull, desc } from "drizzle-orm";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,34 +17,36 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials) return null;
         try {
-          const user = await User.findOne({ 
-            where: { email: credentials.email }
-          });
-          
-          if (!user) return null;
-          
-          const isValid = await compare(credentials.password, user.hashed_password);
+          const [userRecord] = await db
+            .select()
+            .from(user)
+            .where(eq(user.email, credentials.email))
+            .limit(1);
+
+          if (!userRecord) return null;
+
+          const isValid = await compare(credentials.password, userRecord.hashed_password);
           if (!isValid) return null;
-          
-          const userBands = await UserBand.findAll({
-            where: { user_id: user.id },
-            attributes: ["band_id"],
-            limit: 1
-          });
+
+          const userBands = await db
+            .select({ band_id: userBand.band_id })
+            .from(userBand)
+            .where(eq(userBand.user_id, userRecord.id))
+            .limit(1);
 
           return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            band_id: userBands[0]?.band_id || null
+            id: userRecord.id,
+            name: userRecord.name,
+            email: userRecord.email,
+            role: userRecord.role,
+            band_id: userBands[0]?.band_id || null,
           };
         } catch (error) {
           console.error("Authorization error:", error);
           return null;
         }
-      }
-    })
+      },
+    }),
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
@@ -53,7 +54,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.email = user.email; 
+        token.email = user.email;
         token.name = user.name;
         token.role = user.role;
         token.band_id = user.band_id;
@@ -69,24 +70,30 @@ export const authOptions: NextAuthOptions = {
         band_id: token.band_id as string | null,
       };
       return session;
-    }
+    },
   },
   events: {
     async signIn({ user }) {
-      await LoginHistory.create({
+      await db.insert(loginHistory).values({
         user_id: user.id,
         login_time: new Date(),
-        logout_time: null
+        logout_time: null,
       });
     },
     async signOut({ token }) {
-      const loginRecord = await LoginHistory.findOne({
-        where: { user_id: token.id, logout_time: null },
-        order: [["login_time", "DESC"]]
-      });
+      const [loginRecord] = await db
+        .select()
+        .from(loginHistory)
+        .where(and(eq(loginHistory.user_id, token.id), isNull(loginHistory.logout_time)))
+        .orderBy(desc(loginHistory.login_time))
+        .limit(1);
+
       if (loginRecord) {
-        await loginRecord.update({ logout_time: new Date() });
+        await db
+          .update(loginHistory)
+          .set({ logout_time: new Date() })
+          .where(eq(loginHistory.id, loginRecord.id));
       }
-    }
+    },
   },
 };

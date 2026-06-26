@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FaCalendarAlt, FaInfoCircle, FaGuitar, FaKeyboard, FaMicrophone } from "react-icons/fa";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
 import Modal from "./Modal";
 
 type EquipmentType = {
@@ -35,6 +36,15 @@ const TableEquip = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [isTableScrolled, setIsTableScrolled] = useState(false);
+
+  const handleTableScroll = useCallback(() => {
+    const el = tableScrollRef.current;
+    if (el) {
+      setIsTableScrolled(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchEquipment = async () => {
@@ -87,9 +97,9 @@ const TableEquip = () => {
           setModalContent(
               <div>
                   <p>Book {selectedEquipment.name} from {format(startDate, "PPP")} to {format(endDate, "PPP")}?</p>
-                  <div className="flex justify-end gap-4 mt-4">
-                    <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-700">Cancel</button>
-                    <button onClick={() => { /* Booking logic here */ setModalOpen(false);}} className="px-4 py-2 rounded-md bg-purple-600">Confirm</button>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-sm font-mono text-gray-300 hover:bg-white/20 transition-all">Cancel</button>
+                    <button onClick={() => { /* Booking logic here */ setModalOpen(false);}} className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-sm font-mono font-bold border border-purple-400/20 hover:from-purple-700 hover:to-purple-600 transition-all shadow-lg shadow-purple-500/25">Confirm</button>
                   </div>
               </div>
           );
@@ -98,41 +108,56 @@ const TableEquip = () => {
   }
 
   return (
-    <div className="bg-gray-900/50 p-4 rounded-lg text-white w-full">
-      <div className="overflow-x-auto">
+    <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 rounded-3xl text-white w-full shadow-2xl">
+      <div className="relative">
+        <div
+          ref={tableScrollRef}
+          onScroll={handleTableScroll}
+          className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]"
+        >
         <table className="w-full text-left">
-          <thead className="border-b border-gray-700">
+          <thead className="bg-white/5">
             <tr>
-              <th className="p-4">Instrument</th>
-              <th className="p-4">Category</th>
-              <th className="p-4">Availability</th>
-              <th className="p-4">Return Date</th>
-              <th className="p-4">Actions</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Instrument</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Category</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Availability</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Return Date</th>
+              <th className="p-2 sm:p-4 text-xs font-bold uppercase tracking-wider text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {equipment.map((item) => (
-              <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-800/60">
-                <td className="p-4">{item.name}</td>
-                <td className="p-4 text-xl">{equipmentIcons[item.category.toLowerCase()] || item.category}</td>
-                <td className="p-4"><span className={`px-2 py-1 text-xs rounded-full ${statusColorMap[item.availability]}`}>{item.availability}</span></td>
-                <td className="p-4">{item.returnDate}</td>
-                <td className="p-4">
-                  <div className="flex gap-4">
-                    <button onClick={() => openBookingModal(item)} disabled={item.availability === 'Booked'} className="disabled:opacity-50"><FaCalendarAlt /></button>
-                    <button onClick={() => openDetailsModal(item)}><FaInfoCircle /></button>
+            {equipment.map((item, index) => (
+              <motion.tr
+                key={item.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: index * 0.03 }}
+                className="border-b border-white/10 hover:bg-white/[0.03] transition-colors"
+              >
+                <td className="p-2 sm:p-3 font-mono text-sm text-gray-300">{item.name}</td>
+                <td className="p-2 sm:p-3 text-lg">{equipmentIcons[item.category.toLowerCase()] || item.category}</td>
+                <td className="p-2 sm:p-3"><span className={`px-2 py-1 text-xs rounded-full ${statusColorMap[item.availability]}`}>{item.availability}</span></td>
+                <td className="p-2 sm:p-3 font-mono text-sm text-gray-400">{item.returnDate}</td>
+                <td className="p-2 sm:p-3">
+                  <div className="flex gap-2">
+                    <button onClick={() => openBookingModal(item)} disabled={item.availability === 'Booked'} className="p-2 rounded-lg hover:bg-white/10 transition-all text-purple-400 disabled:opacity-50"><FaCalendarAlt className="text-sm" /></button>
+                    <button onClick={() => openDetailsModal(item)} className="p-2 rounded-lg hover:bg-white/10 transition-all text-gray-400"><FaInfoCircle className="text-sm" /></button>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>
+        </div>
+        {isTableScrolled && (
+          <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-black-100/80 via-black-100/40 to-transparent pointer-events-none rounded-r-2xl" />
+        )}
       </div>
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={modalTitle}>
           {modalContent}
           {modalTitle.startsWith("Book") && (
               <div className="flex justify-end pt-4">
-                  <button onClick={handleBookingConfirm} className="px-6 py-2 bg-purple-600 rounded-md">Book</button>
+                  <button onClick={handleBookingConfirm} className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl text-sm font-mono font-bold border border-purple-400/20 hover:from-purple-700 hover:to-purple-600 transition-all shadow-lg shadow-purple-500/25">Book</button>
               </div>
           )}
       </Modal>

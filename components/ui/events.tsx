@@ -80,8 +80,8 @@ const Event: React.FC<EventProps> = ({
       }`}
     >
       <div
-        className={`max-w-6xl mx-auto mt-4 flex items-center ${
-          reverse ? "flex-row-reverse" : "flex-row"
+        className={`max-w-6xl mx-auto mt-4 flex flex-col sm:flex-row items-center ${
+          reverse ? "sm:flex-row-reverse" : "sm:flex-row"
         }`}
       >
         {/* Text Section */}
@@ -91,13 +91,13 @@ const Event: React.FC<EventProps> = ({
         </div>
 
         {/* Image Section */}
-        <div className="flex-1 p-4" style={{ height: "400px", width: "600px" }}>
+        <div className="flex-1 p-4 w-full sm:w-auto">
           <Image
             src={imageSrc}
             alt={altText}
-            className="rounded-lg shadow-lg"
-            placeholder="blur" // Optional: Adds a blur placeholder for optimized images
-            style={{ height: "100%", width: "100%", objectFit: "cover" }}
+            className="rounded-lg shadow-lg w-full h-auto"
+            placeholder="blur"
+            style={{ objectFit: "cover" }}
           />
         </div>
       </div>

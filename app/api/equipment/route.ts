@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import Equipment from "@/models/Equipment";
+import { db } from "@/db";
+import { equipment } from "@/db/schema";
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const newEquipment = await Equipment.create({ equipment_name, category, quantity });
+    const [newEquipment] = await db.insert(equipment).values({ equipment_name, category, quantity }).returning();
     return NextResponse.json(newEquipment, { status: 201 });
   } catch (error) {
     console.error(error);

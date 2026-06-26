@@ -2,10 +2,10 @@
 
 import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
 import SlotsRequestsTable from "../../../components/ui/SlotsRequestTable";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { MotionWrapper } from "@/components/ui/MotionWrapper";
 
 // Import Navbar dynamically with no SSR
 const Navbar = dynamic(() => import("@/components/Navbar"), {
@@ -28,23 +28,18 @@ const SlotRequestsPage = () => {
   }, [session, status, router]);
   
   if (status === "loading" || !session) {
-    return null; //—or a <Spinner /> if you have one
+    return null;
   }
   
   return (
-    <motion.div 
-      className="bg-black-100"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-    <Navbar aria-label="Main Navigation" />
-    <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
-      <div className="w-full mb-4">
-        <SlotsRequestsTable isAdmin={session.user.role === "admin"} userId={session.user.id!} />
-      </div>
-    </main>
-    </motion.div>
+    <MotionWrapper className="bg-black-100">
+      <Navbar aria-label="Main Navigation" />
+      <main className="relative bg-black-100 flex justify-center items-center flex-col mx-auto px-4 sm:px-10 min-h-screen">
+        <div className="w-full pt-20">
+          <SlotsRequestsTable isAdmin={session.user.role === "admin"} userId={session.user.id!} />
+        </div>
+      </main>
+    </MotionWrapper>
   );
 };
 

@@ -1,32 +1,34 @@
 import { NextResponse } from "next/server";
-import User from "@/models/User";
-import Band from "@/models/Band";
-import UserBand from "@/models/UserBand";
+import { db } from "@/db";
+import { user, band, userBand } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   try {
-    const allUsers = await User.findAll({
-      include: [
-        {
-          model: Band,
-          as: "Bands",
-          through: { attributes: [] },
-        },
-      ],
-    });
+    const rows = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        bandId: band.id,
+        bandName: band.name,
+      })
+      .from(user)
+      .leftJoin(userBand, eq(user.id, userBand.user_id))
+      .leftJoin(band, eq(userBand.band_id, band.id));
 
-    const result = allUsers.map((u) => {
-      const ujson: any = u.toJSON();
-      return {
-        id: ujson.id,
-        name: ujson.name,
-        email: ujson.email,
-        role: ujson.role,
-        bands: (ujson.Bands || []).map((b: any) => ({ id: b.id, name: b.name })),
-      };
-    });
+    const grouped: Record<string, any> = {};
+    for (const row of rows) {
+      if (!grouped[row.id]) {
+        grouped[row.id] = { id: row.id, name: row.name, email: row.email, role: row.role, bands: [] };
+      }
+      if (row.bandId && row.bandName) {
+        grouped[row.id].bands.push({ id: row.bandId, name: row.bandName });
+      }
+    }
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(Object.values(grouped), { status: 200 });
   } catch (error) {
     console.error("GET /api/users error:", error);
     return NextResponse.json({ message: "Error fetching users" }, { status: 500 });
@@ -42,12 +44,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ message: "Missing user id" }, { status: 400 });
     }
 
-    await UserBand.destroy({ where: { user_id: id } });
-    const userToDelete = await User.findByPk(id);
-    if (!userToDelete) {
+    await db.delete(userBand).where(eq(userBand.user_id, id));
+
+    const [existing] = await db.select().from(user).where(eq(user.id, id)).limit(1);
+    if (!existing) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
-    await userToDelete.destroy();
+
+    await db.delete(user).where(eq(user.id, id));
     return NextResponse.json({ message: "User deleted" }, { status: 200 });
   } catch (error) {
     console.error("DELETE /api/users error:", error);
@@ -65,25 +69,24 @@ export async function PUT(request: Request) {
     }
 
     const { name, email, role, bandIds } = await request.json();
-    const userToUpdate = await User.findByPk(id);
-    if (!userToUpdate) {
+    const [existing] = await db.select().from(user).where(eq(user.id, id)).limit(1);
+    if (!existing) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (role !== undefined) updateData.role = role;
-    await userToUpdate.update(updateData);
+    if (Object.keys(updateData).length > 0) {
+      await db.update(user).set(updateData).where(eq(user.id, id));
+    }
 
     if (Array.isArray(bandIds)) {
-      await UserBand.destroy({ where: { user_id: id } });
-      const newPairs = bandIds.map((bId: string) => ({
-        user_id: id,
-        band_id: bId,
-      }));
-      if (newPairs.length > 0) {
-        await UserBand.bulkCreate(newPairs);
+      await db.delete(userBand).where(eq(userBand.user_id, id));
+      if (bandIds.length > 0) {
+        const newPairs = bandIds.map((bId: string) => ({ user_id: id, band_id: bId }));
+        await db.insert(userBand).values(newPairs);
       }
     }
 

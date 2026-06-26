@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import RBTable from "../../../components/ui/RBTable";
 import dynamic from "next/dynamic";
@@ -15,8 +17,8 @@ const RoomBookingPage = () => {
   return (
     <MotionWrapper className="bg-black-100">
     <Navbar aria-label="Main Navigation" />
-    <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10 max-h-screen">
-      <div className="w-full">
+      <main className="relative bg-black-100 flex justify-center items-center flex-col mx-auto px-4 sm:px-10 min-h-screen">
+      <div className="w-full pt-20">
         <RBTable />
       </div>
     </main>

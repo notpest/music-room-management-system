@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import Room from "@/models/Room";
+import { db } from "@/db";
+import { room } from "@/db/schema";
+import { asc } from "drizzle-orm";
 
 export async function GET() {
   try {
-    const rooms = await Room.findAll({ order: [["number", "ASC"]] });
+    const rooms = await db.select().from(room).orderBy(asc(room.number));
     return NextResponse.json(rooms, { status: 200 });
   } catch (error) {
     console.error(error);

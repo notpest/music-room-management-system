@@ -18,7 +18,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
           onClick={onClose}
         >
           <motion.div
@@ -26,14 +26,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="relative w-full max-w-lg p-6 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
+            className="relative w-full max-w-lg mx-4 sm:mx-auto p-6 sm:p-8 bg-black/50 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl shadow-black/50"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-white">{title}</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-white tracking-tight">{title}</h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +51,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
                 </svg>
               </button>
             </div>
-            <div>{children}</div>
+            <div className="text-white">
+                {children}
+            </div>
           </motion.div>
         </motion.div>
       )}

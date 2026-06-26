@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
-import SWOLogo from "../../public/SWO_Logo.png";
+import { motion, AnimatePresence } from "framer-motion";
 import Modal from "./ui/Modal";
 import RegistrationModal from "./ui/RegistrationModal";
 
@@ -53,7 +53,7 @@ const NavbarComponent = () => {
   };
 
   const navLinks = [
-    { href: "/", label: "Home" },
+    { href: "/home", label: "Home" },
     { href: "/RoomBooking", label: "Room Booking", auth: true },
     { href: "/SlotRequests", label: "Slot Requests", auth: true },
     { href: "/Dashboard", label: "Dashboard", admin: true },
@@ -63,7 +63,7 @@ const NavbarComponent = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-40 w-full bg-black bg-opacity-50 backdrop-blur-lg transition-transform duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 w-full bg-black/50 backdrop-blur-xl border-b border-white/10 transition-transform duration-300 ${
           showNavbar || isMenuOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
@@ -72,14 +72,14 @@ const NavbarComponent = () => {
             {/* Left side: Logo */}
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center gap-2">
-                <Image src={SWOLogo} alt="SWO Logo" width={40} height={40} priority />
+                <Image src="/SWO_Logo.png" alt="SWO Logo" width={40} height={40} priority />
                 <span className="text-white font-bold text-xl hidden sm:block">SWO</span>
               </Link>
             </div>
 
             {/* Center: Desktop Menu */}
             <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
+              <div className="ml-10 flex items-center gap-1">
                 {navLinks.map(({ href, label, auth, admin }) => {
                   const isActive = pathname === href;
                   if ((auth && !session) || (admin && session?.user?.role !== 'admin')) {
@@ -89,13 +89,16 @@ const NavbarComponent = () => {
                     <Link
                       key={href}
                       href={href}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      className={`relative px-4 py-2 text-sm font-mono font-medium transition-all ${
                         isActive
-                          ? "bg-purple-600 text-white"
-                          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                          ? "text-purple-300"
+                          : "text-gray-400 hover:text-white"
                       }`}
                     >
                       {label}
+                      {isActive && (
+                        <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-lg shadow-purple-500/80" />
+                      )}
                     </Link>
                   );
                 })}
@@ -105,16 +108,16 @@ const NavbarComponent = () => {
             {/* Right side: Auth buttons & Mobile menu toggle */}
             <div className="flex items-center">
               <div className="hidden md:block">
-                {session ? (
+                  {session ? (
                    <div className="relative">
-                     <button onClick={() => signOut({ callbackUrl: "/" })} className="px-4 py-2 text-sm bg-red-600 rounded-md hover:bg-red-700">
+                     <button onClick={() => signOut({ callbackUrl: "/" })} className="px-4 py-2 text-sm font-mono font-bold bg-gradient-to-r from-red-600 to-red-500 rounded-xl border border-red-400/20 hover:from-red-700 hover:to-red-600 transition-all">
                        Logout
                      </button>
                    </div>
                 ) : (
                   <button
                     onClick={() => setLoginModalOpen(true)}
-                    className="px-4 py-2 text-sm bg-purple-600 rounded-md hover:bg-purple-700"
+                    className="px-4 py-2 text-sm font-mono font-bold bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl border border-purple-400/20 hover:from-purple-700 hover:to-purple-600 transition-all"
                   >
                     Login
                   </button>
@@ -123,7 +126,7 @@ const NavbarComponent = () => {
               <div className="md:hidden">
                 <button
                   onClick={() => setMenuOpen(!isMenuOpen)}
-                  className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700"
+                  className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all"
                 >
                   <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                     {isMenuOpen ? (
@@ -139,41 +142,54 @@ const NavbarComponent = () => {
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {navLinks.map(({ href, label, auth, admin }) => {
-                  if ((auth && !session) || (admin && session?.user?.role !== 'admin')) {
-                    return null;
-                  }
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                  >
-                    {label}
-                  </Link>
-                );
-              })}
-               <div className="pt-4 border-t border-gray-700">
-                {session ? (
-                     <button onClick={() => {signOut({ callbackUrl: "/" }); setMenuOpen(false);}} className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700 hover:text-white">
-                       Logout
-                     </button>
-                ) : (
-                  <button
-                    onClick={() => {setLoginModalOpen(true); setMenuOpen(false);}}
-                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                  >
-                    Login
-                  </button>
-                )}
-               </div>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="md:hidden overflow-hidden bg-black/50 backdrop-blur-xl border-t border-white/10"
+            >
+              <div className="px-4 pt-2 pb-4 space-y-1">
+                {navLinks.map(({ href, label, auth, admin }) => {
+                    if ((auth && !session) || (admin && session?.user?.role !== 'admin')) {
+                      return null;
+                    }
+                    const isActive = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`block px-4 py-2.5 rounded-xl text-sm font-mono font-medium transition-all border ${
+                        isActive
+                          ? "bg-purple-600/20 text-purple-300 border-purple-400/30"
+                          : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
+                 <div className="pt-3 border-t border-white/10 space-y-1">
+                  {session ? (
+                    <button onClick={() => {signOut({ callbackUrl: "/" }); setMenuOpen(false);}} className="w-full px-4 py-2.5 rounded-xl text-sm font-mono font-bold bg-gradient-to-r from-red-600 to-red-500 border border-red-400/20 hover:from-red-700 hover:to-red-600 transition-all text-white">
+                      Logout
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {setLoginModalOpen(true); setMenuOpen(false);}}
+                      className="w-full px-4 py-2.5 rounded-xl text-sm font-mono font-bold bg-gradient-to-r from-purple-600 to-purple-500 border border-purple-400/20 hover:from-purple-700 hover:to-purple-600 transition-all text-white"
+                    >
+                      Login
+                    </button>
+                  )}
+                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
       
       {/* Modals */}
@@ -185,7 +201,7 @@ const NavbarComponent = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoggingIn}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-mono text-white outline-none focus:ring-2 focus:ring-purple-500 transition-all placeholder-gray-500"
           />
           <input
             type="password"
@@ -194,7 +210,7 @@ const NavbarComponent = () => {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoggingIn}
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-mono text-white outline-none focus:ring-2 focus:ring-purple-500 transition-all placeholder-gray-500"
           />
           <div className="flex justify-between items-center">
             <button
@@ -202,14 +218,14 @@ const NavbarComponent = () => {
                 setLoginModalOpen(false);
                 setRegModalOpen(true);
               }}
-              className="text-sm text-purple-400 hover:underline"
+              className="text-sm font-mono text-purple-400 hover:text-purple-300 transition-colors"
             >
               Don't have an account? Sign up
             </button>
             <button
               onClick={handleLogin}
               disabled={isLoggingIn}
-              className="px-6 py-2 bg-purple-600 rounded-md disabled:bg-gray-600"
+              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl text-sm font-mono font-bold border border-purple-400/20 hover:from-purple-700 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {isLoggingIn ? "Signing in..." : "Sign In"}
             </button>

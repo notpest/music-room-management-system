@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import dynamic from "next/dynamic";
 import TableEquip from '@/components/ui/TableEquip';
@@ -15,7 +17,7 @@ const EquipmentBooking = () => {
   return (
     <MotionWrapper className="bg-black-100">
       <Navbar aria-label="Main Navigation" />
-    <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto sm:px-10">
+    <main className="relative bg-black-100 flex justify-center items-center flex-col overflow-hidden mx-auto px-4 sm:px-10">
       <div className="w-full p-8">
         <TableEquip />
       </div>
